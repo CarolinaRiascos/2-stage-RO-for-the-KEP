@@ -76,6 +76,7 @@ public:
     vector<vector<int>>PredList;
     map<int, vector<pair<int,int>>>PredMap;
     vector<Cycles> ListCycles;
+    int Hola;
     
     
     //Functions
