@@ -145,7 +145,6 @@ public:
     void KEP_CycleFormulation();
     vector<Cycles> SubCycleFinder (IloEnv env, IloNumArray2 AdjaList, IloInt origin);
     void SetName1Index(IloNumVar& var, const char* prefix, IloInt i);
-    void SetName2Index(IloNumVar& var, const char* prefix, IloInt i, IloInt j);
     IloBool IsxinStack (IloInt test, vector<int>& xinTrial);
     IloNum PathWeight (vector<int>& Stack);
     
@@ -179,26 +178,19 @@ public:
     IloRangeArray BoundObjGrandSubP;
     IloRangeArray ActiveCCSubP_LB;
     IloRangeArray ActiveCCSubP_UB;
-    vector<Cycles> NewListCCs;
     vector<Cycles> RepairedListCCs;
     vector<Cycles> RobustSolTHP;
     vector<IndexGrandSubSol> GrandSubSolSet;
     map<int,vector<int>> CycleNodeGSP;
     void GrandSubProbMaster();
     void GrandSubProbRoutine();
-    vector<Cycles> BackRecoursePolicy(IloNumArray& vertex_sol, IloNumArray2& arc_sol);
-    vector<Cycles> AmongPolicy(IloNumArray& vertex_sol, IloNumArray2& arc_sol);
-    vector<Cycles> AllPolicy(IloNumArray& vertex_sol, IloNumArray2& arc_sol);
+    vector<Cycles> BackRecoursePolicy(IloNumArray& vertex_sol);
+    vector<Cycles> AmongPolicy(IloNumArray& vertex_sol);
+    vector<Cycles> AllPolicy(IloNumArray& vertex_sol);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     
-    void FillRepSol_AND_CycleNodeGSP(map<int,vector<int>>& CycleNodeGSP);
+    
     void CheckNewIncludedVerticesGSP(vector<IndexGrandSubSol>&Sol, vector<Cycles>&LastRepSol);
-    IloExpr GenerateMakeOneFailConstraint(int iteration);
-    IloExpr GenerateAllArcsVertices(int cycleIndx);
-    void ccVarsOneVtx (int cycleIndx, int vtx, map<int,int>&WhichCCs);
-    IloExpr GenerateAllCCsVars(map<int,int>&WhichCCs);
-    void AddRow_MakeOneFail();
-    void AddRowsCols_ActiveCCSubP_LB();
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
     void PrintSolSNP(IloNumArray vertex_sol, IloNumArray2 arc_sol);
@@ -209,7 +201,6 @@ public:
 private:
 };
 
-int FindPosArray(IloNumArray array, int value);
-int FindPosVector(vector<int> array, int value);
+
 int checkIfCCisNew(vector<int>v, vector<IndexGrandSubSol>&Sol);
 #endif /* Class_Problem_hpp */

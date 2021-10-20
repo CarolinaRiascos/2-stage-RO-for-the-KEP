@@ -201,7 +201,7 @@ void Problem::MainCycleFinder(){
                 CycleNode[ListC[i].get_c()[y]].push_back(ListCycles.size() - 1);
             }
         }
-        //if (ListCycles.size() == ThisMany) terminate = true;
+        if (ListCycles.size() == ThisMany) terminate = true;
         
         //Remove node
         for (int l = 0; l < AdjaList.getSize(); l++){
