@@ -187,7 +187,7 @@ void Problem::GrandSubProbMaster(){
             //AllPolicy(vertex_sol, arc_sol);
             RepairedListCCs = AmongPolicy(vertex_sol); // It updates NewListCCs
             //Update arrays in GranSubSolSet and CycleNodeGSP
-            CheckNewIncludedVerticesGSP(GrandSubSolSet, RepairedListCCs);
+            //CheckNewIncludedVerticesGSP(GrandSubSolSet, RepairedListCCs);
             
             //Add new cols and rows
             //AddRow_MakeOneFail();
@@ -237,11 +237,14 @@ void Problem::UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj){
             RobustSolTHP.push_back(Cycles(GrandSubSolSet[i].get_cc(), GrandSubSolSet[i].get_w()));
         }
     }
-    int FindPosVector(vector<int> array, int value){
-        int pos = -1;
-vector<Cycles> Problem::BackRecoursePolicy(IloNumArray& vertex_sol, IloNumArray2& arc_sol){
-        for (int j = 0; j < array.size(); j++){
-            if (array[j] == value) return j;
+}
+int FindPosVector(vector<int> array, int value){
+    int pos = -1;
+    for (int j = 0; j < array.size(); j++){
+        if (array[j] == value) return j;
+    }
+    return pos;
+}
 vector<Cycles> Problem::BackRecoursePolicy(IloNumArray& vertex_sol){
     vector<Cycles> NewListCCs;
     
@@ -291,7 +294,7 @@ vector<Cycles> Problem::BackRecoursePolicy(IloNumArray& vertex_sol){
 //            cout << NewListCCs[k].get_c()[l] << "\t";
 //        }
 //    }
-    return CFThirdPhase(NewListCCs, CycleNodeTPH);
+    return NewListCCs;
 }
 vector<Cycles> Problem::AmongPolicy(IloNumArray& vertex_sol){
     vector<Cycles> NewListCCs;
@@ -370,4 +373,6 @@ vector<Cycles> Problem::AllPolicy(IloNumArray& vertex_sol){
         }
         //Remove from Adja List
         AdjaList[origin].clear();
-    
+    }
+    return NewListCCs;
+}

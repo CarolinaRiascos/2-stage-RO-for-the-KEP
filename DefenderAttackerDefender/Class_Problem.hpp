@@ -190,7 +190,6 @@ public:
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     
     
-    void CheckNewIncludedVerticesGSP(vector<IndexGrandSubSol>&Sol, vector<Cycles>&LastRepSol);
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
     void PrintSolSNP(IloNumArray vertex_sol, IloNumArray2 arc_sol);
