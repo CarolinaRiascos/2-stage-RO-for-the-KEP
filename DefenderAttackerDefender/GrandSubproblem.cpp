@@ -185,7 +185,7 @@ void Problem::GrandSubProbMaster(){
             RepSolCounter++;
             //BackRecoursePolicy(vertex_sol, arc_sol);
             //AllPolicy(vertex_sol, arc_sol);
-            RepairedListCCs = AmongPolicy(vertex_sol); // It updates NewListCCs
+            //RepairedListCCs = AmongPolicy(arc_sol); // It updates NewListCCs
             //Update arrays in GranSubSolSet and CycleNodeGSP
             //CheckNewIncludedVerticesGSP(GrandSubSolSet, RepairedListCCs);
             
@@ -245,21 +245,21 @@ int FindPosVector(vector<int> array, int value){
     }
     return pos;
 }
-vector<Cycles> Problem::BackRecoursePolicy(IloNumArray& vertex_sol){
+vector<Cycles> Problem::BackRecoursePolicy(vector<vector<int>>& FistStageSol){
     vector<Cycles> NewListCCs;
     
-    for (int i = 0; i < GrandSubSolSet.size(); i++){
+    for (int i = 0; i < FistStageSol.size(); i++){
         IloNumArray2 AdjaList (env, AdjacencyList.getSize());
 
         for (int i = 0; i < AdjacencyList.getSize(); i++){
             AdjaList[i] = IloNumArray(env);
         }
-        for (int j = 0; j < GrandSubSolSet[i].get_cc().size(); j++){
-            for (int l = 0; l < AdjacencyList[GrandSubSolSet[i].get_cc()[j]].getSize(); l++){
-                int neighbour = AdjacencyList[GrandSubSolSet[i].get_cc()[j]][l] - 1;
-                int pos = FindPosVector(GrandSubSolSet[i].get_cc(), neighbour);
+        for (int j = 0; j < FistStageSol[i].size(); j++){
+            for (int l = 0; l < AdjacencyList[FistStageSol[i][j]].getSize(); l++){
+                int neighbour = AdjacencyList[FistStageSol[i][j]][l] - 1;
+                int pos = FindPosVector(FistStageSol[i], neighbour);
                 if (pos != -1) {
-                    AdjaList[GrandSubSolSet[i].get_cc()[j]].add(neighbour + 1);
+                    AdjaList[FistStageSol[i][j]].add(neighbour + 1);
                 }
             }
         }
@@ -272,8 +272,8 @@ vector<Cycles> Problem::BackRecoursePolicy(IloNumArray& vertex_sol){
         
         //Find inner cycles
         vector<Cycles> NewList;
-        for (int j = 0; j < GrandSubSolSet[i].get_cc().size(); j++){
-            int origin = GrandSubSolSet[i].get_cc()[j];
+        for (int j = 0; j < FistStageSol[i].size(); j++){
+            int origin = FistStageSol[i][j];
             NewList = SubCycleFinder(env, AdjaList, origin);
             for (int k = 0; k < NewList.size(); k++){
                 NewListCCs.push_back(NewList[k]);
@@ -296,7 +296,7 @@ vector<Cycles> Problem::BackRecoursePolicy(IloNumArray& vertex_sol){
 //    }
     return NewListCCs;
 }
-vector<Cycles> Problem::AmongPolicy(IloNumArray& vertex_sol){
+vector<Cycles> Problem::AmongPolicy(vector<vector<int>>& FistStageSol){
     vector<Cycles> NewListCCs;
     
     IloNumArray2 AdjaList (env, AdjacencyList.getSize());
@@ -338,7 +338,7 @@ vector<Cycles> Problem::AmongPolicy(IloNumArray& vertex_sol){
     
     return NewListCCs;
 }
-vector<Cycles> Problem::AllPolicy(IloNumArray& vertex_sol){
+vector<Cycles> Problem::AllPolicy(vector<vector<int>>& FistStageSol){
     vector<Cycles> NewListCCs;
     vector<int>ListVertices;
     

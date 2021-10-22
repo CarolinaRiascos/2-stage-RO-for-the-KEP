@@ -49,6 +49,15 @@ public:
     vector<int> get_cc(){return _GrandSubSol;}
 };
 
+struct vChain{
+    int vertex;
+    bool FirstPass = true;
+    vector<int>e_sol;
+    vector<int>::iterator it = e_sol.begin();
+    vector<int>::iterator itEnd = e_sol.end();
+    vChain(int _vertex, vector<int>sol){vertex = _vertex, e_sol = sol;}
+};
+
 class Problem{
 public:
     IloEnv env;
@@ -184,9 +193,9 @@ public:
     map<int,vector<int>> CycleNodeGSP;
     void GrandSubProbMaster();
     void GrandSubProbRoutine();
-    vector<Cycles> BackRecoursePolicy(IloNumArray& vertex_sol);
-    vector<Cycles> AmongPolicy(IloNumArray& vertex_sol);
-    vector<Cycles> AllPolicy(IloNumArray& vertex_sol);
+    vector<Cycles> BackRecoursePolicy(vector<vector<int>>&sol);
+    vector<Cycles> AmongPolicy(vector<vector<int>>&sol);
+    vector<Cycles> AllPolicy(vector<vector<int>>&sol);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     
     
