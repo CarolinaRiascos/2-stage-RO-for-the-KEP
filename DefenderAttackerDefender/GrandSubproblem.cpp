@@ -251,7 +251,7 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<vector<int>>& FistStageSol){
     for (int i = 0; i < FistStageSol.size(); i++){
         IloNumArray2 AdjaList (env, AdjacencyList.getSize());
 
-        for (int i = 0; i < AdjacencyList.getSize(); i++){
+        for (int j = 0; j < AdjacencyList.getSize(); j++){
             AdjaList[i] = IloNumArray(env);
         }
         for (int j = 0; j < FistStageSol[i].size(); j++){
@@ -263,12 +263,6 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<vector<int>>& FistStageSol){
                 }
             }
         }
-//        for (int i = 0; i < AdjaList.getSize(); i++){
-//            cout << endl << i << ": ";
-//            for (int j = 0; j < AdjaList[i].getSize(); j++){
-//                cout << AdjaList[i][j] << "\t";
-//            }
-//        }
         
         //Find inner cycles
         vector<Cycles> NewList;
@@ -277,9 +271,9 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<vector<int>>& FistStageSol){
             NewList = SubCycleFinder(env, AdjaList, origin);
             for (int k = 0; k < NewList.size(); k++){
                 NewListCCs.push_back(NewList[k]);
-                NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
+                NewListCCs.back().set_Weight(int(NewList[k].get_c().size()));
                 for (int l = 0; l < NewList[k].get_c().size(); l++){
-                    CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
+                    CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
                 }
             }
             //Remove origin from AdjaList
@@ -288,12 +282,6 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<vector<int>>& FistStageSol){
         AdjaList.clear();
     }
     
-//    for (int k = 0; k < NewListCCs.size(); k++){
-//        cout << endl;
-//        for (int l = 0; l < NewListCCs[k].get_c().size(); l++){
-//            cout << NewListCCs[k].get_c()[l] << "\t";
-//        }
-//    }
     return NewListCCs;
 }
 vector<Cycles> Problem::AmongPolicy(vector<vector<int>>& FistStageSol){
@@ -304,33 +292,33 @@ vector<Cycles> Problem::AmongPolicy(vector<vector<int>>& FistStageSol){
         AdjaList[i] = IloNumArray(env);
     }
     
-    vector<int>LookFor;
+    vector<int>ListVertices;
     
-    for (int i = 0; i < GrandSubSolSet.size(); i++){
-        for (int j = 0; j < GrandSubSolSet[i].get_cc().size(); j++){
-            LookFor.push_back(GrandSubSolSet[i].get_cc()[j]);
+    for (int i = 0; i < FistStageSol.size(); i++){
+        for (int j = 0; j < FistStageSol[i].size(); j++){
+            ListVertices.push_back(FistStageSol[i][j]);
         }
     }
     
     //Fill in Adjacency List
-    for (int i = 0; i < LookFor.size(); i++){
+    for (int i = 0; i < ListVertices.size(); i++){
         //cout << endl << LookFor[i] << "\t" << ":";
-        for (int j = 0; j < AdjacencyList[LookFor[i]].getSize(); j++){
-            int pos = FindPosVector(LookFor, AdjacencyList[LookFor[i]][j] - 1);
-            if (pos != -1){
-                AdjaList[LookFor[i]].add(AdjacencyList[LookFor[i]][j]);
-            }
+        for (int j = 0; j < AdjacencyList[ListVertices[i]].getSize(); j++){
+            AdjaList[ListVertices[i]].add(AdjacencyList[ListVertices[i]][j]);
         }
     }
     
     //Find among-cycles
     vector<Cycles> NewList;
-    for (int i = 0; i < LookFor.size(); i++){
-        int origin = LookFor[i];
+    for (int i = 0; i < ListVertices.size(); i++){
+        int origin = ListVertices[i];
         NewList = SubCycleFinder(env, AdjaList, origin);
         for (int k = 0; k < NewList.size(); k++){
             NewListCCs.push_back(NewList[k]);
-            NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
+            NewListCCs.back().set_Weight(int(NewList[k].get_c().size()));
+            for (int l = 0; l < NewList[k].get_c().size(); l++){
+                CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
+            }
         }
         //Remove from Adja List
         AdjaList[origin].clear();
@@ -342,9 +330,9 @@ vector<Cycles> Problem::AllPolicy(vector<vector<int>>& FistStageSol){
     vector<Cycles> NewListCCs;
     vector<int>ListVertices;
     
-    for (int i = 0; i < GrandSubSolSet.size(); i++){
-        for (int j = 0; j < GrandSubSolSet[i].get_cc().size(); j++){
-            ListVertices.push_back(GrandSubSolSet[i].get_cc()[j]);
+    for (int i = 0; i < FistStageSol.size(); i++){
+        for (int j = 0; j < FistStageSol[i].size(); j++){
+            ListVertices.push_back(FistStageSol[i][j]);
         }
     }
     //Make a copy of Adjacency List
@@ -367,12 +355,119 @@ vector<Cycles> Problem::AllPolicy(vector<vector<int>>& FistStageSol){
             for (int l = 0; l < NewList[k].get_c().size(); l++){
                 int pos = FindPosVector(ListVertices, NewList[k].get_c()[l]);
                 if (pos != -1) counter++;
-                CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
+                CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
             }
-            NewListCCs.back().set_Many(counter);
+            NewListCCs.back().set_Weight(counter);
         }
         //Remove from Adja List
         AdjaList[origin].clear();
     }
     return NewListCCs;
+}
+void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain){
+    
+    for (int j = 0; j < ListVertices.size(); j++){
+        if (VertexinSolChain[ListVertices[j]].veci.size() > 0){
+            VertexinSolChain[ListVertices[j]].veci = vector<int>();
+        }
+        for (int l = 0; l < AdjacencyList[ListVertices[j]].getSize(); l++){
+            int neighbour = AdjacencyList[ListVertices[j]][l] - 1;
+            int pos = FindPosVector(ListVertices, neighbour);
+            if (pos != -1) {
+                VertexinSolChain[ListVertices[j]].veci.push_back(neighbour);
+            }
+        }
+        VertexinSolChain[ListVertices[j]].it = VertexinSolChain[ListVertices[j]].veci.begin();
+        VertexinSolChain[ListVertices[j]].itEnd = VertexinSolChain[ListVertices[j]].veci.end();
+    }
+}
+vector<vector<int>> Problem::FindChains(IloNumArray2 x_sol, vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol){
+    vector<vector<int>>Bestchains;
+    int u,v;
+    double w = 0, price = 0;
+    vector<vChain>::iterator itVinChain = VertexinSolChain.begin();
+    vector<vChain>::iterator itVinChainAux;
+    vector<Chain>PPChains;
+    
+    while (itVinChain->vertex > Pairs - 1){//By construction altruistic donors come first
+        if (itVinChain->veci.size() > 0){
+            PPChains.push_back(Chain(*itVinChain));
+            PPChains.back().AccumWeight++;
+            while(PPChains.back().Vnodes.size() >  0){//next neighbor
+                //Increase iterator
+                if (PPChains.back().Vnodes.back().FirstPass == true){
+                    PPChains.back().Vnodes.back().FirstPass = false;
+                }else{PPChains.back().Vnodes.back().it++;}
+                u = PPChains.back().Vnodes.back().vertex;
+                v = *(PPChains.back().Vnodes.back().it);
+                w = Weights[make_pair(u, v)];
+                //Find pointer to v in VertexinSolChain
+                itVinChainAux = VertexinSolChain.begin();
+                for (itVinChainAux; itVinChainAux != VertexinSolChain.end(); itVinChainAux++)
+                    if (itVinChainAux->vertex == v){
+                        break;
+                    }
+                //If chain is not too long or we have reached the end of some vertex's neighbors
+                if (PPChains.back().Vnodes.size() + 1 <= ChainLength  +  1 || PPChains.back().Vnodes.back().it != PPChains.back().Vnodes.back().veci.end()){
+                    //If vertex not already in chain
+                    if (v2AlreadyinChain(PPChains.back().Vnodes, v) == false){
+                    //If vertex v is in VertexinSolChain add vertex to current chain, augment AccumWeight, store current chain
+                        //Add vertex to current chain
+                        PPChains.back().Vnodes.push_back(*itVinChainAux);
+                        if (v2inFirstStageSol(vinFirstStageSol, v) == true){// Update weight only if v is in the 1st-stage solution
+                            PPChains.back().AccumWeight++;
+                        }
+                    }
+                }
+                else{
+                    PPChains.back().Vnodes.pop_back();
+                    //Find new neighbor
+                    FindNewNeighbor(PPChains);
+                }
+            }
+            PPChains.erase(PPChains.end() - 1);
+        }
+        itVinChain++;
+    }
+    //Transfer chains to Bestchains
+    for (int i = 0; i < PPChains.size();i++){
+        Bestchains.push_back(vector<int>());
+        for (int j = 0; j < PPChains[i].Vnodes.size(); j++){
+            Bestchains.back().push_back(PPChains[i].Vnodes[j].vertex);
+        }
+    }
+    
+    if (Bestchains.size() > 0){
+        if (Bestchains[0].size() == 1){
+            cout << "S.O.S" << endl;
+        }
+    }
+    return Bestchains;
+    
+}
+bool v2inFirstStageSol(vector<int>sol, int v){
+    for (int i = 0; i < sol.size(); i++){
+        if (v == sol[i]) return true;
+    }
+    return false;
+}
+bool v2AlreadyinChain(vector<vChain> v1, int v2){
+    for (int j = 0; j < v1.size(); j++){
+        if (v1[j].vertex == v2){
+            return true;
+        }
+    }
+    return false;
+}
+void FindNewNeighbor(vector<Chain>& PPChains){
+    while (PPChains.back().Vnodes.back().it != PPChains.back().Vnodes.back().veci.end()){
+        PPChains.back().Vnodes.back().it++;
+        if (PPChains.back().Vnodes.back().it == PPChains.back().Vnodes.back().itEnd){
+            PPChains.back().Vnodes.pop_back();
+        }
+        else{
+            break;
+        }
+        if (PPChains.back().Vnodes.size() == 0) break;
+    }
 }

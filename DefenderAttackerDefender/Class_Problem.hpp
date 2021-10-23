@@ -29,7 +29,7 @@ public:
     Cycles(vector<int> cycle, double weight){_cycle = cycle, _weight = weight;}
     double get_w(){return _weight;}
     vector<int> get_c(){return _cycle;}
-    void set_Many(int HM){_HowMany = HM;}
+    void set_Weight(int HM){_HowMany = HM;}
     int get_Many(){return _HowMany;}
 };
 
@@ -52,10 +52,15 @@ public:
 struct vChain{
     int vertex;
     bool FirstPass = true;
-    vector<int>e_sol;
-    vector<int>::iterator it = e_sol.begin();
-    vector<int>::iterator itEnd = e_sol.end();
-    vChain(int _vertex, vector<int>sol){vertex = _vertex, e_sol = sol;}
+    vector<int>veci;
+    vector<int>::iterator it = veci.begin();
+    vector<int>::iterator itEnd = veci.end();
+    vChain(int _vertex, vector<int>sol){vertex = _vertex, veci = sol;}
+};
+struct Chain{
+    vector<vChain> Vnodes;
+    double AccumWeight = 0;
+    Chain(vChain v){Vnodes.push_back(v);}
 };
 
 class Problem{
@@ -161,7 +166,7 @@ public:
     IloModel ThirdPH;
     IloCplex cplexThirdPH;
     vector<Cycles> CFThirdPhase(vector<Cycles>Input, map<int,vector<int>>&CycleMap);
-    map<int,vector<int>>CycleNodeTPH;
+    map<int,vector<int>>CycleNodeSPH;
     
     
     //Constraint and Column Generation Grand Problem
@@ -197,6 +202,8 @@ public:
     vector<Cycles> AmongPolicy(vector<vector<int>>&sol);
     vector<Cycles> AllPolicy(vector<vector<int>>&sol);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
+    void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain);
+    vector<vector<int>>FindChains(IloNumArray2 x_sol, vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
     
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
