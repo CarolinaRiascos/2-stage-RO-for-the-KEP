@@ -245,29 +245,29 @@ int FindPosVector(vector<int> array, int value){
     }
     return pos;
 }
-vector<Cycles> Problem::BackRecoursePolicy(vector<vector<int>>& FistStageSol){
+vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
     
-    for (int i = 0; i < FistStageSol.size(); i++){
+    
         IloNumArray2 AdjaList (env, AdjacencyList.getSize());
 
         for (int j = 0; j < AdjacencyList.getSize(); j++){
-            AdjaList[i] = IloNumArray(env);
+            AdjaList[j] = IloNumArray(env);
         }
-        for (int j = 0; j < FistStageSol[i].size(); j++){
-            for (int l = 0; l < AdjacencyList[FistStageSol[i][j]].getSize(); l++){
-                int neighbour = AdjacencyList[FistStageSol[i][j]][l] - 1;
-                int pos = FindPosVector(FistStageSol[i], neighbour);
+        for (int j = 0; j < ListVertices.size(); j++){
+            for (int l = 0; l < AdjacencyList[ListVertices[j]].getSize(); l++){
+                int neighbour = AdjacencyList[ListVertices[j]][l] - 1;
+                int pos = FindPosVector(ListVertices, neighbour);
                 if (pos != -1) {
-                    AdjaList[FistStageSol[i][j]].add(neighbour + 1);
+                    AdjaList[ListVertices[j]].add(neighbour + 1);
                 }
             }
         }
         
         //Find inner cycles
         vector<Cycles> NewList;
-        for (int j = 0; j < FistStageSol[i].size(); j++){
-            int origin = FistStageSol[i][j];
+        for (int j = 0; j < ListVertices.size(); j++){
+            int origin = ListVertices[j];
             NewList = SubCycleFinder(env, AdjaList, origin);
             for (int k = 0; k < NewList.size(); k++){
                 NewListCCs.push_back(NewList[k]);
@@ -280,11 +280,10 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<vector<int>>& FistStageSol){
             AdjaList[origin].clear();
         }
         AdjaList.clear();
-    }
     
     return NewListCCs;
 }
-vector<Cycles> Problem::AmongPolicy(vector<vector<int>>& FistStageSol){
+vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
     
     IloNumArray2 AdjaList (env, AdjacencyList.getSize());
@@ -292,13 +291,6 @@ vector<Cycles> Problem::AmongPolicy(vector<vector<int>>& FistStageSol){
         AdjaList[i] = IloNumArray(env);
     }
     
-    vector<int>ListVertices;
-    
-    for (int i = 0; i < FistStageSol.size(); i++){
-        for (int j = 0; j < FistStageSol[i].size(); j++){
-            ListVertices.push_back(FistStageSol[i][j]);
-        }
-    }
     
     //Fill in Adjacency List
     for (int i = 0; i < ListVertices.size(); i++){
@@ -326,15 +318,9 @@ vector<Cycles> Problem::AmongPolicy(vector<vector<int>>& FistStageSol){
     
     return NewListCCs;
 }
-vector<Cycles> Problem::AllPolicy(vector<vector<int>>& FistStageSol){
+vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
-    vector<int>ListVertices;
-    
-    for (int i = 0; i < FistStageSol.size(); i++){
-        for (int j = 0; j < FistStageSol[i].size(); j++){
-            ListVertices.push_back(FistStageSol[i][j]);
-        }
-    }
+
     //Make a copy of Adjacency List
     IloNumArray2 AdjaList(env,AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){

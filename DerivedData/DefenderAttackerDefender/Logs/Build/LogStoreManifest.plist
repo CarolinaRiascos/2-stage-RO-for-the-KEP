@@ -278,6 +278,40 @@
 			<key>uniqueIdentifier</key>
 			<string>27B3201B-5554-4A91-B3B9-B35D83192E63</string>
 		</dict>
+		<key>2AE361F9-5731-4AFA-B59A-189D52678BAB</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>2AE361F9-5731-4AFA-B59A-189D52678BAB.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>656716444.55021</real>
+			<key>timeStoppedRecording</key>
+			<real>656716451.31299603</real>
+			<key>title</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>2AE361F9-5731-4AFA-B59A-189D52678BAB</string>
+		</dict>
 		<key>2B60073E-E51F-4E1B-967D-E47A83B083C9</key>
 		<dict>
 			<key>className</key>
@@ -889,6 +923,40 @@
 			<string>Build DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
 			<string>81884143-8FC2-4109-8B8D-22F13FD1371F</string>
+		</dict>
+		<key>83937BA0-2FE1-4180-8D61-29064B0FF19B</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>83937BA0-2FE1-4180-8D61-29064B0FF19B.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>656716502.07253599</real>
+			<key>timeStoppedRecording</key>
+			<real>656716526.89145303</real>
+			<key>title</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>83937BA0-2FE1-4180-8D61-29064B0FF19B</string>
 		</dict>
 		<key>83A8928C-E5D3-4E2D-981C-A301A3367F6E</key>
 		<dict>
@@ -1535,6 +1603,40 @@
 			<string>Build DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
 			<string>D9A230B1-4F05-4458-9BB8-47C8EA9476F1</string>
+		</dict>
+		<key>E746E7AB-A1D7-469C-84C7-91F14AD16EC9</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>E746E7AB-A1D7-469C-84C7-91F14AD16EC9.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>656715251.98781502</real>
+			<key>timeStoppedRecording</key>
+			<real>656715279.25428998</real>
+			<key>title</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>E746E7AB-A1D7-469C-84C7-91F14AD16EC9</string>
 		</dict>
 		<key>F686FC49-4B97-4AA4-908E-1509AB0AD4C5</key>
 		<dict>

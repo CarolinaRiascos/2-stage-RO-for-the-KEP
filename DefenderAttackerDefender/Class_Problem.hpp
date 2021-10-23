@@ -198,9 +198,9 @@ public:
     map<int,vector<int>> CycleNodeGSP;
     void GrandSubProbMaster();
     void GrandSubProbRoutine();
-    vector<Cycles> BackRecoursePolicy(vector<vector<int>>&sol);
-    vector<Cycles> AmongPolicy(vector<vector<int>>&sol);
-    vector<Cycles> AllPolicy(vector<vector<int>>&sol);
+    vector<Cycles> BackRecoursePolicy(vector<int>&vinFirstStageSol);
+    vector<Cycles> AmongPolicy(vector<int>&vinFirstStageSol);
+    vector<Cycles> AllPolicy(vector<int>&vinFirstStageSol);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain);
     vector<vector<int>>FindChains(IloNumArray2 x_sol, vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
