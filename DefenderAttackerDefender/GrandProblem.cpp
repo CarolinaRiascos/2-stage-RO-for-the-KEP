@@ -79,11 +79,11 @@ void Problem::KEP_CycleFormulation(){
                IloNumArray z_sol(env, ListCycles.size());
                cplexGrandP.getValues(z_sol,z);
                
-               GrandSubSolSet.clear();
+               GrandProbSol.clear();
                for (int f = 0; f < z_sol.getSize(); f++){
                    if (z_sol[f] > 0.9){
-                       GrandSubSolSet.push_back(IndexGrandSubSol(ListCycles[f].get_c(), ListCycles[f].get_w()));
-                       GrandSubSolSet.back().set_ite(1);
+                       GrandProbSol.push_back(IndexGrandSubSol(ListCycles[f].get_c(), ListCycles[f].get_w()));
+                       GrandProbSol.back().set_ite(1);
                    }
                }
                GrandSubProbMaster();

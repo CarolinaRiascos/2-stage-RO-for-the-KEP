@@ -108,7 +108,7 @@ void Problem::M_PICEF(){
     
     //Solve M-PICEF
     cplexmPICEF.exportModel("MPICEF.lp");
-    cplexmPICEF.solve();
+    //cplexmPICEF.solve();
     
     IloNumArray3 xsol (env, Pairs);
     IloNumArray3 ysol (env, AdjacencyList.getSize());
@@ -122,56 +122,67 @@ void Problem::M_PICEF(){
    else {
        //Retrieve solution
 
-       int Obj_MPICEF = cplexmPICEF.getObjValue();
-       env.out() << "M-PICEF Objective: " << Obj_MPICEF << endl;
+//       int Obj_MPICEF = cplexmPICEF.getObjValue();
+//       env.out() << "M-PICEF Objective: " << Obj_MPICEF << endl;
        
        
-       for (int i = 0; i < xsol.getSize(); i++){
-           xsol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
-           for (int j = 0; j < xsol[i].getSize(); j++){
-               xsol[i][j] = IloNumArray(env);
-               cplexmPICEF.getValues(xsol[i][j],cyarc[i][j]);
-               for (int k = 0; k < CycleLength; k++){
-                   if (xsol[i][j][k] > 0){
-                       cout << cyarc[i][j][k].getName() << endl;
-                   }
-               }
-           }
-       }
-       
-       for (int i = 0; i < ysol.getSize(); i++){
-           ysol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
-           for (int j = 0; j < ysol[i].getSize(); j++){
-               ysol[i][j] = IloNumArray(env, ChainLength);
-               cplexmPICEF.getValues(ysol[i][j],charc[i][j]);
-               for (int k = 0; k < ysol[i][j].getSize(); k++){
-                   if (ysol[i][j][k] > 0){
-                       cout << charc[i][j][k].getName() << endl;
-                   }
-               }
-           }
-       }
-       
-       cout << "Origin: " << endl;
-       for (int i = 0; i < arcorisol.getSize(); i++){
-           arcorisol[i] = IloNumArray(env);
-           cplexmPICEF.getValues(arcorisol[i],arcori[i]);
-           for (int j = 0; j < arcorisol[i].getSize(); j++){
-               if (arcorisol[i][j] > 0){
-                   cout << arcori[i][j].getName() << ": " << arcorisol[i][j] << endl;
-               }
-           }
-       }
-
-//       for (int i = 0; i < auxsol.getSize(); i++){
-//           auxsol[i] = IloNumArray(env);
-//           cplexmPICEF.getValues(auxsol[i],aux[i]);
-//           for (int j = 0; j < auxsol[i].getSize(); j++){
-//               if (auxsol[i][j] > 0){
-//                   cout << aux[i][j].getName() << ": " << auxsol[i][j] << endl;
+//       for (int i = 0; i < xsol.getSize(); i++){
+//           xsol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
+//           for (int j = 0; j < xsol[i].getSize(); j++){
+//               xsol[i][j] = IloNumArray(env);
+//               cplexmPICEF.getValues(xsol[i][j],cyarc[i][j]);
+//               for (int k = 0; k < CycleLength; k++){
+//                   if (xsol[i][j][k] > 0){
+//                       cout << cyarc[i][j][k].getName() << endl;
+//                   }
 //               }
 //           }
 //       }
+//
+//       for (int i = 0; i < ysol.getSize(); i++){
+//           ysol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
+//           for (int j = 0; j < ysol[i].getSize(); j++){
+//               ysol[i][j] = IloNumArray(env, ChainLength);
+//               cplexmPICEF.getValues(ysol[i][j],charc[i][j]);
+//               for (int k = 0; k < ysol[i][j].getSize(); k++){
+//                   if (ysol[i][j][k] > 0){
+//                       cout << charc[i][j][k].getName() << endl;
+//                   }
+//               }
+//           }
+//       }
+//
+//       cout << "Origin: " << endl;
+//       for (int i = 0; i < arcorisol.getSize(); i++){
+//           arcorisol[i] = IloNumArray(env);
+//           cplexmPICEF.getValues(arcorisol[i],arcori[i]);
+//           for (int j = 0; j < arcorisol[i].getSize(); j++){
+//               if (arcorisol[i][j] > 0){
+//                   cout << arcori[i][j].getName() << ": " << arcorisol[i][j] << endl;
+//               }
+//           }
+//       }
+
+       vector<vector<int>>cysol;
+       cysol.push_back(vector<int>{11, 112, 115,70, 11});
+       cysol.push_back(vector<int>{24, 95, 27, 24});
+       cysol.push_back(vector<int>{66, 17, 66});
+       cysol.push_back(vector<int>{67, 4, 92, 12, 67});
+       cysol.push_back(vector<int>{69, 108, 50, 75, 69});
+       cysol.push_back(vector<int>{105, 49, 76, 85, 105});
+       vector<vector<int>>chsol;
+       chsol.push_back(vector<int>{129, 39, 52, 26});
+       chsol.push_back(vector<int>{130, 14, 25, 59});
+       chsol.push_back(vector<int>{131, 30, 57, 93});
+       chsol.push_back(vector<int>{132, 122, 63, 36});
+       chsol.push_back(vector<int>{133, 2, 55, 87});
+       chsol.push_back(vector<int>{134, 6, 28, 33});
+       
+       vector<IndexGrandSubSol>solcy; vector<IndexGrandSubSol>solch;
+       for (int i = 0; i < 6; i++){
+           solcy.push_back(IndexGrandSubSol(cysol[i], cysol[i].size() - 1));
+           solch.push_back(IndexGrandSubSol(chsol[i], chsol[i].size()));
+       }
        
        cout << "Hola";
    }

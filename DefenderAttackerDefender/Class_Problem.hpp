@@ -194,7 +194,8 @@ public:
     IloRangeArray ActiveCCSubP_UB;
     vector<Cycles> RepairedListCCs;
     vector<Cycles> RobustSolTHP;
-    vector<IndexGrandSubSol> GrandSubSolSet;
+    vector<IndexGrandSubSol> GrandProbSol;
+    vector<vChain> VertexinSolChain;
     map<int,vector<int>> CycleNodeGSP;
     void GrandSubProbMaster();
     void GrandSubProbRoutine();
@@ -203,7 +204,8 @@ public:
     vector<Cycles> AllPolicy(vector<int>&vinFirstStageSol);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain);
-    vector<vector<int>>FindChains(IloNumArray2 x_sol, vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
+    vector<vector<int>>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
+    IloNumArray2 BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
