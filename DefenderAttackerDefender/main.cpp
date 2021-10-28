@@ -11,8 +11,8 @@
 
 
 int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
-    if (argc != 5){
-        cout <<"Not enough parameters. They must be 5." << endl;
+    if (argc != 6){
+        cout <<"Not enough parameters. They must be 6." << endl;
         return -1;
     }
     
@@ -24,7 +24,8 @@ int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
     IloInt CycleLength; str >> CycleLength;
     str.clear(); str << argv[4];
     IloInt ChainLength; str >> ChainLength;
-    Problem P(FolderName, FileName, CycleLength, ChainLength);
+    string RecoursePolicy = argv[5];
+    Problem P(FolderName, FileName, CycleLength, ChainLength, RecoursePolicy);
     
     cout << "Start reading" << endl;
     //clock_t tStart = clock();

@@ -353,111 +353,6 @@ vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
     }
     return NewListCCs;
 }
-void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain){
-    vector<int> veci;
-    for (int j = 0; j < ListVertices.size(); j++){
-        veci.clear();
-        for (int l = 0; l < AdjacencyList[ListVertices[j]].getSize(); l++){
-            int neighbour = AdjacencyList[ListVertices[j]][l] - 1;
-            int pos = FindPosVector(ListVertices, neighbour);
-            if (pos != -1) {
-                veci.push_back(neighbour);
-            }
-        }
-        VertexinSolChain.push_back(vChain(ListVertices[j], veci));
-        VertexinSolChain.back().it = VertexinSolChain[ListVertices[j]].veci.begin();
-        VertexinSolChain.back().itEnd = VertexinSolChain[ListVertices[j]].veci.end();
-    }
-}
-vector<vector<int>> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol){
-    vector<vector<int>>Bestchains;
-    int u,v;
-    double w = 0, price = 0;
-    vector<vChain>::iterator itVinChain = VertexinSolChain.begin();
-    vector<vChain>::iterator itVinChainAux;
-    vector<Chain>PPChains;
-    
-    for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
-        if (itVinChain->vertex > Pairs - 1 && itVinChain->veci.size() > 0){
-            PPChains.push_back(Chain(*itVinChain));
-            PPChains.back().AccumWeight++;
-            while(PPChains.back().Vnodes.size() >  0){//next neighbor
-                //Increase iterator
-                if (PPChains.back().Vnodes.back().FirstPass == true){
-                    PPChains.back().Vnodes.back().FirstPass = false;
-                }else{PPChains.back().Vnodes.back().it++;}
-                u = PPChains.back().Vnodes.back().vertex;
-                v = *(PPChains.back().Vnodes.back().it);
-                w = Weights[make_pair(u, v)];
-                //Find pointer to v in VertexinSolChain
-                itVinChainAux = VertexinSolChain.begin();
-                for (itVinChainAux; itVinChainAux != VertexinSolChain.end(); itVinChainAux++)
-                    if (itVinChainAux->vertex == v){
-                        break;
-                    }
-                //If chain is not too long or we have reached the end of some vertex's neighbors
-                if (PPChains.back().Vnodes.size() + 1 <= ChainLength  +  1 || PPChains.back().Vnodes.back().it != PPChains.back().Vnodes.back().veci.end()){
-                    //If vertex not already in chain
-                    if (v2AlreadyinChain(PPChains.back().Vnodes, v) == false){
-                    //If vertex v is in VertexinSolChain add vertex to current chain, augment AccumWeight, store current chain
-                        //Add vertex to current chain
-                        PPChains.back().Vnodes.push_back(*itVinChainAux);
-                        if (v2inFirstStageSol(vinFirstStageSol, v) == true){// Update weight only if v is in the 1st-stage solution
-                            PPChains.back().AccumWeight++;
-                        }
-                    }
-                }
-                else{
-                    PPChains.back().Vnodes.pop_back();
-                    //Find new neighbor
-                    FindNewNeighbor(PPChains);
-                }
-            }
-            PPChains.erase(PPChains.end() - 1);
-        }
-    }
-    //Transfer chains to Bestchains
-    for (int i = 0; i < PPChains.size();i++){
-        Bestchains.push_back(vector<int>());
-        for (int j = 0; j < PPChains[i].Vnodes.size(); j++){
-            Bestchains.back().push_back(PPChains[i].Vnodes[j].vertex);
-        }
-    }
-    
-    if (Bestchains.size() > 0){
-        if (Bestchains[0].size() == 1){
-            cout << "S.O.S" << endl;
-        }
-    }
-    return Bestchains;
-    
-}
-bool v2inFirstStageSol(vector<int>sol, int v){
-    for (int i = 0; i < sol.size(); i++){
-        if (v == sol[i]) return true;
-    }
-    return false;
-}
-bool v2AlreadyinChain(vector<vChain> v1, int v2){
-    for (int j = 0; j < v1.size(); j++){
-        if (v1[j].vertex == v2){
-            return true;
-        }
-    }
-    return false;
-}
-void FindNewNeighbor(vector<Chain>& PPChains){
-    while (PPChains.back().Vnodes.back().it != PPChains.back().Vnodes.back().veci.end()){
-        PPChains.back().Vnodes.back().it++;
-        if (PPChains.back().Vnodes.back().it == PPChains.back().Vnodes.back().itEnd){
-            PPChains.back().Vnodes.pop_back();
-        }
-        else{
-            break;
-        }
-        if (PPChains.back().Vnodes.size() == 0) break;
-    }
-}
 IloNumArray2 Problem::BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol, string policy){
     
     //Create List of all vertices in 1st-stage sol: vinFirstStageSol
@@ -476,7 +371,9 @@ IloNumArray2 Problem::BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol
         ListVertices = vinFirstStageSol;
     }
     else if (policy == "full"){
-        for (int i = 0; i < Nodes; i++) ListVertices.push_back(i);
+        for (int i = 0; i < Nodes; i++){
+            ListVertices.push_back(i);
+        }
     }
     
     VertexinSolChain = vector<vChain>();
@@ -521,3 +418,141 @@ IloNumArray2 Problem::BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol
     
     return AdjaList;
 }
+void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain){
+    vector<int> null(1, -1);
+    for (int j = 0; j < ListVertices.size(); j++){
+        vector<int> veci;
+        for (int l = 0; l < AdjacencyList[ListVertices[j]].getSize(); l++){
+            int neighbour = AdjacencyList[ListVertices[j]][l] - 1;
+            int pos = FindPosVector(ListVertices, neighbour);
+            if (pos != -1) {
+                veci.push_back(neighbour);
+            }
+        }
+        
+        if (veci.size() > 0){
+            VertexinSolChain.push_back(vChain(ListVertices[j], veci));
+            VertexinSolChain.back().it = VertexinSolChain[ListVertices[j]].veci.begin();
+            VertexinSolChain.back().itEnd = VertexinSolChain[ListVertices[j]].veci.end();
+        }
+        else{
+            VertexinSolChain.push_back(vChain(ListVertices[j], null));
+            VertexinSolChain.back().it = VertexinSolChain[ListVertices[j]].veci.begin();
+            VertexinSolChain.back().itEnd = VertexinSolChain[ListVertices[j]].veci.end();
+        }
+    }
+}
+vector<vector<int>> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol){
+    vector<vector<int>>Chains;
+    vector<int>null(0);
+    int u,v;
+    double w = 0, price = 0; bool isin = false;
+    vector<vChain>::iterator itVinChain = VertexinSolChain.begin();
+    vector<vChain>::iterator itVinChainAux;
+    vector<Chain>PPChains;
+    
+    for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
+        if (itVinChain->vertex > Pairs - 1 && v2inFirstStageSol(vinFirstStageSol, itVinChain->vertex) == true){
+            PPChains.push_back(Chain(*itVinChain));
+            while(PPChains.back().Vnodes.size() >  0){//next neighbor
+                //Increase iterator
+                if (PPChains.back().Vnodes.back().FirstPass == true){
+                    PPChains.back().Vnodes.back().FirstPass = false;
+                }else{PPChains.back().Vnodes.back().it++;}
+                u = PPChains.back().Vnodes.back().vertex;
+                v = *(PPChains.back().Vnodes.back().it);
+                if (PPChains.back().Vnodes.back().veci.size() == 1 && v == -1){
+                    PPChains.back().Vnodes.back().it = PPChains.back().Vnodes.back().itEnd;
+                }
+                //Find pointer to v in VertexinSolChain
+                itVinChainAux = VertexinSolChain.begin();
+                for (itVinChainAux; itVinChainAux != VertexinSolChain.end(); itVinChainAux++)
+                    if (itVinChainAux->vertex == v){
+                        break;
+                    }
+                //If chain is not too long or we have reached the end of some vertex's neighbors
+                if (PPChains.back().Vnodes.size() + 1 <= ChainLength  +  1 && PPChains.back().Vnodes.back().it != PPChains.back().Vnodes.back().itEnd){
+                    //If vertex not already in chain
+                    if (v2AlreadyinChain(PPChains.back().Vnodes, v) == false){
+                    //If vertex v is in VertexinSolChain add vertex to current chain, augment AccumWeight, store current chain
+                        isin = v2inFirstStageSol(vinFirstStageSol, v);
+                        if (isin == true){// Update weight only if v is in the 1st-stage solution
+                            PPChains.back().AccumWeight++;
+                        }
+                        if (isin == false && PPChains.back().Vnodes.size() + 1 == ChainLength  +  1){
+                            //Do nothing
+                        }
+                        else{
+                            //Add vertex to current chain
+                            PPChains.back().Vnodes.push_back(*itVinChainAux);
+                        }
+                    }
+                }
+                else{
+                    if (PPChains.back().AccumWeight > 0){
+                        isin = v2inFirstStageSol(vinFirstStageSol, PPChains.back().Vnodes.back().vertex);
+                        if (isin == false){
+                            PPChains.back().Vnodes.pop_back();
+                            Chain aux = PPChains.back();
+                            PPChains.push_back(aux);
+                        }
+                        else{
+                            Chain aux = PPChains.back();
+                            PPChains.push_back(aux);
+                            PPChains.back().Vnodes.pop_back();
+                            PPChains.back().AccumWeight--;
+                        }
+                    }
+                    else{
+                        PPChains.back().Vnodes.pop_back();
+                    }
+                    //Find new neighbor
+                    //FindNewNeighbor(PPChains);
+                }
+            }
+            PPChains.erase(PPChains.end() - 1);
+        }
+    }
+    //Transfer chains to Bestchains
+    for (int i = 0; i < PPChains.size();i++){
+        Chains.push_back(vector<int>());
+        for (int j = 0; j < PPChains[i].Vnodes.size(); j++){
+            Chains.back().push_back(PPChains[i].Vnodes[j].vertex);
+        }
+    }
+    
+    if (Chains.size() > 0){
+        if (Chains[0].size() == 1){
+            cout << "S.O.S" << endl;
+        }
+    }
+    return Chains;
+    
+}
+bool v2inFirstStageSol(vector<int>sol, int v){
+    for (int i = 0; i < sol.size(); i++){
+        if (v == sol[i]) return true;
+    }
+    return false;
+}
+bool v2AlreadyinChain(vector<vChain> v1, int v2){
+    for (int j = 0; j < v1.size(); j++){
+        if (v1[j].vertex == v2){
+            return true;
+        }
+    }
+    return false;
+}
+void FindNewNeighbor(vector<Chain>& PPChains){
+    while (PPChains.back().Vnodes.back().it != PPChains.back().Vnodes.back().veci.end()){
+        PPChains.back().Vnodes.back().it++;
+        if (PPChains.back().Vnodes.back().it == PPChains.back().Vnodes.back().itEnd){
+            PPChains.back().Vnodes.pop_back();
+        }
+        else{
+            break;
+        }
+        if (PPChains.back().Vnodes.size() == 0) break;
+    }
+}
+

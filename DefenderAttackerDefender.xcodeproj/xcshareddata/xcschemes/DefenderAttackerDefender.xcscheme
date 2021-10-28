@@ -67,6 +67,10 @@
             argument = "3"
             isEnabled = "YES">
          </CommandLineArgument>
+         <CommandLineArgument
+            argument = "full"
+            isEnabled = "YES">
+         </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference
          identifier = "com.apple.dt.IDEFoundation.CurrentLocationScenarioIdentifier"

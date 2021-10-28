@@ -184,6 +184,7 @@ void Problem::M_PICEF(){
            solch.push_back(IndexGrandSubSol(chsol[i], chsol[i].size()));
        }
        
+       BuildAdjaForChains (solch, RecoursePolicy);
        cout << "Hola";
    }
    

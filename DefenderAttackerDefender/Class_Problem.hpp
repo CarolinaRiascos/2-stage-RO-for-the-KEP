@@ -85,16 +85,16 @@ public:
     IloNumArray2 AdjacencyList;//Successors
     string FileName;
     string FolderName;
+    string RecoursePolicy;
     map<pair<int,int>,double>Weights;
     map<int,vector<int>>CycleNode;
     vector<vector<int>>PredList;
     map<int, vector<pair<int,int>>>PredMap;
     vector<Cycles> ListCycles;
-    int Hola;
     
     
     //Functions
-    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength);
+    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy);
     int Reading();
    
     //M-PICEF

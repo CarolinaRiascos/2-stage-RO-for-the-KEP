@@ -7,9 +7,10 @@
 //
 
 #include "Class_Problem.hpp"
-Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength){
+Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy){
     FolderName = _FolderName;
     FileName = _FileName;
     CycleLength = _cycleLength;
     ChainLength = _chainLength;
+    RecoursePolicy = _RecoursePolicy;
 }
