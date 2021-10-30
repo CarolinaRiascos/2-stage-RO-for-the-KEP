@@ -46,16 +46,20 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     Beta = IloNumVar(env);
     SetName1Index(Beta, "Beta", 0);
     
-    //Add Bounding Constraint
-    //BoundObjGrandSubP = IloRangeArray(env);
+    //Add Objective function and Bounding Constraint
     string name = "Obj_GrandSubP";
     const char* cName = name.c_str();
     IloExpr obj (env,0);
-    for (int i = 0; i < GrandProbSol.size(); i++){
-        obj += GrandProbSol[i].get_w()*cyvar[i];
+    for (int i = 0; i < Cycles2ndStage.size(); i++){
+        obj += Cycles2ndStage[i].get_Many()*cyvar[i];
     }
-    ObjGrandSubP = IloObjective(env, obj, IloObjective::Minimize, cName);
+    for (int i = 0; i < Chains2ndStage.size(); i++){
+        obj += Chains2ndStage[i].AccumWeight*chvar[i];
+    }
+    ObjGrandSubP = IloObjective(env, Beta, IloObjective::Minimize, cName);
     GrandSubProb.add(ObjGrandSubP);
+    GrandSubProb.add(Beta >= obj);
+    obj.end();
     
     MakeOneFailGrandSubP = IloRangeArray(env);
     for (int ite = 1; ite <= RepSolCounter; ite++){
@@ -68,10 +72,10 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     GrandSubProb.add(MakeOneFailGrandSubP);
     
-    //Select a cycle if has not failed and no other was selected
+    //Select a cycle/chain if it has not failed and no other was selected
     ActiveCCSubP_LB = IloRangeArray(env, GrandProbSol.size());
     map<int,vector<int>>::iterator it;
-    for (int i = 0; i < GrandProbSol.size(); i++){
+    for (int i = 0; i < Cycles2ndStage.size(); i++){
         IloExpr ExprArcsVtx (env, 0);
         //ExprArcsVtx = GenerateAllArcsVertices(i);
         IloExpr AllccVars (env, 0);
@@ -88,44 +92,6 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     GrandSubProb.add(ActiveCCSubP_LB);
     
-    //Guarantee one cycle per node
-    float n;
-    ActiveCCSubP_UB = IloRangeArray(env, GrandProbSol.size());
-    for (int i = 0; i < GrandProbSol.size(); i++){
-        if (MaxArcFailures + MaxVertexFailures <= GrandProbSol[i].get_cc().size()*2){
-            n = MaxArcFailures + MaxVertexFailures;
-        }
-        else{
-            n = GrandProbSol[i].get_cc().size()*2;
-        }
-        IloExpr ExprArcsVtx (env, 0);
-        IloExpr Total (env, 0);
-        //ExprArcsVtx += GenerateAllArcsVertices(i);
-        Total += ExprArcsVtx/n;
-        name = "ActiveCC_UB." + to_string(i);
-        cName = name.c_str();
-        ActiveCCSubP_UB[i] = IloRange(env, -IloInfinity, cyvar[i] + Total, 1, cName);
-    }
-    GrandSubProb.add(ActiveCCSubP_UB);
-    
-    //One cycle per vertex
-    TheOneCC = IloRangeArray(env, Pairs);
-    for (int i = 0; i < Pairs; i++){
-        it = CycleNodeGSP.find(i);
-        name = "TheOneCC." + to_string(i);
-        cName = name.c_str();
-        IloExpr Expr (env, 0);
-        if (it != CycleNodeGSP.end()){
-            for (int j = 0; j < CycleNodeGSP[i].size(); j++){
-                Expr += cyvar[CycleNodeGSP[i][j]];
-            }
-            TheOneCC[i] = IloRange(env, -IloInfinity, Expr, 1, cName);
-        }
-        else{
-            TheOneCC[i] = IloRange(env, -IloInfinity, Expr, 1, cName);
-        }
-    }
-    GrandSubProb.add(TheOneCC);
     
     IloExpr sumVertices (env, 0);
     for (int i = 0; i < Pairs; i++){
@@ -142,21 +108,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     GrandSubProb.add(sumArcs <= MaxArcFailures);
     
     
-    for (int i = 0; i < Pairs; i++){
-        IloExpr sumDisjunctive (env, 0);
-        //Outside
-        for (int j = 0; j < AdjacencyList[i].getSize(); j++){
-            sumDisjunctive+= arc[i][j];
-        }
-        //Inside
-        for (int j = 0; j < PredList[i].size(); j++){
-            //int pos = FindPosArray(AdjacencyList[PredList[i][j]], i + 1);
-            //sumDisjunctive+= arc[PredList[i][j]][pos];
-        }
-        name = "Disjunctive." + to_string(i);
-        cName = name.c_str();
-        GrandSubProb.add(IloRange(env, -IloInfinity, sumDisjunctive - (1 - vertex[i])*(AdjacencyList[i].getSize() + PredList[i].size()), 0, cName));
-    }
+
     
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     IloNum GrandSubObj = 0;
