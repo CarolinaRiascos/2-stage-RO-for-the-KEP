@@ -29,7 +29,7 @@ public:
     Cycles(vector<int> cycle, double weight){_cycle = cycle, _weight = weight;}
     double get_w(){return _weight;}
     vector<int> get_c(){return _cycle;}
-    void set_Weight(int HM){_HowMany = HM;}
+    void set_Many(int HM){_HowMany = HM;}
     int get_Many(){return _HowMany;}
 };
 
@@ -167,6 +167,7 @@ public:
     IloCplex cplexThirdPH;
     vector<Cycles> CFThirdPhase(vector<Cycles>Input, map<int,vector<int>>&CycleMap);
     map<int,vector<int>>CycleNodeSPH;
+    map<int,vector<int>>ChainNodeSPH;
     
     
     //Constraint and Column Generation Grand Problem
@@ -184,7 +185,8 @@ public:
     IloInt MaxVertexFailures = 1;
     IloInt RepSolCounter = 1;
     IloNum RobustObjTPH = 0;
-    IloNumVarArray r;
+    IloNumVarArray cyvar;
+    IloNumVarArray chvar;
     IloNumVarArray2 arc;
     IloNumVarArray vertex;
     IloRangeArray TheOneCC;
@@ -197,15 +199,16 @@ public:
     vector<IndexGrandSubSol> GrandProbSol;
     vector<vChain> VertexinSolChain;
     map<int,vector<int>> CycleNodeGSP;
-    void GrandSubProbMaster();
+    void GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage);
     void GrandSubProbRoutine();
     vector<Cycles> BackRecoursePolicy(vector<int>&vinFirstStageSol);
     vector<Cycles> AmongPolicy(vector<int>&vinFirstStageSol);
     vector<Cycles> AllPolicy(vector<int>&vinFirstStageSol);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain);
-    vector<vector<int>>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
-    IloNumArray2 BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol, string policy);
+    vector<Chain>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
+    vector<Chain> Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol, string policy);
+    vector<Cycles> Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);

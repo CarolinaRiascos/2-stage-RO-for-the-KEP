@@ -184,8 +184,11 @@ void Problem::M_PICEF(){
            solch.push_back(IndexGrandSubSol(chsol[i], chsol[i].size()));
        }
        
-       BuildAdjaForChains (solch, RecoursePolicy);
-       cout << "Hola";
+       vector<Cycles>Cycles2ndStage;
+       vector<Chain>Chains2ndStage;
+       Chains2ndStage = Get2ndStageChains (solch, RecoursePolicy);
+       Cycles2ndStage = Get2ndStageCycles (solcy, RecoursePolicy);
+       GrandSubProbMaster(Cycles2ndStage,Chains2ndStage);
    }
    
 }

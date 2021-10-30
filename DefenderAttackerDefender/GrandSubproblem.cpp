@@ -7,22 +7,28 @@
 //
 
 #include "GrandSubproblem.hpp"
-void Problem::GrandSubProbMaster(){
+void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage){
     // Create model
     GrandSubProb = IloModel(env);
     cplexGrandSubP = IloCplex(GrandSubProb);
     cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, 1800);
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
-    //Fill RepairedListCCs
-    //FillRepSol_AND_CycleNodeGSP(CycleNodeGSP);
     FillRobustSolTHP();
     
     //Create cycle variables
-    r = IloNumVarArray(env, GrandProbSol.size(), 0, 1, ILOINT);
-    for (int i = 0; i < GrandProbSol.size(); i++){
-       SetName1Index(r[i], "r", i);
+    cyvar = IloNumVarArray(env, Cycles2ndStage.size(), 0, 1, ILOINT);
+    for (int i = 0; i < Cycles2ndStage.size(); i++){
+       SetName1Index(cyvar[i], "r", i);
        //cout << r[i].getName() << endl;
     }
+    
+    //Create chain variables
+    chvar = IloNumVarArray(env, Chains2ndStage.size(), 0, 1, ILOINT);
+    for (int i = 0; i < Chains2ndStage.size(); i++){
+       SetName1Index(cyvar[i], "r", i);
+       //cout << r[i].getName() << endl;
+    }
+    
     //Create arc variables
     arc = IloNumVarArray2(env,AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
@@ -32,8 +38,8 @@ void Problem::GrandSubProbMaster(){
         }
     }
     //Create vertex variables
-    vertex = IloNumVarArray(env, Pairs, 0, 1, ILOINT);
-    for (int i = 0; i < Pairs; i++){
+    vertex = IloNumVarArray(env, Nodes, 0, 1, ILOINT);
+    for (int i = 0; i < Nodes; i++){
         SetName1Index( vertex[i], "vertex",i);
     }
     //Create bounding variable
@@ -46,7 +52,7 @@ void Problem::GrandSubProbMaster(){
     const char* cName = name.c_str();
     IloExpr obj (env,0);
     for (int i = 0; i < GrandProbSol.size(); i++){
-        obj += GrandProbSol[i].get_w()*r[i];
+        obj += GrandProbSol[i].get_w()*cyvar[i];
     }
     ObjGrandSubP = IloObjective(env, obj, IloObjective::Minimize, cName);
     GrandSubProb.add(ObjGrandSubP);
@@ -78,7 +84,7 @@ void Problem::GrandSubProbMaster(){
         //cout << AllccVars << endl;
         name = "ActiveCC_LB." + to_string(i);
         cName = name.c_str();
-        ActiveCCSubP_LB[i] = IloRange(env, 1, r[i] + ExprArcsVtx + AllccVars, IloInfinity, cName);
+        ActiveCCSubP_LB[i] = IloRange(env, 1, cyvar[i] + ExprArcsVtx + AllccVars, IloInfinity, cName);
     }
     GrandSubProb.add(ActiveCCSubP_LB);
     
@@ -98,7 +104,7 @@ void Problem::GrandSubProbMaster(){
         Total += ExprArcsVtx/n;
         name = "ActiveCC_UB." + to_string(i);
         cName = name.c_str();
-        ActiveCCSubP_UB[i] = IloRange(env, -IloInfinity, r[i] + Total, 1, cName);
+        ActiveCCSubP_UB[i] = IloRange(env, -IloInfinity, cyvar[i] + Total, 1, cName);
     }
     GrandSubProb.add(ActiveCCSubP_UB);
     
@@ -111,7 +117,7 @@ void Problem::GrandSubProbMaster(){
         IloExpr Expr (env, 0);
         if (it != CycleNodeGSP.end()){
             for (int j = 0; j < CycleNodeGSP[i].size(); j++){
-                Expr += r[CycleNodeGSP[i][j]];
+                Expr += cyvar[CycleNodeGSP[i][j]];
             }
             TheOneCC[i] = IloRange(env, -IloInfinity, Expr, 1, cName);
         }
@@ -165,7 +171,7 @@ void Problem::GrandSubProbMaster(){
             
             //Retrieve solution
             IloNumArray r_sol(env, GrandProbSol.size());
-            cplexGrandSubP.getValues(r_sol,r);
+            cplexGrandSubP.getValues(r_sol,cyvar);
             
             IloNumArray vertex_sol(env, Pairs);
             cplexGrandSubP.getValues(vertex_sol,vertex);
@@ -245,9 +251,54 @@ int FindPosVector(vector<int> array, int value){
     }
     return pos;
 }
+vector<Cycles> Problem::Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy){
+    //Create List of all vertices in 1st-stage sol: vinFirstStageSol
+    vector<int> vinFirstStageSol;
+    if (policy == "among" || policy == "full"){
+        for (int i = 0; i < GrandProbSol.size(); i++){
+            for (int j = 0; j < GrandProbSol[i].get_cc().size(); j++){
+                vinFirstStageSol.push_back(GrandProbSol[i].get_cc()[j]);
+            }
+        }
+    }
+    
+    //Create List of all candidate vertices: ListVertices
+    vector<int>ListVertices;
+    if (policy == "among"){
+        ListVertices = vinFirstStageSol;
+    }
+    else if (policy == "full"){
+        for (int i = 0; i < Pairs; i++){
+            ListVertices.push_back(i);
+        }
+    }
+    
+    vector<Cycles>RecoCycles;
+    if (policy == "among"){
+        //Call Find Cycles
+        RecoCycles = AmongPolicy(vinFirstStageSol);
+    }
+    else if (policy == "full"){
+        //Call Find Cycles
+        RecoCycles = AllPolicy(vinFirstStageSol);
+    }
+    else{//BackArcs recourse
+        for (int i = 0; i < GrandProbSol.size(); i++){
+            //Call Find Cycles
+            vector<Cycles>auxCycles;
+            vector<int>aux = GrandProbSol[i].get_cc();
+            auxCycles = BackRecoursePolicy(aux);
+            for (int j = 0; j < auxCycles.size(); j++){
+                RecoCycles.push_back(auxCycles[j]);
+            }
+        }
+    }
+    
+    return RecoCycles;
+}
 vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
-    
+    CycleNodeSPH.clear();
     
         IloNumArray2 AdjaList (env, AdjacencyList.getSize());
 
@@ -271,7 +322,7 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
             NewList = SubCycleFinder(env, AdjaList, origin);
             for (int k = 0; k < NewList.size(); k++){
                 NewListCCs.push_back(NewList[k]);
-                NewListCCs.back().set_Weight(int(NewList[k].get_c().size()));
+                NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
                 for (int l = 0; l < NewList[k].get_c().size(); l++){
                     CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
                 }
@@ -285,6 +336,7 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
 }
 vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
+    CycleNodeSPH.clear();
     
     IloNumArray2 AdjaList (env, AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
@@ -310,7 +362,7 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
         NewList = SubCycleFinder(env, AdjaList, origin);
         for (int k = 0; k < NewList.size(); k++){
             NewListCCs.push_back(NewList[k]);
-            NewListCCs.back().set_Weight(int(NewList[k].get_c().size()));
+            NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
             for (int l = 0; l < NewList[k].get_c().size(); l++){
                 CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
             }
@@ -323,6 +375,7 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
 }
 vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
+    CycleNodeSPH.clear();
 
     //Make a copy of Adjacency List
     IloNumArray2 AdjaList(env,AdjacencyList.getSize());
@@ -344,16 +397,16 @@ vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
             for (int l = 0; l < NewList[k].get_c().size(); l++){
                 int pos = FindPosVector(ListVertices, NewList[k].get_c()[l]);
                 if (pos != -1) counter++;
-                CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
+                CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap fosecond phase
             }
-            NewListCCs.back().set_Weight(counter);
+            NewListCCs.back().set_Many(counter);
         }
         //Remove from Adja List
         AdjaList[origin].clear();
     }
     return NewListCCs;
 }
-IloNumArray2 Problem::BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol, string policy){
+vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol, string policy){
     
     //Create List of all vertices in 1st-stage sol: vinFirstStageSol
     vector<int> vinFirstStageSol;
@@ -377,7 +430,7 @@ IloNumArray2 Problem::BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol
     }
     
     VertexinSolChain = vector<vChain>();
-    vector<vector<int>>RecoChains;
+    vector<Chain>RecoChains;
     if (policy == "among" || policy == "full"){
         //Call InitializeVertexinSolChain
         InitializeVertexinSolChain(ListVertices, VertexinSolChain);
@@ -389,34 +442,15 @@ IloNumArray2 Problem::BuildAdjaForChains (vector<IndexGrandSubSol>& GrandProbSol
             vector<int> aux = GrandProbSol[i].get_cc();
             InitializeVertexinSolChain(aux, VertexinSolChain);
             //Call Find Chains
-            vector<vector<int>>auxChains;
+            vector<Chain>auxChains;
             auxChains = FindChains(VertexinSolChain, aux);
             for (int j = 0; j < auxChains.size(); j++){
                 RecoChains.push_back(auxChains[j]);
             }
         }
     }
+    return RecoChains;
     
-    map<pair<int,int>,bool> arcMap;
-    map<pair<int,int>,bool>::iterator it;
-    
-    for (int i = 0; i < RecoChains.size(); i++){
-        for (int j = 0; j < RecoChains[i].size() - 1; j++){
-            it = arcMap.find(make_pair(RecoChains[i][j],RecoChains[i][j + 1]));
-            if (it != arcMap.end()) arcMap[make_pair(RecoChains[i][j],RecoChains[i][j + 1])] = false;
-        }
-    }
-    
-    IloNumArray2 AdjaList(env, Nodes);
-    for (int i = 0; i < AdjacencyList.getSize(); i++){
-        AdjaList[i] = IloNumArray (env);
-    }
-    
-    for (it = arcMap.begin(); it != arcMap.end(); it++){
-        AdjaList[it->first.first].add(it->first.second);
-    }
-    
-    return AdjaList;
 }
 void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain){
     vector<int> null(1, -1);
@@ -442,7 +476,7 @@ void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>
         }
     }
 }
-vector<vector<int>> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol){
+vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol){
     vector<vector<int>>Chains;
     vector<int>null(0);
     int u,v;
@@ -450,6 +484,7 @@ vector<vector<int>> Problem::FindChains(vector<vChain>& VertexinSolChain, vector
     vector<vChain>::iterator itVinChain = VertexinSolChain.begin();
     vector<vChain>::iterator itVinChainAux;
     vector<Chain>PPChains;
+    ChainNodeSPH.clear();
     
     for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
         if (itVinChain->vertex > Pairs - 1 && v2inFirstStageSol(vinFirstStageSol, itVinChain->vertex) == true){
@@ -476,13 +511,28 @@ vector<vector<int>> Problem::FindChains(vector<vChain>& VertexinSolChain, vector
                     if (v2AlreadyinChain(PPChains.back().Vnodes, v) == false){
                     //If vertex v is in VertexinSolChain add vertex to current chain, augment AccumWeight, store current chain
                         isin = v2inFirstStageSol(vinFirstStageSol, v);
-                        if (isin == true){// Update weight only if v is in the 1st-stage solution
-                            PPChains.back().AccumWeight++;
-                        }
                         if (isin == false && PPChains.back().Vnodes.size() + 1 == ChainLength  +  1){
                             //Do nothing
                         }
                         else{
+                            if (isin == true && PPChains.back().AccumWeight >= 1){// Update weight only if v is in the 1st-stage solution
+                                Chain aux = PPChains.back();
+                                PPChains.push_back(aux);
+                                PPChains.back().AccumWeight++;
+                                ChainNodeSPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
+                                for (int j = 0; j < PPChains.back().Vnodes.size(); j++){
+                                    int v = PPChains.back().Vnodes[j].vertex;
+                                    ChainNodeSPH[v].push_back(int(PPChains.size() - 1));
+                                }
+                            }
+                            else if (isin == true){
+                                ChainNodeSPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
+                                for (int j = 0; j < PPChains.back().Vnodes.size(); j++){
+                                    int v = PPChains.back().Vnodes[j].vertex;
+                                    ChainNodeSPH[v].push_back(int(PPChains.size() - 1));
+                                }
+                                PPChains.back().AccumWeight++;
+                            }
                             //Add vertex to current chain
                             PPChains.back().Vnodes.push_back(*itVinChainAux);
                         }
@@ -514,19 +564,19 @@ vector<vector<int>> Problem::FindChains(vector<vChain>& VertexinSolChain, vector
         }
     }
     //Transfer chains to Bestchains
-    for (int i = 0; i < PPChains.size();i++){
-        Chains.push_back(vector<int>());
-        for (int j = 0; j < PPChains[i].Vnodes.size(); j++){
-            Chains.back().push_back(PPChains[i].Vnodes[j].vertex);
-        }
-    }
+//    for (int i = 0; i < PPChains.size();i++){
+//        Chains.push_back(vector<int>());
+//        for (int j = 0; j < PPChains[i].Vnodes.size(); j++){
+//            Chains.back().push_back(PPChains[i].Vnodes[j].vertex);
+//        }
+//    }
     
     if (Chains.size() > 0){
         if (Chains[0].size() == 1){
             cout << "S.O.S" << endl;
         }
     }
-    return Chains;
+    return PPChains;
     
 }
 bool v2inFirstStageSol(vector<int>sol, int v){
