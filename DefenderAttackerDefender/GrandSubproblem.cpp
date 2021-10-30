@@ -34,7 +34,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     for (int i = 0; i < AdjacencyList.getSize(); i++){
         arc[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, 1, ILOINT);
         for (int j = 0; j < AdjacencyList[i].getSize(); j++){
-            //SetName2Index(arc[i][j], "arc",i, AdjacencyList[i][j] - 1);
+            SetName2(arc[i][j], "arc", i, AdjacencyList[i][j] - 1);
         }
     }
     //Create vertex variables
@@ -73,23 +73,31 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     GrandSubProb.add(MakeOneFailGrandSubP);
     
     //Select a cycle/chain if it has not failed and no other was selected
-    ActiveCCSubP_LB = IloRangeArray(env, GrandProbSol.size());
-    map<int,vector<int>>::iterator it;
+    ActiveCCSubP_LB = IloRangeArray(env, Cycles2ndStage.size() + Chains2ndStage.size());
     for (int i = 0; i < Cycles2ndStage.size(); i++){
         IloExpr ExprArcsVtx (env, 0);
-        //ExprArcsVtx = GenerateAllArcsVertices(i);
         IloExpr AllccVars (env, 0);
-        map<int,int>WhichCCs;
-        for (int j = 0; j < GrandProbSol[i].get_cc().size(); j++){
-            //ccVarsOneVtx (i, GrandSubSolSet[i].get_cc()[j], WhichCCs);
+        for (int j = 0; j < Cycles2ndStage[i].get_c().size(); j++){
+            ExprArcsVtx+= vertex[Cycles2ndStage[i].get_c()[j]];
+            if (j == Cycles2ndStage[i].get_c().size() - 1){
+                ExprArcsVtx+= arc[Cycles2ndStage[i].get_c()[j]][Cycles2ndStage[i].get_c()[0]];
+            }
+            else{
+                ExprArcsVtx+= arc[Cycles2ndStage[i].get_c()[j]][Cycles2ndStage[i].get_c()[j + 1]];
+            }
+            for (int k = 0; k < CycleNodeSPH[Cycles2ndStage[i].get_c()[j]].size(); k++){
+                if (CycleNodeSPH[Cycles2ndStage[i].get_c()[j]][k] != i) AllccVars+= cyvar[CycleNodeSPH[Cycles2ndStage[i].get_c()[j]][k]];
+            }
+            for (int k = 0; k < ChainNodeSPH[Cycles2ndStage[i].get_c()[j]].size(); k++){
+                if (ChainNodeSPH[Cycles2ndStage[i].get_c()[j]][k] != i) AllccVars+= chvar[ChainNodeSPH[Cycles2ndStage[i].get_c()[j]][k]];
+            }
         }
-        //Generate Sum with CCs containing the vertices in the i-th CC
-        //AllccVars = GenerateAllCCsVars(WhichCCs);
-        //cout << AllccVars << endl;
-        name = "ActiveCC_LB." + to_string(i);
+        name = "ActiveCC_LB.cyvar." + to_string(i);
         cName = name.c_str();
         ActiveCCSubP_LB[i] = IloRange(env, 1, cyvar[i] + ExprArcsVtx + AllccVars, IloInfinity, cName);
     }
+    
+    
     GrandSubProb.add(ActiveCCSubP_LB);
     
     

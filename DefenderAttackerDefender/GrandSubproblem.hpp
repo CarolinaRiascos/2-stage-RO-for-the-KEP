@@ -10,6 +10,7 @@
 #define GrandSubproblem_hpp
 
 #include "Class_Problem.hpp"
+#include "M-PICEF.hpp"
 bool v2AlreadyinChain(vector<vChain> v1, int v2);
 bool v2inFirstStageSol(vector<int>sol, int v);
 void FindNewNeighbor(vector<Chain>& PPChains);
