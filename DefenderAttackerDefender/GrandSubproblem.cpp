@@ -61,16 +61,6 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     GrandSubProb.add(Beta >= obj);
     obj.end();
     
-    MakeOneFailGrandSubP = IloRangeArray(env);
-    for (int ite = 1; ite <= RepSolCounter; ite++){
-        IloExpr ArcVerSum (env, 0);
-        //ArcVerSum = GenerateMakeOneFailConstraint(ite);
-        //cout << ArcVerSum << endl;
-        name = "MakeOneFail." + to_string(ite);
-        cName = name.c_str();
-        MakeOneFailGrandSubP.add(IloRange(env, 1, ArcVerSum, IloInfinity, cName));
-    }
-    GrandSubProb.add(MakeOneFailGrandSubP);
     
     //Select a cycle/chain if it has not failed and no other was selected
     ActiveCCSubP_LB = IloRangeArray(env, Cycles2ndStage.size() + Chains2ndStage.size());
@@ -96,8 +86,30 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         cName = name.c_str();
         ActiveCCSubP_LB[i] = IloRange(env, 1, cyvar[i] + ExprArcsVtx + AllccVars, IloInfinity, cName);
     }
-    
-    
+    //Chain variables
+    for (int i = 0; i < Chains2ndStage.size(); i++){
+        IloExpr Expr2ArcsVtx (env, 0);
+        IloExpr All2ccVars (env, 0);
+        for (int j = 0; j < Chains2ndStage[i].Vnodes.size(); j++){
+            int v = Chains2ndStage[i].Vnodes[j].vertex;
+            Expr2ArcsVtx+= vertex[v];
+            if (j == Chains2ndStage[i].Vnodes.size() - 1){
+                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][Chains2ndStage[i].Vnodes[0].vertex];
+            }
+            else{
+                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][Chains2ndStage[i].Vnodes[j + 1].vertex];
+            }
+            for (int k = 0; k < CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex].size(); k++){
+                if (CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k] != i) All2ccVars+= cyvar[CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k]];
+            }
+            for (int k = 0; k < ChainNodeSPH[Chains2ndStage[i].Vnodes[j].vertex].size(); k++){
+                if (ChainNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k] != i) All2ccVars+= chvar[ChainNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k]];
+            }
+        }
+        name = "ActiveCC_LB.chvar." + to_string(i);
+        cName = name.c_str();
+        ActiveCCSubP_LB[ActiveCCSubP_LB.getSize() + i] = IloRange(env, 1, chvar[i] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName);
+    }
     GrandSubProb.add(ActiveCCSubP_LB);
     
     
@@ -114,9 +126,6 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         }
     }
     GrandSubProb.add(sumArcs <= MaxArcFailures);
-    
-    
-
     
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     IloNum GrandSubObj = 0;

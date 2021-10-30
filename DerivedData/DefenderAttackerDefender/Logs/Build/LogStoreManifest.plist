@@ -2590,6 +2590,40 @@
 			<key>uniqueIdentifier</key>
 			<string>54EF42E1-A613-464D-BCA2-5CE925B85BF8</string>
 		</dict>
+		<key>553658F2-29EF-4BDB-B5B5-83572F10D878</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>553658F2-29EF-4BDB-B5B5-83572F10D878.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>657321518.32078695</real>
+			<key>timeStoppedRecording</key>
+			<real>657321528.12390399</real>
+			<key>title</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>553658F2-29EF-4BDB-B5B5-83572F10D878</string>
+		</dict>
 		<key>562D3A43-6ABD-41AC-932B-40584F259AF7</key>
 		<dict>
 			<key>className</key>
@@ -2929,6 +2963,40 @@
 			<string>Build DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
 			<string>648BE0D8-3CEB-438C-85DA-CB2A5CA43FC5</string>
+		</dict>
+		<key>64B57521-3109-4B74-851D-05486312ED6C</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>64B57521-3109-4B74-851D-05486312ED6C.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>657322061.29846203</real>
+			<key>timeStoppedRecording</key>
+			<real>657322072.58679903</real>
+			<key>title</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>64B57521-3109-4B74-851D-05486312ED6C</string>
 		</dict>
 		<key>67B7E048-5BF5-4824-8100-9C2D2EA734A5</key>
 		<dict>
@@ -5581,6 +5649,40 @@
 			<string>Build DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
 			<string>C4D476AF-C834-45B3-BFEB-CBF44B89D44F</string>
+		</dict>
+		<key>C4E921E8-4FCF-4A23-B812-7074A094BB37</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>C4E921E8-4FCF-4A23-B812-7074A094BB37.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>657321645.90900803</real>
+			<key>timeStoppedRecording</key>
+			<real>657321655.88643897</real>
+			<key>title</key>
+			<string>Build DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>C4E921E8-4FCF-4A23-B812-7074A094BB37</string>
 		</dict>
 		<key>C56EAE70-DEC2-4C18-BFD9-A121D7971FCD</key>
 		<dict>
