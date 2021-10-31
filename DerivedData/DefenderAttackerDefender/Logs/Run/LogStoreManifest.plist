@@ -1536,6 +1536,40 @@
 			<key>uniqueIdentifier</key>
 			<string>6370AE6B-30BF-4188-84D2-180EF383220E</string>
 		</dict>
+		<key>69B74704-5C44-47A3-94BF-11282F52D2E0</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>69B74704-5C44-47A3-94BF-11282F52D2E0.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>657377816.19543695</real>
+			<key>timeStoppedRecording</key>
+			<real>657378040.09318805</real>
+			<key>title</key>
+			<string>Run DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>69B74704-5C44-47A3-94BF-11282F52D2E0</string>
+		</dict>
 		<key>6AC075A5-CCC5-4ED5-8380-5E6DD0AEE20E</key>
 		<dict>
 			<key>className</key>
@@ -2692,6 +2726,40 @@
 			<key>uniqueIdentifier</key>
 			<string>C2E60643-A870-4B7D-AF54-A3BC0BC4C2D4</string>
 		</dict>
+		<key>C3EE861C-DC85-4EF2-8079-93E1FB967C3E</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>C3EE861C-DC85-4EF2-8079-93E1FB967C3E.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>657377714.94253004</real>
+			<key>timeStoppedRecording</key>
+			<real>657377812.005054</real>
+			<key>title</key>
+			<string>Run DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>C3EE861C-DC85-4EF2-8079-93E1FB967C3E</string>
+		</dict>
 		<key>C8104954-40CE-4CCA-964C-196FD602EC46</key>
 		<dict>
 			<key>className</key>
@@ -2827,6 +2895,40 @@
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
 			<string>D4362340-7A04-45E0-891F-F81CA8A58F88</string>
+		</dict>
+		<key>D75A9882-957A-4DD0-A626-0CA7D4EAA87B</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>D75A9882-957A-4DD0-A626-0CA7D4EAA87B.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DefenderAttackerDefender project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DefenderAttackerDefender</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run DefenderAttackerDefender</string>
+			<key>timeStartedRecording</key>
+			<real>657375957.66028798</real>
+			<key>timeStoppedRecording</key>
+			<real>657376271.30692101</real>
+			<key>title</key>
+			<string>Run DefenderAttackerDefender</string>
+			<key>uniqueIdentifier</key>
+			<string>D75A9882-957A-4DD0-A626-0CA7D4EAA87B</string>
 		</dict>
 		<key>DB8695C1-858A-4EC0-9014-F0BB525C4A45</key>
 		<dict>

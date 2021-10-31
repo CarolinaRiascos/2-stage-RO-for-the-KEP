@@ -181,8 +181,8 @@ public:
     IloNumVar Beta;
     IloObjective ObjGrandSubP;
     IloArray<IloNumColumn> NewCycleTPH;
-    IloInt MaxArcFailures = 2;
-    IloInt MaxVertexFailures = 1;
+    IloInt MaxArcFailures = 4;
+    IloInt MaxVertexFailures = 2;
     IloInt RepSolCounter = 1;
     IloNum RobustObjTPH = 0;
     IloNumVarArray cyvar;

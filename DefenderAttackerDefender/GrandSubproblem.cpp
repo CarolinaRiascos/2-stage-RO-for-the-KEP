@@ -30,10 +30,12 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     
     //Create arc variables
+    map<pair<int,int>,int> mapArcs;
     arc = IloNumVarArray2(env,AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
         arc[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, 1, ILOINT);
         for (int j = 0; j < AdjacencyList[i].getSize(); j++){
+            mapArcs[make_pair(i, AdjacencyList[i][j] - 1)] = j;
             SetName2(arc[i][j], "arc", i, AdjacencyList[i][j] - 1);
         }
     }
@@ -69,11 +71,16 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         IloExpr AllccVars (env, 0);
         for (int j = 0; j < Cycles2ndStage[i].get_c().size(); j++){
             ExprArcsVtx+= vertex[Cycles2ndStage[i].get_c()[j]];
+            int u = Cycles2ndStage[i].get_c()[j];
             if (j == Cycles2ndStage[i].get_c().size() - 1){
-                ExprArcsVtx+= arc[Cycles2ndStage[i].get_c()[j]][Cycles2ndStage[i].get_c()[0]];
+                int v = Cycles2ndStage[i].get_c()[0];
+                int s = mapArcs[make_pair(u,v)];
+                ExprArcsVtx+= arc[Cycles2ndStage[i].get_c()[j]][s];
             }
             else{
-                ExprArcsVtx+= arc[Cycles2ndStage[i].get_c()[j]][Cycles2ndStage[i].get_c()[j + 1]];
+                int v = Cycles2ndStage[i].get_c()[j + 1];
+                int s = mapArcs[make_pair(u,v)];
+                ExprArcsVtx+= arc[Cycles2ndStage[i].get_c()[j]][s];
             }
             for (int k = 0; k < CycleNodeSPH[Cycles2ndStage[i].get_c()[j]].size(); k++){
                 if (CycleNodeSPH[Cycles2ndStage[i].get_c()[j]][k] != i) AllccVars+= cyvar[CycleNodeSPH[Cycles2ndStage[i].get_c()[j]][k]];
@@ -91,13 +98,17 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         IloExpr Expr2ArcsVtx (env, 0);
         IloExpr All2ccVars (env, 0);
         for (int j = 0; j < Chains2ndStage[i].Vnodes.size(); j++){
-            int v = Chains2ndStage[i].Vnodes[j].vertex;
-            Expr2ArcsVtx+= vertex[v];
+            int u = Chains2ndStage[i].Vnodes[j].vertex;
+            Expr2ArcsVtx+= vertex[u];
             if (j == Chains2ndStage[i].Vnodes.size() - 1){
-                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][Chains2ndStage[i].Vnodes[0].vertex];
+                int v = Cycles2ndStage[i].get_c()[0];
+                int s = mapArcs[make_pair(u,v)];
+                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][s];
             }
             else{
-                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][Chains2ndStage[i].Vnodes[j + 1].vertex];
+                int v = Cycles2ndStage[i].get_c()[j + 1];
+                int s = mapArcs[make_pair(u,v)];
+                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][s];
             }
             for (int k = 0; k < CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex].size(); k++){
                 if (CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k] != i) All2ccVars+= cyvar[CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k]];
