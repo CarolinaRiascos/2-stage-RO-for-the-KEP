@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <vector>
 #include <ilcplex/ilocplex.h>
+#include <algorithm>
 #include <map>
 
 ILOSTLBEGIN
@@ -194,11 +195,19 @@ public:
     IloRangeArray BoundObjGrandSubP;
     IloRangeArray ActiveCCSubP_LB;
     IloRangeArray ActiveCCSubP_UB;
+    IloRange ConsBeta;
     vector<Cycles> RepairedListCCs;
     vector<Cycles> RobustSolTHP;
     vector<IndexGrandSubSol> GrandProbSol;
     vector<vChain> VertexinSolChain;
+    map<pair<int,int>, vector<int>> ArcsinCycles;
+    map<pair<int,int>, vector<int>> ArcsinChains;
+    map<pair<int,int>, bool> FailedArcs;
+    map<int, bool> FailedVertices;
+    map<int,int>Cycles2ndTo3rd;
+    map<int,int>Chains2ndTo3rd;
     map<int,vector<int>> CycleNodeGSP;
+    
     void GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage);
     void GrandSubProbRoutine();
     vector<Cycles> BackRecoursePolicy(vector<int>&vinFirstStageSol);
@@ -209,6 +218,7 @@ public:
     vector<Chain>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
     vector<Chain> Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     vector<Cycles> Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy);
+    void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles);
     
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
