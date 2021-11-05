@@ -190,7 +190,6 @@ void Problem::M_PICEF(){
        Cycles2ndStage = Get2ndStageCycles (solcy, RecoursePolicy);
        GrandSubProbMaster(Cycles2ndStage,Chains2ndStage);
    }
-   
 }
 IloExpr Problem::GetObjMPICEF(){
     IloExpr obj(env,0);

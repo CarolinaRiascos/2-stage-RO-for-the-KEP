@@ -67,7 +67,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     
     
     //Select a cycle/chain if it has not failed and no other was selected
-    ActiveCCSubP_LB = IloRangeArray(env, Cycles2ndTo3rd.size() + Chains2ndTo3rd.size());
+    ActiveCCSubP_LB = IloRangeArray(env);
     for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
         IloExpr ExprArcsVtx (env, 0);
         IloExpr AllccVars (env, 0);
@@ -85,48 +85,49 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
                 int s = mapArcs[make_pair(u,v)];
                 ExprArcsVtx+= arc[u][s];
             }
-            for (int k = 0; k < CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]].size(); k++){
-                if (CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] != i) AllccVars+= cyvar[CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k]];
+            for (int k = 0; k < CycleNodeSPH[u].size(); k++){
+                if (CycleNodeSPH[u][k] != i) AllccVars+= cyvar[CycleNodeSPH[u][k]];
                 //check whether CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] exixts in Cycles2ndTo3rd
             }
             //cout << Cycles2ndStage[idx].get_c()[j] << endl;
-            for (int k = 0; k < ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]].size(); k++){
-                if (ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] != i) AllccVars+= chvar[ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]][k]];
+            for (int k = 0; k < ChainNodeSPH[u].size(); k++){
+                if (ChainNodeSPH[u][k] != i) AllccVars+= chvar[ChainNodeSPH[u][k]];
             }
         }
         name = "ActiveCC_LB.cyvar." + to_string(i);
         cName = name.c_str();
         //cout << cyvar[i].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
-        ActiveCCSubP_LB[i] = IloRange(env, 1, cyvar[i] - ExprArcsVtx - AllccVars, IloInfinity, cName);
+        ActiveCCSubP_LB.add(IloRange(env, 1, cyvar[i] - ExprArcsVtx - AllccVars, IloInfinity, cName));
     }
     //Chain variables
     for (int i = 0; i < Chains2ndStage.size(); i++){
         IloExpr Expr2ArcsVtx (env, 0);
         IloExpr All2ccVars (env, 0);
-        int idx = Cycles2ndTo3rd[i];
+        int idx = Chains2ndTo3rd[i];
         for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
             int u = Chains2ndStage[idx].Vnodes[j].vertex;
             Expr2ArcsVtx+= vertex[u];
             if (j == Chains2ndStage[idx].Vnodes.size() - 1){
                 int v = Cycles2ndStage[idx].get_c()[0];
                 int s = mapArcs[make_pair(u,v)];
-                Expr2ArcsVtx+= arc[Chains2ndStage[idx].Vnodes[j].vertex][s];
+                Expr2ArcsVtx+= arc[u][s];
             }
             else{
                 int v = Cycles2ndStage[idx].get_c()[j + 1];
                 int s = mapArcs[make_pair(u,v)];
-                Expr2ArcsVtx+= arc[Chains2ndStage[idx].Vnodes[j].vertex][s];
+                Expr2ArcsVtx+= arc[u][s];
             }
-            for (int k = 0; k < CycleNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex].size(); k++){
-                if (CycleNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k] != i) All2ccVars+= cyvar[CycleNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k]];
+            for (int k = 0; k < CycleNodeSPH[u].size(); k++){
+                if (CycleNodeSPH[u][k] != i) All2ccVars+= cyvar[CycleNodeSPH[u][k]];
             }
             for (int k = 0; k < ChainNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex].size(); k++){
-                if (ChainNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k] != i) All2ccVars+= chvar[ChainNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k]];
+                if (ChainNodeSPH[u][k] != i) All2ccVars+= chvar[ChainNodeSPH[u][k]];
             }
         }
         name = "ActiveCC_LB.chvar." + to_string(i);
         cName = name.c_str();
-        ActiveCCSubP_LB[ActiveCCSubP_LB.getSize() + i] = IloRange(env, 1, chvar[i] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName);
+        //cout << cyvar[i].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
+        ActiveCCSubP_LB.add(IloRange(env, 1, chvar[i] - Expr2ArcsVtx - All2ccVars, IloInfinity, cName));
     }
     GrandSubProb.add(ActiveCCSubP_LB);
     
