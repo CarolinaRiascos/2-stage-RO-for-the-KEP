@@ -18,14 +18,14 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     //Create cycle variables
     cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
     for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
-       SetName1Index(cyvar[i], "r", i);
+       SetName1Index(cyvar[i], "x", i);
        //cout << r[i].getName() << endl;
     }
     
     //Create chain variables
     chvar = IloNumVarArray(env, Chains2ndTo3rd.size(), 0, 1, ILOINT);
     for (int i = 0; i < Chains2ndTo3rd.size(); i++){
-       SetName1Index(chvar[i], "r", i);
+       SetName1Index(chvar[i], "y", i);
        //cout << r[i].getName() << endl;
     }
     
@@ -88,38 +88,40 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
             for (int k = 0; k < CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]].size(); k++){
                 if (CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] != i) AllccVars+= cyvar[CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k]];
                 //check whether CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] exixts in Cycles2ndTo3rd
-                
             }
+            //cout << Cycles2ndStage[idx].get_c()[j] << endl;
             for (int k = 0; k < ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]].size(); k++){
                 if (ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] != i) AllccVars+= chvar[ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]][k]];
             }
         }
         name = "ActiveCC_LB.cyvar." + to_string(i);
         cName = name.c_str();
-        ActiveCCSubP_LB[i] = IloRange(env, 1, cyvar[i] + ExprArcsVtx + AllccVars, IloInfinity, cName);
+        //cout << cyvar[i].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
+        ActiveCCSubP_LB[i] = IloRange(env, 1, cyvar[i] - ExprArcsVtx - AllccVars, IloInfinity, cName);
     }
     //Chain variables
     for (int i = 0; i < Chains2ndStage.size(); i++){
         IloExpr Expr2ArcsVtx (env, 0);
         IloExpr All2ccVars (env, 0);
-        for (int j = 0; j < Chains2ndStage[i].Vnodes.size(); j++){
-            int u = Chains2ndStage[i].Vnodes[j].vertex;
+        int idx = Cycles2ndTo3rd[i];
+        for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
+            int u = Chains2ndStage[idx].Vnodes[j].vertex;
             Expr2ArcsVtx+= vertex[u];
-            if (j == Chains2ndStage[i].Vnodes.size() - 1){
-                int v = Cycles2ndStage[i].get_c()[0];
+            if (j == Chains2ndStage[idx].Vnodes.size() - 1){
+                int v = Cycles2ndStage[idx].get_c()[0];
                 int s = mapArcs[make_pair(u,v)];
-                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][s];
+                Expr2ArcsVtx+= arc[Chains2ndStage[idx].Vnodes[j].vertex][s];
             }
             else{
-                int v = Cycles2ndStage[i].get_c()[j + 1];
+                int v = Cycles2ndStage[idx].get_c()[j + 1];
                 int s = mapArcs[make_pair(u,v)];
-                Expr2ArcsVtx+= arc[Chains2ndStage[i].Vnodes[j].vertex][s];
+                Expr2ArcsVtx+= arc[Chains2ndStage[idx].Vnodes[j].vertex][s];
             }
-            for (int k = 0; k < CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex].size(); k++){
-                if (CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k] != i) All2ccVars+= cyvar[CycleNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k]];
+            for (int k = 0; k < CycleNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex].size(); k++){
+                if (CycleNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k] != i) All2ccVars+= cyvar[CycleNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k]];
             }
-            for (int k = 0; k < ChainNodeSPH[Chains2ndStage[i].Vnodes[j].vertex].size(); k++){
-                if (ChainNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k] != i) All2ccVars+= chvar[ChainNodeSPH[Chains2ndStage[i].Vnodes[j].vertex][k]];
+            for (int k = 0; k < ChainNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex].size(); k++){
+                if (ChainNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k] != i) All2ccVars+= chvar[ChainNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex][k]];
             }
         }
         name = "ActiveCC_LB.chvar." + to_string(i);
