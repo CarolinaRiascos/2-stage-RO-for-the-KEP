@@ -169,6 +169,8 @@ public:
     vector<Cycles> CFThirdPhase(vector<Cycles>Input, map<int,vector<int>>&CycleMap);
     map<int,vector<int>>CycleNodeSPH;
     map<int,vector<int>>ChainNodeSPH;
+    map<int,vector<int>>CycleNodeTPH;
+    map<int,vector<int>>ChainNodeTPH;
     
     
     //Constraint and Column Generation Grand Problem

@@ -76,17 +76,19 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
             ExprArcsVtx+= vertex[Cycles2ndStage[idx].get_c()[j]];
             int u = Cycles2ndStage[idx].get_c()[j];
             if (j == Cycles2ndStage[idx].get_c().size() - 1){
-                int v = Cycles2ndStage[i].get_c()[0];
+                int v = Cycles2ndStage[idx].get_c()[0];
                 int s = mapArcs[make_pair(u,v)];
-                ExprArcsVtx+= arc[Cycles2ndStage[idx].get_c()[j]][s];
+                ExprArcsVtx+= arc[u][s];
             }
             else{
                 int v = Cycles2ndStage[idx].get_c()[j + 1];
                 int s = mapArcs[make_pair(u,v)];
-                ExprArcsVtx+= arc[Cycles2ndStage[idx].get_c()[j]][s];
+                ExprArcsVtx+= arc[u][s];
             }
             for (int k = 0; k < CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]].size(); k++){
                 if (CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] != i) AllccVars+= cyvar[CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k]];
+                //check whether CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] exixts in Cycles2ndTo3rd
+                
             }
             for (int k = 0; k < ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]].size(); k++){
                 if (ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] != i) AllccVars+= chvar[ChainNodeSPH[Cycles2ndStage[idx].get_c()[j]][k]];
@@ -281,7 +283,7 @@ vector<Cycles> Problem::Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSo
 }
 vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
-    CycleNodeSPH.clear();
+    CycleNodeTPH.clear();
     ArcsinCycles.clear();
     
         IloNumArray2 AdjaList (env, AdjacencyList.getSize());
@@ -308,7 +310,7 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
                 NewListCCs.push_back(NewList[k]);
                 NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
                 for (int l = 0; l < NewList[k].get_c().size(); l++){
-                    CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
+                    CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
                     if (l <= NewList[k].get_c().size() - 2){
                         ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[l + 1])].push_back(int(NewListCCs.size() - 1));
                     }
@@ -326,7 +328,7 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
 }
 vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
-    CycleNodeSPH.clear();
+    CycleNodeTPH.clear();
     ArcsinCycles.clear();
     
     IloNumArray2 AdjaList (env, AdjacencyList.getSize());
@@ -355,7 +357,7 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
             NewListCCs.push_back(NewList[k]);
             NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
             for (int l = 0; l < NewList[k].get_c().size(); l++){
-                CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
+                CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
                 if (l <= NewList[k].get_c().size() - 2){
                     ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[l + 1])].push_back(int(NewListCCs.size() - 1));
                 }
@@ -372,7 +374,7 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
 }
 vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
-    CycleNodeSPH.clear();
+    CycleNodeTPH.clear();
     ArcsinCycles.clear();
 
     //Make a copy of Adjacency List
@@ -395,7 +397,7 @@ vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
             for (int l = 0; l < NewList[k].get_c().size(); l++){
                 int pos = FindPosVector(ListVertices, NewList[k].get_c()[l]);
                 if (pos != -1) counter++;
-                CycleNodeSPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap fosecond phase
+                CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap fosecond phase
                 if (l <= NewList[k].get_c().size() - 2){
                     ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[l + 1])].push_back(int(NewListCCs.size() - 1));
                 }
@@ -488,7 +490,7 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
     vector<vChain>::iterator itVinChain = VertexinSolChain.begin();
     vector<vChain>::iterator itVinChainAux;
     vector<Chain>PPChains;
-    ChainNodeSPH.clear();
+    ChainNodeTPH.clear();
     ArcsinChains.clear();
     
     for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
@@ -524,10 +526,10 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
                                 Chain aux = PPChains.back();
                                 PPChains.push_back(aux);
                                 PPChains.back().AccumWeight++;
-                                ChainNodeSPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
+                                ChainNodeTPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
                                 for (int j = 0; j < PPChains.back().Vnodes.size(); j++){
                                     int v = PPChains.back().Vnodes[j].vertex;
-                                    ChainNodeSPH[v].push_back(int(PPChains.size() - 1));
+                                    ChainNodeTPH[v].push_back(int(PPChains.size() - 1));
                                     //Map arcs to cycles
                                     if (j <= PPChains.back().Vnodes.size() - 2){
                                         ArcsinChains[make_pair(v, PPChains.back().Vnodes[j + 1].vertex)].push_back(int(PPChains.size() - 1));
@@ -538,10 +540,10 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
                                 }
                             }
                             else if (isin == true){
-                                ChainNodeSPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
+                                ChainNodeTPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
                                 for (int j = 0; j < PPChains.back().Vnodes.size(); j++){
                                     int v = PPChains.back().Vnodes[j].vertex;
-                                    ChainNodeSPH[v].push_back(int(PPChains.size() - 1));
+                                    ChainNodeTPH[v].push_back(int(PPChains.size() - 1));
                                     //Map arcs to cycles
                                     if (j <= PPChains.back().Vnodes.size() - 2){
                                         ArcsinChains[make_pair(v, PPChains.back().Vnodes[j + 1].vertex)].push_back(int(PPChains.size() - 1));
@@ -635,17 +637,27 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles){
     sort(Chains.begin(), Chains.end(), sortChains);
     sort(Cycles.begin(), Cycles.end(), sortCycles);
     
+    CycleNodeSPH.size();
+    ChainNodeSPH.size();
+    
     //Select 100 cycles and 200 chains
     int counter = 0;
     for (int i = 0; i < Cycles.size(); i++){
         Cycles2ndTo3rd[counter] = i;
+        for (int j = 0; j < Cycles[i].get_c().size(); j++){
+            CycleNodeSPH[Cycles[i].get_c()[j]].push_back(counter);
+        }
         counter++;
         if (counter == 100) break;
     }
     counter = 0;
     for (int i = 0; i < Chains.size(); i++){
         Chains2ndTo3rd[counter] = i;
+        for (int j = 0; j < Chains[i].Vnodes.size(); j++){
+            ChainNodeSPH[Chains[i].Vnodes[j].vertex].push_back(counter);
+        }
         counter++;
         if (counter == 100) break;
     }
+    
 }
