@@ -6,7 +6,7 @@
 	<integer>10</integer>
 	<key>logs</key>
 	<dict>
-		<key>098576C1-C176-47E5-99E7-3B6E4DBC8920</key>
+		<key>1E3E1FCF-11CF-40D8-A700-92A82706F8BF</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>098576C1-C176-47E5-99E7-3B6E4DBC8920.xcactivitylog</string>
+			<string>1E3E1FCF-11CF-40D8-A700-92A82706F8BF.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -32,15 +32,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657838380.063604</real>
+			<real>658259881.75691402</real>
 			<key>timeStoppedRecording</key>
-			<real>657838424.14583099</real>
+			<real>658261066.43579805</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>098576C1-C176-47E5-99E7-3B6E4DBC8920</string>
+			<string>1E3E1FCF-11CF-40D8-A700-92A82706F8BF</string>
 		</dict>
-		<key>0D392432-5270-4E2F-926A-420E45A67935</key>
+		<key>479ACD4A-34E0-427C-8DA1-062F7A4A4763</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -49,7 +49,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>0D392432-5270-4E2F-926A-420E45A67935.xcactivitylog</string>
+			<string>479ACD4A-34E0-427C-8DA1-062F7A4A4763.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -66,15 +66,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657723069.61860704</real>
+			<real>658259076.21379399</real>
 			<key>timeStoppedRecording</key>
-			<real>657724005.68719804</real>
+			<real>658259136.41826904</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>0D392432-5270-4E2F-926A-420E45A67935</string>
+			<string>479ACD4A-34E0-427C-8DA1-062F7A4A4763</string>
 		</dict>
-		<key>1270F8DF-DF60-48D1-9B4A-3C2FACC2A973</key>
+		<key>4B19BA1F-E6E0-4017-8F96-D2314C188575</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -83,7 +83,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>1270F8DF-DF60-48D1-9B4A-3C2FACC2A973.xcactivitylog</string>
+			<string>4B19BA1F-E6E0-4017-8F96-D2314C188575.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -100,15 +100,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657821594.50200403</real>
+			<real>658036030.92679596</real>
 			<key>timeStoppedRecording</key>
-			<real>657821661.61616004</real>
+			<real>658036664.50146699</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>1270F8DF-DF60-48D1-9B4A-3C2FACC2A973</string>
+			<string>4B19BA1F-E6E0-4017-8F96-D2314C188575</string>
 		</dict>
-		<key>16FA0C0A-6F16-4688-A1BD-3551332C7BE4</key>
+		<key>4B524EC6-D46F-473B-AE3D-2D225C42892D</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -117,7 +117,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>16FA0C0A-6F16-4688-A1BD-3551332C7BE4.xcactivitylog</string>
+			<string>4B524EC6-D46F-473B-AE3D-2D225C42892D.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -134,15 +134,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657821807.16567004</real>
+			<real>657933151.15178895</real>
 			<key>timeStoppedRecording</key>
-			<real>657821822.23073494</real>
+			<real>657933258.01181495</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>16FA0C0A-6F16-4688-A1BD-3551332C7BE4</string>
+			<string>4B524EC6-D46F-473B-AE3D-2D225C42892D</string>
 		</dict>
-		<key>20B4B31F-D4B5-465F-85F1-B971EF76A9A2</key>
+		<key>617DD4C4-370A-4308-A9B2-9744A9E80544</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -151,7 +151,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>20B4B31F-D4B5-465F-85F1-B971EF76A9A2.xcactivitylog</string>
+			<string>617DD4C4-370A-4308-A9B2-9744A9E80544.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -168,15 +168,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657687949.42151499</real>
+			<real>657933676.34082198</real>
 			<key>timeStoppedRecording</key>
-			<real>657688275.63691497</real>
+			<real>657942186.06860101</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>20B4B31F-D4B5-465F-85F1-B971EF76A9A2</string>
+			<string>617DD4C4-370A-4308-A9B2-9744A9E80544</string>
 		</dict>
-		<key>2BF70A80-328C-4CED-B750-C2F38D4C17FE</key>
+		<key>620C00CF-D599-4B1E-B8C0-FC4710785C1E</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -185,7 +185,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>2BF70A80-328C-4CED-B750-C2F38D4C17FE.xcactivitylog</string>
+			<string>620C00CF-D599-4B1E-B8C0-FC4710785C1E.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -202,15 +202,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657823211.71480298</real>
+			<real>657927812.05956697</real>
 			<key>timeStoppedRecording</key>
-			<real>657823266.72907901</real>
+			<real>657927827.54435503</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>2BF70A80-328C-4CED-B750-C2F38D4C17FE</string>
+			<string>620C00CF-D599-4B1E-B8C0-FC4710785C1E</string>
 		</dict>
-		<key>2F3642C0-B1A1-4296-862C-20431400556C</key>
+		<key>AC196985-2083-4E8B-8E8D-A4A982101B3B</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -219,7 +219,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>2F3642C0-B1A1-4296-862C-20431400556C.xcactivitylog</string>
+			<string>AC196985-2083-4E8B-8E8D-A4A982101B3B.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -236,15 +236,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657837797.46845996</real>
+			<real>658259147.46222794</real>
 			<key>timeStoppedRecording</key>
-			<real>657838010.648664</real>
+			<real>658259318.82493401</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>2F3642C0-B1A1-4296-862C-20431400556C</string>
+			<string>AC196985-2083-4E8B-8E8D-A4A982101B3B</string>
 		</dict>
-		<key>3C4A59DC-9812-4D57-97D8-D39BB634B29D</key>
+		<key>CE321EEF-2C3F-462F-93A0-890F49B9D8E0</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -253,7 +253,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>3C4A59DC-9812-4D57-97D8-D39BB634B29D.xcactivitylog</string>
+			<string>CE321EEF-2C3F-462F-93A0-890F49B9D8E0.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -270,15 +270,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657822983.98755503</real>
+			<real>658242119.708588</real>
 			<key>timeStoppedRecording</key>
-			<real>657823001.66043401</real>
+			<real>658242130.75519598</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>3C4A59DC-9812-4D57-97D8-D39BB634B29D</string>
+			<string>CE321EEF-2C3F-462F-93A0-890F49B9D8E0</string>
 		</dict>
-		<key>53D3DD2F-1271-46CF-99B0-059AA6EFF8B3</key>
+		<key>E36CF12E-D37C-4458-A9AA-54239DBDA1FF</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -287,7 +287,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>53D3DD2F-1271-46CF-99B0-059AA6EFF8B3.xcactivitylog</string>
+			<string>E36CF12E-D37C-4458-A9AA-54239DBDA1FF.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -304,15 +304,15 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657821533.75739503</real>
+			<real>657933305.56653094</real>
 			<key>timeStoppedRecording</key>
-			<real>657821569.81902695</real>
+			<real>657933663.37939799</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>53D3DD2F-1271-46CF-99B0-059AA6EFF8B3</string>
+			<string>E36CF12E-D37C-4458-A9AA-54239DBDA1FF</string>
 		</dict>
-		<key>61865E6E-A762-402F-AFC5-A31FD58E88C8</key>
+		<key>FA063CC5-4829-4F32-A69A-C8E16B5FE2DA</key>
 		<dict>
 			<key>className</key>
 			<string>DBGConsoleLog</string>
@@ -321,7 +321,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
 			<key>fileName</key>
-			<string>61865E6E-A762-402F-AFC5-A31FD58E88C8.xcactivitylog</string>
+			<string>FA063CC5-4829-4F32-A69A-C8E16B5FE2DA.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -338,625 +338,13 @@
 			<key>signature</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>timeStartedRecording</key>
-			<real>657724586.876477</real>
+			<real>658259392.37548697</real>
 			<key>timeStoppedRecording</key>
-			<real>657724772.86089396</real>
+			<real>658259880.33208096</real>
 			<key>title</key>
 			<string>Run DefenderAttackerDefender</string>
 			<key>uniqueIdentifier</key>
-			<string>61865E6E-A762-402F-AFC5-A31FD58E88C8</string>
-		</dict>
-		<key>62170C1A-DF2E-421A-9B98-E59949CF2AFC</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>62170C1A-DF2E-421A-9B98-E59949CF2AFC.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657822416.47153699</real>
-			<key>timeStoppedRecording</key>
-			<real>657822632.27736294</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>62170C1A-DF2E-421A-9B98-E59949CF2AFC</string>
-		</dict>
-		<key>66ABC0AF-25B6-4936-A9AF-7DCFDE8150A3</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>66ABC0AF-25B6-4936-A9AF-7DCFDE8150A3.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657823003.06966603</real>
-			<key>timeStoppedRecording</key>
-			<real>657823039.76541495</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>66ABC0AF-25B6-4936-A9AF-7DCFDE8150A3</string>
-		</dict>
-		<key>69B74704-5C44-47A3-94BF-11282F52D2E0</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>69B74704-5C44-47A3-94BF-11282F52D2E0.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657377816.19543695</real>
-			<key>timeStoppedRecording</key>
-			<real>657378040.09318805</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>69B74704-5C44-47A3-94BF-11282F52D2E0</string>
-		</dict>
-		<key>7A02CF95-39D8-4027-AD85-FA2667D370F0</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>7A02CF95-39D8-4027-AD85-FA2667D370F0.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657822908.55332196</real>
-			<key>timeStoppedRecording</key>
-			<real>657822973.47322094</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>7A02CF95-39D8-4027-AD85-FA2667D370F0</string>
-		</dict>
-		<key>8E850519-2220-4489-B6B6-D02CBCEE5E8A</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>8E850519-2220-4489-B6B6-D02CBCEE5E8A.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657821839.12802505</real>
-			<key>timeStoppedRecording</key>
-			<real>657821893.06594706</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>8E850519-2220-4489-B6B6-D02CBCEE5E8A</string>
-		</dict>
-		<key>9F07E07F-A556-4DCD-BBB1-1E05DA192D95</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>9F07E07F-A556-4DCD-BBB1-1E05DA192D95.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657821923.81035197</real>
-			<key>timeStoppedRecording</key>
-			<real>657821982.21746004</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>9F07E07F-A556-4DCD-BBB1-1E05DA192D95</string>
-		</dict>
-		<key>A90EF06F-FBF8-432D-80D6-06D0019989F0</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>A90EF06F-FBF8-432D-80D6-06D0019989F0.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657821982.65525305</real>
-			<key>timeStoppedRecording</key>
-			<real>657821991.04018605</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>A90EF06F-FBF8-432D-80D6-06D0019989F0</string>
-		</dict>
-		<key>BD1CDCAD-1083-4CDE-AEC7-3C8412826258</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>BD1CDCAD-1083-4CDE-AEC7-3C8412826258.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657823043.74988699</real>
-			<key>timeStoppedRecording</key>
-			<real>657823151.50213897</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>BD1CDCAD-1083-4CDE-AEC7-3C8412826258</string>
-		</dict>
-		<key>BD925BD8-0B79-4864-B327-39B0B4F008D3</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>BD925BD8-0B79-4864-B327-39B0B4F008D3.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657822132.93162799</real>
-			<key>timeStoppedRecording</key>
-			<real>657822213.44402099</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>BD925BD8-0B79-4864-B327-39B0B4F008D3</string>
-		</dict>
-		<key>D23408F8-11A5-47FA-BC8A-A2140613FB46</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>D23408F8-11A5-47FA-BC8A-A2140613FB46.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657823152.67127502</real>
-			<key>timeStoppedRecording</key>
-			<real>657823192.055264</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>D23408F8-11A5-47FA-BC8A-A2140613FB46</string>
-		</dict>
-		<key>D312E1AC-BFE3-4E17-8208-6CCC721588D5</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>D312E1AC-BFE3-4E17-8208-6CCC721588D5.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657724994.03147495</real>
-			<key>timeStoppedRecording</key>
-			<real>657725043.14784205</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>D312E1AC-BFE3-4E17-8208-6CCC721588D5</string>
-		</dict>
-		<key>D60C5F00-5DC0-4D8B-8DD6-6C5E2C8949C9</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>D60C5F00-5DC0-4D8B-8DD6-6C5E2C8949C9.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657821392.02493298</real>
-			<key>timeStoppedRecording</key>
-			<real>657821481.62650597</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>D60C5F00-5DC0-4D8B-8DD6-6C5E2C8949C9</string>
-		</dict>
-		<key>E3ECA368-854C-41C6-A792-FF80063AED67</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>E3ECA368-854C-41C6-A792-FF80063AED67.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657822754.694327</real>
-			<key>timeStoppedRecording</key>
-			<real>657822864.61032999</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>E3ECA368-854C-41C6-A792-FF80063AED67</string>
-		</dict>
-		<key>F3F700B3-C27B-424A-A744-85371BE5189E</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>F3F700B3-C27B-424A-A744-85371BE5189E.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657823832.11970198</real>
-			<key>timeStoppedRecording</key>
-			<real>657823869.96596098</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>F3F700B3-C27B-424A-A744-85371BE5189E</string>
-		</dict>
-		<key>F5BB9449-B9D4-4F51-A978-F5887CFA068C</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>F5BB9449-B9D4-4F51-A978-F5887CFA068C.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657821707.63697505</real>
-			<key>timeStoppedRecording</key>
-			<real>657821804.52688301</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>F5BB9449-B9D4-4F51-A978-F5887CFA068C</string>
-		</dict>
-		<key>F88CDF33-527E-4BB3-944C-CC63DD13FBC6</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>F88CDF33-527E-4BB3-944C-CC63DD13FBC6.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657820432.89690804</real>
-			<key>timeStoppedRecording</key>
-			<real>657820714.39877105</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>F88CDF33-527E-4BB3-944C-CC63DD13FBC6</string>
-		</dict>
-		<key>FB5E18B5-CBCB-454F-982C-5C10B7FCB1A7</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>FB5E18B5-CBCB-454F-982C-5C10B7FCB1A7.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657821088.62522697</real>
-			<key>timeStoppedRecording</key>
-			<real>657821296.93283296</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>FB5E18B5-CBCB-454F-982C-5C10B7FCB1A7</string>
-		</dict>
-		<key>FE75F670-54BD-4B02-A077-29F09D71CF30</key>
-		<dict>
-			<key>className</key>
-			<string>DBGConsoleLog</string>
-			<key>documentTypeString</key>
-			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
-			<key>fileName</key>
-			<string>FE75F670-54BD-4B02-A077-29F09D71CF30.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>DefenderAttackerDefender project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>DefenderAttackerDefender</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>timeStartedRecording</key>
-			<real>657838469.99628997</real>
-			<key>timeStoppedRecording</key>
-			<real>657838532.45086896</real>
-			<key>title</key>
-			<string>Run DefenderAttackerDefender</string>
-			<key>uniqueIdentifier</key>
-			<string>FE75F670-54BD-4B02-A077-29F09D71CF30</string>
+			<string>FA063CC5-4829-4F32-A69A-C8E16B5FE2DA</string>
 		</dict>
 	</dict>
 </dict>

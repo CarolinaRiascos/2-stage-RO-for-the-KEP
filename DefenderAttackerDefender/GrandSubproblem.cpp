@@ -63,7 +63,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     GrandSubProb.add(ObjGrandSubP);
     ConsBeta = IloRange(env, 0, Beta - obj, IloInfinity);
     GrandSubProb.add(ConsBeta);
-    obj.end();
+    //obj.end();
     
     
     //Select a cycle/chain if it has not failed and no other was selected
@@ -71,6 +71,8 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
         IloExpr ExprArcsVtx (env, 0);
         IloExpr AllccVars (env, 0);
+        map<int,bool>forcycles;
+        map<int,bool>forchains;
         int idx = Cycles2ndTo3rd[i];
         for (int j = 0; j < Cycles2ndStage[idx].get_c().size(); j++){
             ExprArcsVtx+= vertex[Cycles2ndStage[idx].get_c()[j]];
@@ -86,23 +88,32 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
                 ExprArcsVtx+= arc[u][s];
             }
             for (int k = 0; k < CycleNodeSPH[u].size(); k++){
-                if (CycleNodeSPH[u][k] != i) AllccVars+= cyvar[CycleNodeSPH[u][k]];
+                if (CycleNodeSPH[u][k] != i) forcycles[CycleNodeSPH[u][k]];
                 //check whether CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] exixts in Cycles2ndTo3rd
             }
             //cout << Cycles2ndStage[idx].get_c()[j] << endl;
             for (int k = 0; k < ChainNodeSPH[u].size(); k++){
-                if (ChainNodeSPH[u][k] != i) AllccVars+= chvar[ChainNodeSPH[u][k]];
+                if (ChainNodeSPH[u][k] != i) forchains[ChainNodeSPH[u][k]];
             }
+        }
+        for (auto it = forcycles.begin(); it != forcycles.end(); it++){
+            AllccVars+= cyvar[it->first];
+        }
+        for (auto it = forchains.begin(); it != forchains.end(); it++){
+            AllccVars+= chvar[it->first];
         }
         name = "ActiveCC_LB.cyvar." + to_string(i);
         cName = name.c_str();
         //cout << cyvar[i].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
-        ActiveCCSubP_LB.add(IloRange(env, 1, cyvar[i] - ExprArcsVtx - AllccVars, IloInfinity, cName));
+        ActiveCCSubP_LB.add(IloRange(env, 1, cyvar[i] + ExprArcsVtx + AllccVars, IloInfinity, cName));
+        GrandSubProb.add(ActiveCCSubP_LB[ActiveCCSubP_LB.getSize() - 1]);
     }
     //Chain variables
-    for (int i = 0; i < Chains2ndStage.size(); i++){
+    for (int i = 0; i < Chains2ndTo3rd.size(); i++){
         IloExpr Expr2ArcsVtx (env, 0);
         IloExpr All2ccVars (env, 0);
+        map<int,bool>forcycles;
+        map<int,bool>forchains;
         int idx = Chains2ndTo3rd[i];
         for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
             int u = Chains2ndStage[idx].Vnodes[j].vertex;
@@ -118,25 +129,31 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
                 Expr2ArcsVtx+= arc[u][s];
             }
             for (int k = 0; k < CycleNodeSPH[u].size(); k++){
-                if (CycleNodeSPH[u][k] != i) All2ccVars+= cyvar[CycleNodeSPH[u][k]];
+                if (CycleNodeSPH[u][k] != i) forcycles[CycleNodeSPH[u][k]];
             }
-            for (int k = 0; k < ChainNodeSPH[Chains2ndStage[idx].Vnodes[j].vertex].size(); k++){
-                if (ChainNodeSPH[u][k] != i) All2ccVars+= chvar[ChainNodeSPH[u][k]];
+            for (int k = 0; k < ChainNodeSPH[u].size(); k++){
+                if (ChainNodeSPH[u][k] != i) forchains[ChainNodeSPH[u][k]];
             }
+        }
+        for (auto it = forcycles.begin(); it != forcycles.end(); it++){
+            All2ccVars+= cyvar[it->first];
+        }
+        for (auto it = forchains.begin(); it != forchains.end(); it++){
+            All2ccVars+= chvar[it->first];
         }
         name = "ActiveCC_LB.chvar." + to_string(i);
         cName = name.c_str();
         //cout << cyvar[i].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
-        ActiveCCSubP_LB.add(IloRange(env, 1, chvar[i] - Expr2ArcsVtx - All2ccVars, IloInfinity, cName));
+        ActiveCCSubP_LB.add(IloRange(env, 1, chvar[i] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName));
+        GrandSubProb.add(ActiveCCSubP_LB[ActiveCCSubP_LB.getSize() - 1]);
     }
-    GrandSubProb.add(ActiveCCSubP_LB);
     
     
     IloExpr sumVertices (env, 0);
     for (int i = 0; i < Pairs; i++){
         sumVertices+=  vertex[i];
     }
-    GrandSubProb.add(sumVertices <= MaxVertexFailures);
+    GrandSubProb.add(sumVertices <= 0);
     
     IloExpr sumArcs (env, 0);
     for (int i = 0; i < AdjacencyList.getSize(); i++){
@@ -144,13 +161,13 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
             sumArcs+= arc[i][j];
         }
     }
-    GrandSubProb.add(sumArcs <= MaxArcFailures);
+    GrandSubProb.add(sumArcs <= 0);
     
-    //cplexGrandSubP.exportModel("GrandSubP.lp");
+    cplexGrandSubP.exportModel("GrandSubP.lp");
     IloNum GrandSubObj = 0;
     while(true){
         cplexGrandSubP.solve();
-        if (cplexGrandP.getStatus() == 'Infeasible'){
+        if (cplexGrandSubP.getStatus() == 'Infeasible'){
             break;
         }
         else{
@@ -158,8 +175,17 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
             env.out() << "Objective: " << GrandSubObj << endl;
             
             //Retrieve solution
-            IloNumArray r_sol(env, GrandProbSol.size());
-            cplexGrandSubP.getValues(r_sol,cyvar);
+            IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
+            IloNumArray chvar_sol(env, Chains2ndTo3rd.size());
+            cplexGrandSubP.getValues(cyvar_sol,cyvar);
+            cplexGrandSubP.getValues(chvar_sol,cyvar);
+            
+            for (int i = 0; i < cyvar_sol.getSize(); i++){
+                if (cyvar_sol[i] > 0.9) cout << cyvar[i].getName() << endl;
+            }
+            for (int i = 0; i < chvar_sol.getSize(); i++){
+                if (chvar_sol[i] > 0.9) cout << chvar[i].getName() << endl;
+            }
             
             IloNumArray vertex_sol(env, Pairs);
             cplexGrandSubP.getValues(vertex_sol,vertex);
@@ -172,7 +198,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
             //Print curret solution
             cplexGrandSubP.exportModel("GrandSubP.lp");
             //Save new solution
-            UpdateSNPSol(r_sol, GrandSubObj);
+            //UpdateSNPSol(r_sol, GrandSubObj);
             PrintSolSNP(vertex_sol, arc_sol);
 
             
@@ -459,7 +485,6 @@ vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol
         }
     }
     return RecoChains;
-    
 }
 void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain){
     vector<int> null(1, -1);
@@ -495,6 +520,8 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
     vector<Chain>PPChains;
     ChainNodeTPH.clear();
     ArcsinChains.clear();
+    int counter = 0;
+    int save = 0;
     
     for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
         if (itVinChain->vertex > Pairs - 1 && v2inFirstStageSol(vinFirstStageSol, itVinChain->vertex) == true){
@@ -559,26 +586,40 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
                             }
                             //Add vertex to current chain
                             PPChains.back().Vnodes.push_back(*itVinChainAux);
+                            counter++;
                         }
                     }
                 }
                 else{
-                    if (PPChains.back().AccumWeight > 0){
-                        isin = v2inFirstStageSol(vinFirstStageSol, PPChains.back().Vnodes.back().vertex);
-                        if (isin == false){
+                    if (save == counter){// I did not add anybody
+                        if (PPChains.back().Vnodes.size() > 0){
                             PPChains.back().Vnodes.pop_back();
-                            Chain aux = PPChains.back();
-                            PPChains.push_back(aux);
                         }
                         else{
-                            Chain aux = PPChains.back();
-                            PPChains.push_back(aux);
-                            PPChains.back().Vnodes.pop_back();
-                            PPChains.back().AccumWeight--;
+                            PPChains.erase(PPChains.begin() + PPChains.size());
+                            break;
                         }
                     }
                     else{
-                        PPChains.back().Vnodes.pop_back();
+                        if (PPChains.back().AccumWeight > 0){
+                            isin = v2inFirstStageSol(vinFirstStageSol, PPChains.back().Vnodes.back().vertex);
+                            if (isin == false){
+                                PPChains.back().Vnodes.pop_back();
+                                Chain aux = PPChains.back();
+                                PPChains.push_back(aux);
+                                save = counter;
+                            }
+                            else{
+                                Chain aux = PPChains.back();
+                                PPChains.push_back(aux);
+                                PPChains.back().Vnodes.pop_back();
+                                PPChains.back().AccumWeight--;
+                                save = counter;
+                            }
+                        }
+                        else{
+                            PPChains.back().Vnodes.pop_back();
+                        }
                     }
                     //Find new neighbor
                     //FindNewNeighbor(PPChains);

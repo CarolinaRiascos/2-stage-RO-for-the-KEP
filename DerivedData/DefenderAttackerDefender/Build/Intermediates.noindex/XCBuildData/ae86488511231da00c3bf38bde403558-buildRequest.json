@@ -2,7 +2,7 @@
   "_buildCommand2" : {
     "command" : "build",
     "skipDependencies" : false,
-    "style" : "buildOnly"
+    "style" : "buildAndRun"
   },
   "buildCommand" : "build",
   "configuredTargets" : [
