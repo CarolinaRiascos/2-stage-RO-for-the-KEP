@@ -520,8 +520,7 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
     vector<Chain>PPChains;
     ChainNodeTPH.clear();
     ArcsinChains.clear();
-    int counter = 0;
-    int save = 0;
+    bool justPopedBacked = false;
     
     for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
         if (itVinChain->vertex > Pairs - 1 && v2inFirstStageSol(vinFirstStageSol, itVinChain->vertex) == true){
@@ -586,43 +585,30 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
                             }
                             //Add vertex to current chain
                             PPChains.back().Vnodes.push_back(*itVinChainAux);
-                            counter++;
                         }
                     }
                 }
                 else{
-                    if (save == counter){// I did not add anybody
-                        if (PPChains.back().Vnodes.size() > 0){
+                    if (PPChains.back().AccumWeight > 0){
+                        isin = v2inFirstStageSol(vinFirstStageSol, PPChains.back().Vnodes.back().vertex);
+                        if (isin == false){
                             PPChains.back().Vnodes.pop_back();
+                            Chain aux = PPChains.back();
+                            PPChains.push_back(aux);
                         }
                         else{
-                            PPChains.erase(PPChains.begin() + PPChains.size());
-                            break;
+                            Chain aux = PPChains.back();
+                            PPChains.push_back(aux);
+                            PPChains.back().Vnodes.pop_back();
+                            PPChains.back().AccumWeight--;
                         }
                     }
                     else{
-                        if (PPChains.back().AccumWeight > 0){
-                            isin = v2inFirstStageSol(vinFirstStageSol, PPChains.back().Vnodes.back().vertex);
-                            if (isin == false){
-                                PPChains.back().Vnodes.pop_back();
-                                Chain aux = PPChains.back();
-                                PPChains.push_back(aux);
-                                save = counter;
-                            }
-                            else{
-                                Chain aux = PPChains.back();
-                                PPChains.push_back(aux);
-                                PPChains.back().Vnodes.pop_back();
-                                PPChains.back().AccumWeight--;
-                                save = counter;
-                            }
-                        }
-                        else{
-                            PPChains.back().Vnodes.pop_back();
-                        }
+                        PPChains.back().Vnodes.pop_back();
                     }
-                    //Find new neighbor
-                    //FindNewNeighbor(PPChains);
+                    justPopedBacked = true;
+                //Find new neighbor
+                //FindNewNeighbor(PPChains);
                 }
             }
             PPChains.erase(PPChains.end() - 1);
