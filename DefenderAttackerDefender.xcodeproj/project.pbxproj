@@ -15,6 +15,7 @@
 		5B2589D025FFF1BD00708D26 /* libcplexdistmip.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B2589CE25FFF19B00708D26 /* libcplexdistmip.a */; };
 		5B2589D125FFF1F200708D26 /* libilocplex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B2589CF25FFF19B00708D26 /* libilocplex.a */; };
 		5B2589D92600189500708D26 /* Class_Problem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B2589D72600189500708D26 /* Class_Problem.cpp */; };
+		5B7F88B9273DA4F500F325D0 /* ThirdPhase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B7F88B7273DA4F500F325D0 /* ThirdPhase.cpp */; };
 		5B808FEB26FBB12300494C96 /* M-PICEF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B808FE926FBB12300494C96 /* M-PICEF.cpp */; };
 		5B808FEE270E00F600494C96 /* Dijkstra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B808FEC270E00F600494C96 /* Dijkstra.cpp */; };
 		5B8E69302601592900DA8F8A /* Reading.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B8E692F2601592900DA8F8A /* Reading.cpp */; };
@@ -46,6 +47,8 @@
 		5B2589D325FFFE4500708D26 /* main.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = main.hpp; sourceTree = "<group>"; };
 		5B2589D72600189500708D26 /* Class_Problem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Class_Problem.cpp; sourceTree = "<group>"; };
 		5B2589D82600189500708D26 /* Class_Problem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Class_Problem.hpp; sourceTree = "<group>"; };
+		5B7F88B7273DA4F500F325D0 /* ThirdPhase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ThirdPhase.cpp; sourceTree = "<group>"; };
+		5B7F88B8273DA4F500F325D0 /* ThirdPhase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ThirdPhase.hpp; sourceTree = "<group>"; };
 		5B808FE926FBB12300494C96 /* M-PICEF.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "M-PICEF.cpp"; sourceTree = "<group>"; };
 		5B808FEA26FBB12300494C96 /* M-PICEF.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = "M-PICEF.hpp"; sourceTree = "<group>"; };
 		5B808FEC270E00F600494C96 /* Dijkstra.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Dijkstra.cpp; sourceTree = "<group>"; };
@@ -109,6 +112,8 @@
 				5B808FEA26FBB12300494C96 /* M-PICEF.hpp */,
 				5B808FED270E00F600494C96 /* Dijkstra.hpp */,
 				5B808FEC270E00F600494C96 /* Dijkstra.cpp */,
+				5B7F88B7273DA4F500F325D0 /* ThirdPhase.cpp */,
+				5B7F88B8273DA4F500F325D0 /* ThirdPhase.hpp */,
 			);
 			path = DefenderAttackerDefender;
 			sourceTree = "<group>";
@@ -186,6 +191,7 @@
 				5B8E69302601592900DA8F8A /* Reading.cpp in Sources */,
 				5B808FEE270E00F600494C96 /* Dijkstra.cpp in Sources */,
 				5B808FEB26FBB12300494C96 /* M-PICEF.cpp in Sources */,
+				5B7F88B9273DA4F500F325D0 /* ThirdPhase.cpp in Sources */,
 				5B8E693326017DA500DA8F8A /* GrandProblem.cpp in Sources */,
 				5B2589D92600189500708D26 /* Class_Problem.cpp in Sources */,
 				5B2589BF25FFF02900708D26 /* main.cpp in Sources */,

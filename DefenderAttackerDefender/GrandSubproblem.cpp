@@ -18,14 +18,14 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     //Create cycle variables
     cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
     for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
-       SetName1Index(cyvar[i], "x", i);
+       SetName1Index(cyvar[i], "x", i + 1);
        //cout << r[i].getName() << endl;
     }
     
     //Create chain variables
     chvar = IloNumVarArray(env, Chains2ndTo3rd.size(), 0, 1, ILOINT);
     for (int i = 0; i < Chains2ndTo3rd.size(); i++){
-       SetName1Index(chvar[i], "y", i);
+       SetName1Index(chvar[i], "y", i + 1);
        //cout << r[i].getName() << endl;
     }
     
@@ -36,13 +36,13 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         arc[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, 1, ILOINT);
         for (int j = 0; j < AdjacencyList[i].getSize(); j++){
             mapArcs[make_pair(i, AdjacencyList[i][j] - 1)] = j;
-            SetName2(arc[i][j], "arc", i, AdjacencyList[i][j] - 1);
+            SetName2(arc[i][j], "arc", i + 1, AdjacencyList[i][j]);
         }
     }
     //Create vertex variables
     vertex = IloNumVarArray(env, Nodes, 0, 1, ILOINT);
     for (int i = 0; i < Nodes; i++){
-        SetName1Index( vertex[i], "vertex",i);
+        SetName1Index( vertex[i], "vertex",i + 1);
     }
     //Create bounding variable
     Beta = IloNumVar(env);
@@ -64,7 +64,6 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     ConsBeta = IloRange(env, 0, Beta - obj, IloInfinity);
     GrandSubProb.add(ConsBeta);
     //obj.end();
-    
     
     //Select a cycle/chain if it has not failed and no other was selected
     ActiveCCSubP_LB = IloRangeArray(env);
@@ -93,7 +92,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
             }
             //cout << Cycles2ndStage[idx].get_c()[j] << endl;
             for (int k = 0; k < ChainNodeSPH[u].size(); k++){
-                if (ChainNodeSPH[u][k] != i) forchains[ChainNodeSPH[u][k]];
+                forchains[ChainNodeSPH[u][k]];
             }
         }
         for (auto it = forcycles.begin(); it != forcycles.end(); it++){
@@ -129,7 +128,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
                 Expr2ArcsVtx+= arc[u][s];
             }
             for (int k = 0; k < CycleNodeSPH[u].size(); k++){
-                if (CycleNodeSPH[u][k] != i) forcycles[CycleNodeSPH[u][k]];
+                forcycles[CycleNodeSPH[u][k]];
             }
             for (int k = 0; k < ChainNodeSPH[u].size(); k++){
                 if (ChainNodeSPH[u][k] != i) forchains[ChainNodeSPH[u][k]];
@@ -148,9 +147,8 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         GrandSubProb.add(ActiveCCSubP_LB[ActiveCCSubP_LB.getSize() - 1]);
     }
     
-    
     IloExpr sumVertices (env, 0);
-    for (int i = 0; i < Pairs; i++){
+    for (int i = 0; i < Nodes; i++){
         sumVertices+=  vertex[i];
     }
     GrandSubProb.add(sumVertices <= 0);
@@ -165,59 +163,40 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     
     cplexGrandSubP.exportModel("GrandSubP.lp");
     IloNum GrandSubObj = 0;
-    while(true){
-        cplexGrandSubP.solve();
-        if (cplexGrandSubP.getStatus() == 'Infeasible'){
-            break;
+    cplexGrandSubP.solve();
+    if (cplexGrandSubP.getStatus() == 'Infeasible'){
+        cout << "S.O.S. This should not happen." << endl;
+    }
+    else{
+        GrandSubObj = cplexGrandSubP.getObjValue();
+        env.out() << "Objective: " << GrandSubObj << endl;
+        
+        //Retrieve solution
+        IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
+        IloNumArray chvar_sol(env, Chains2ndTo3rd.size());
+        cplexGrandSubP.getValues(cyvar_sol,cyvar);
+        cplexGrandSubP.getValues(chvar_sol,chvar);
+        
+        for (int i = 0; i < cyvar_sol.getSize(); i++){
+            if (cyvar_sol[i] > 0.9) cout << cyvar[i].getName() << endl;
         }
-        else{
-            GrandSubObj = cplexGrandSubP.getObjValue();
-            env.out() << "Objective: " << GrandSubObj << endl;
-            
-            //Retrieve solution
-            IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
-            IloNumArray chvar_sol(env, Chains2ndTo3rd.size());
-            cplexGrandSubP.getValues(cyvar_sol,cyvar);
-            cplexGrandSubP.getValues(chvar_sol,cyvar);
-            
-            for (int i = 0; i < cyvar_sol.getSize(); i++){
-                if (cyvar_sol[i] > 0.9) cout << cyvar[i].getName() << endl;
-            }
-            for (int i = 0; i < chvar_sol.getSize(); i++){
-                if (chvar_sol[i] > 0.9) cout << chvar[i].getName() << endl;
-            }
-            
-            IloNumArray vertex_sol(env, Pairs);
-            cplexGrandSubP.getValues(vertex_sol,vertex);
-            
-            IloNumArray2 arc_sol(env, AdjacencyList.getSize());
-            for (int f = 0; f < arc_sol.getSize(); f++){
-                arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
-                cplexGrandSubP.getValues(arc_sol[f],arc[f]);
-            }
-            //Print curret solution
-            cplexGrandSubP.exportModel("GrandSubP.lp");
-            //Save new solution
-            //UpdateSNPSol(r_sol, GrandSubObj);
-            PrintSolSNP(vertex_sol, arc_sol);
+        for (int i = 0; i < chvar_sol.getSize(); i++){
+            if (chvar_sol[i] > 0.9) cout << chvar[i].getName() << endl;
+        }
+        cout << "Beta: " << cplexGrandSubP.getValue(Beta) << endl;
+        
+        IloNumArray vertex_sol(env, Pairs);
+        cplexGrandSubP.getValues(vertex_sol,vertex);
+        
+        IloNumArray2 arc_sol(env, AdjacencyList.getSize());
+        for (int f = 0; f < arc_sol.getSize(); f++){
+            arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+            cplexGrandSubP.getValues(arc_sol[f],arc[f]);
+        }
 
-            
-            RepSolCounter++;
-            //BackRecoursePolicy(vertex_sol, arc_sol);
-            //AllPolicy(vertex_sol, arc_sol);
-            //RepairedListCCs = AmongPolicy(arc_sol); // It updates NewListCCs
-            //Update arrays in GranSubSolSet and CycleNodeGSP
-            //CheckNewIncludedVerticesGSP(GrandSubSolSet, RepairedListCCs);
-            
-            //Add new cols and rows
-            //AddRow_MakeOneFail();
-            //AddRowsCols_ActiveCCSubP_LB();
-            cplexGrandSubP.exportModel("GrandSubP.lp");
-        }
+        RepSolCounter++;
     }
     cout << "Hola" << endl;
-    
-    
 }
 void Problem::FillRobustSolTHP(){
     for(int i = 0; i < GrandProbSol.size(); i++){
@@ -307,13 +286,25 @@ vector<Cycles> Problem::Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSo
             }
         }
     }
+    //Fill in CycleNodeTPH
+    for (int i = 0; i < RecoCycles.size(); i++){
+        for (int j = 0; j < RecoCycles[i].get_c().size(); j++){
+            CycleNodeTPH[RecoCycles[i].get_c()[j]].push_back(i);
+            if (j <= RecoCycles[i].get_c().size() - 2){
+                ArcsinCyclesTHP[make_pair(RecoCycles[i].get_c()[j], RecoCycles[i].get_c()[j + 1])].push_back(i);
+            }
+            else{
+                ArcsinCyclesTHP[make_pair(RecoCycles[i].get_c()[j], RecoCycles[i].get_c()[0])].push_back(i);
+            }
+        }
+    }
     
     return RecoCycles;
 }
 vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
     CycleNodeTPH.clear();
-    ArcsinCycles.clear();
+    ArcsinCyclesTHP.clear();
     
         IloNumArray2 AdjaList (env, AdjacencyList.getSize());
 
@@ -341,10 +332,10 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
                 for (int l = 0; l < NewList[k].get_c().size(); l++){
                     CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
                     if (l <= NewList[k].get_c().size() - 2){
-                        ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[l + 1])].push_back(int(NewListCCs.size() - 1));
+                        ArcsinCyclesTHP[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[l + 1])].push_back(int(NewListCCs.size() - 1));
                     }
                     else{
-                        ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[0])].push_back(int(NewListCCs.size() - 1));
+                        ArcsinCyclesTHP[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[0])].push_back(int(NewListCCs.size() - 1));
                     }
                 }
             }
@@ -358,7 +349,7 @@ vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
 vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
     CycleNodeTPH.clear();
-    ArcsinCycles.clear();
+    ArcsinCyclesTHP.clear();
     
     IloNumArray2 AdjaList (env, AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
@@ -385,15 +376,6 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
         for (int k = 0; k < NewList.size(); k++){
             NewListCCs.push_back(NewList[k]);
             NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
-            for (int l = 0; l < NewList[k].get_c().size(); l++){
-                CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap for the third phase
-                if (l <= NewList[k].get_c().size() - 2){
-                    ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[l + 1])].push_back(int(NewListCCs.size() - 1));
-                }
-                else{
-                    ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[0])].push_back(int(NewListCCs.size() - 1));
-                }
-            }
         }
         //Remove from Adja List
         AdjaList[origin].clear();
@@ -404,7 +386,7 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
 vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
     vector<Cycles> NewListCCs;
     CycleNodeTPH.clear();
-    ArcsinCycles.clear();
+    ArcsinCyclesTHP.clear();
 
     //Make a copy of Adjacency List
     IloNumArray2 AdjaList(env,AdjacencyList.getSize());
@@ -426,13 +408,6 @@ vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
             for (int l = 0; l < NewList[k].get_c().size(); l++){
                 int pos = FindPosVector(ListVertices, NewList[k].get_c()[l]);
                 if (pos != -1) counter++;
-                CycleNodeTPH[NewList[k].get_c()[l]].push_back(int(NewListCCs.size() - 1));//CycleNodeMap fosecond phase
-                if (l <= NewList[k].get_c().size() - 2){
-                    ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[l + 1])].push_back(int(NewListCCs.size() - 1));
-                }
-                else{
-                    ArcsinCycles[make_pair(NewList[k].get_c()[l], NewList[k].get_c()[0])].push_back(int(NewListCCs.size() - 1));
-                }
             }
             NewListCCs.back().set_Many(counter);
         }
@@ -484,6 +459,20 @@ vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol
             }
         }
     }
+    
+    //Fill in ChainNodeTPH
+    for (int i = 0; i < RecoChains.size(); i++){
+        for (int j = 0; j < RecoChains[i].Vnodes.size(); j++){
+            ChainNodeTPH[RecoChains[i].Vnodes[j].vertex].push_back(i);
+            if (j <= RecoChains[i].Vnodes.size() - 2){
+                ArcsinChainsTHP[make_pair(RecoChains[i].Vnodes[j].vertex, RecoChains[i].Vnodes[j + 1].vertex)].push_back(i);
+            }
+            else{
+                ArcsinChainsTHP[make_pair(RecoChains[i].Vnodes[j].vertex, RecoChains[i].Vnodes[0].vertex)].push_back(i);
+            }
+        }
+    }
+    
     return RecoChains;
 }
 void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain){
@@ -519,7 +508,7 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
     vector<vChain>::iterator itVinChainAux;
     vector<Chain>PPChains;
     ChainNodeTPH.clear();
-    ArcsinChains.clear();
+    ArcsinChainsTHP.clear();
     bool justPopedBacked = false;
     
     for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
@@ -551,40 +540,27 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
                             //Do nothing
                         }
                         else{
-                            if (isin == true && PPChains.back().AccumWeight >= 1){// Update weight only if v is in the 1st-stage solution
+                            if (isin == true && PPChains.back().AccumWeight >= 1 && justPopedBacked == false){// Update weight only if v is in the 1st-stage solution
                                 Chain aux = PPChains.back();
                                 PPChains.push_back(aux);
                                 PPChains.back().AccumWeight++;
-                                ChainNodeTPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
                                 for (int j = 0; j < PPChains.back().Vnodes.size(); j++){
                                     int v = PPChains.back().Vnodes[j].vertex;
-                                    ChainNodeTPH[v].push_back(int(PPChains.size() - 1));
                                     //Map arcs to cycles
                                     if (j <= PPChains.back().Vnodes.size() - 2){
-                                        ArcsinChains[make_pair(v, PPChains.back().Vnodes[j + 1].vertex)].push_back(int(PPChains.size() - 1));
+                                        ArcsinChainsTHP[make_pair(v, PPChains.back().Vnodes[j + 1].vertex)].push_back(int(PPChains.size() - 1));
                                     }
                                     else{
-                                        ArcsinChains[make_pair(v, itVinChainAux->vertex)].push_back(int(PPChains.size() - 1));
+                                        ArcsinChainsTHP[make_pair(v, itVinChainAux->vertex)].push_back(int(PPChains.size() - 1));
                                     }
                                 }
                             }
-                            else if (isin == true){
-                                ChainNodeTPH[itVinChainAux->vertex].push_back(int(PPChains.size() - 1));
-                                for (int j = 0; j < PPChains.back().Vnodes.size(); j++){
-                                    int v = PPChains.back().Vnodes[j].vertex;
-                                    ChainNodeTPH[v].push_back(int(PPChains.size() - 1));
-                                    //Map arcs to cycles
-                                    if (j <= PPChains.back().Vnodes.size() - 2){
-                                        ArcsinChains[make_pair(v, PPChains.back().Vnodes[j + 1].vertex)].push_back(int(PPChains.size() - 1));
-                                    }
-                                    else{
-                                        ArcsinChains[make_pair(v, itVinChainAux->vertex)].push_back(int(PPChains.size() - 1));
-                                    }
-                                }
-                                PPChains.back().AccumWeight++;
+                            else {
+                                if (isin == true)   PPChains.back().AccumWeight++;
                             }
                             //Add vertex to current chain
                             PPChains.back().Vnodes.push_back(*itVinChainAux);
+                            justPopedBacked = false;
                         }
                     }
                 }
@@ -594,11 +570,11 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
                         if (isin == false){
                             PPChains.back().Vnodes.pop_back();
                             Chain aux = PPChains.back();
-                            PPChains.push_back(aux);
+                            if (justPopedBacked == false) PPChains.push_back(aux);
                         }
                         else{
                             Chain aux = PPChains.back();
-                            PPChains.push_back(aux);
+                            if (justPopedBacked == false) PPChains.push_back(aux);
                             PPChains.back().Vnodes.pop_back();
                             PPChains.back().AccumWeight--;
                         }
@@ -614,13 +590,6 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
             PPChains.erase(PPChains.end() - 1);
         }
     }
-    //Transfer chains to Bestchains
-//    for (int i = 0; i < PPChains.size();i++){
-//        Chains.push_back(vector<int>());
-//        for (int j = 0; j < PPChains[i].Vnodes.size(); j++){
-//            Chains.back().push_back(PPChains[i].Vnodes[j].vertex);
-//        }
-//    }
     
     if (Chains.size() > 0){
         if (Chains[0].size() == 1){
@@ -628,7 +597,6 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
         }
     }
     return PPChains;
-    
 }
 bool v2inFirstStageSol(vector<int>sol, int v){
     for (int i = 0; i < sol.size(); i++){
@@ -684,10 +652,10 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles){
     for (int i = 0; i < Chains.size(); i++){
         Chains2ndTo3rd[counter] = i;
         for (int j = 0; j < Chains[i].Vnodes.size(); j++){
-            ChainNodeSPH[Chains[i].Vnodes[j].vertex].push_back(counter);
+            int u = Chains[i].Vnodes[j].vertex;
+            ChainNodeSPH[u].push_back(counter);
         }
         counter++;
         if (counter == 100) break;
     }
-    
 }

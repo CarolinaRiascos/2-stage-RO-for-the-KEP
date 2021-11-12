@@ -202,8 +202,8 @@ public:
     vector<Cycles> RobustSolTHP;
     vector<IndexGrandSubSol> GrandProbSol;
     vector<vChain> VertexinSolChain;
-    map<pair<int,int>, vector<int>> ArcsinCycles;
-    map<pair<int,int>, vector<int>> ArcsinChains;
+    map<pair<int,int>, vector<int>> ArcsinCyclesTHP;
+    map<pair<int,int>, vector<int>> ArcsinChainsTHP;
     map<pair<int,int>, bool> FailedArcs;
     map<int, bool> FailedVertices;
     map<int,int>Cycles2ndTo3rd;
@@ -227,6 +227,23 @@ public:
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
     void PrintSolSNP(IloNumArray vertex_sol, IloNumArray2 arc_sol);
     void FillRobustSolTHP();
+    
+    //Third Phase
+    void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage);
+        //Model
+        IloModel mTHPMIP;
+        IloCplex cplexmTHPMIP;
+        //Decision variables
+        IloNumVarArray tcyvar;
+        IloNumVarArray tchvar;
+        IloNumVarArray Create_tcyvar(const char* prefix, vector<Cycles>&Cycles2ndStage);
+        IloNumVarArray Create_tchvar(const char* prefix, vector<Chain>&Chains2ndStage);
+        map<int,bool> GetUB_tcyvar(map<pair<int,int>, bool>&FailedArcs, map<int, bool>& FailedVertices);
+        map<int,bool> GetUB_tchvar(map<pair<int,int>, bool>&FailedArcs, map<int, bool>& FailedVertices);
+        //Constraints
+        IloRangeArray DisjointTHPArray;
+        IloRangeArray DisjointTHP(IloNumVarArray& tcyvar, IloNumVarArray& tchvar);
+        
 
     void HeadingCF();
     void PrintCF();
