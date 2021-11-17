@@ -23,79 +23,92 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     
     //Solve formulation
     cplexmTHPMIP.solve();
+    if (cplexmTHPMIP.getStatus() == 'Infeasible'){
+        cout << "S.O.S. This should not happen." << endl;
+    }
+    else{
+        TPMIP_Obj = cplexmTHPMIP.getObjValue();
+    }
     
-    //Retrieve Solution and check whether the cycles are contained in Cycles2ndTo3rd and Chains2ndTo3rd
-    IloNumArray tcysol (env, tcyvar.getSize());
-    cplexmTHPMIP.getValues(tcysol,tcyvar);
-    IloNumArray tchsol (env, tcyvar.getSize());
-    cplexmTHPMIP.getValues(tchsol,tchvar);
-    AddNewCols3rdTo2nd (tcysol, tchsol, Cycles2ndTo3rd, Chains2ndTo3rd, Cycles3rdTo2nd, Chains3rdTo2nd, Cyclenewrow2ndPH, Chainnewrow2ndPH, tcysol3rd, tchsol3rd, Cycles2ndStage, Chains2ndStage);
-    
-    for (int i = 0; i < tcysol3rd.size(); i++){
-        //OldActiveCCSubP_CY
-        vector<int> OldActiveCY;
-        OldActiveCY = ModifyOldActiveCCSubP_CY(tcysol3rd[i], Cycles2ndTo3rd, Cyclenewrow2ndPH, Cycles2ndStage);
-        //OldSelVert2ndPH
-        vector<int> OldSelVert2ndPH;
-        OldSelVert2ndPH = ModifyOldSelectVex_CY(tcysol3rd[i], ListSelVertices, Cycles2ndStage);
+    if (SPMIP_Obj < TPMIP_Obj){
+        //Retrieve Solution and check whether the cycles are contained in Cycles2ndTo3rd and Chains2ndTo3rd
+        IloNumArray tcysol (env, tcyvar.getSize());
+        cplexmTHPMIP.getValues(tcysol,tcyvar);
+        IloNumArray tchsol (env, tcyvar.getSize());
+        cplexmTHPMIP.getValues(tchsol,tchvar);
+        AddNewCols3rdTo2nd (tcysol, tchsol, Cycles2ndTo3rd, Chains2ndTo3rd, Cycles3rdTo2nd, Chains3rdTo2nd, Cyclenewrow2ndPH, Chainnewrow2ndPH, tcysol3rd, tchsol3rd, Cycles2ndStage, Chains2ndStage);
+        if (tcysol3rd.size() != 0 || tchsol3rd.size() != 0){
+            //Add cols and constraints to SPMIP
+            for (int i = 0; i < tcysol3rd.size(); i++){
+                //OldActiveCCSubP_CY
+                vector<int> OldActiveCY;
+                OldActiveCY = ModifyOldActiveCCSubP_CY(tcysol3rd[i], Cycles2ndTo3rd, Cyclenewrow2ndPH, Cycles2ndStage);
+                //OldSelVert2ndPH
+                vector<int> OldSelVert2ndPH;
+                OldSelVert2ndPH = ModifyOldSelectVex_CY(tcysol3rd[i], ListSelVertices, Cycles2ndStage);
 
-        //Create new cycle column
-        IloNumColumn col(env);
-        //Create new variable
-        cyvar.add(IloNumVar(col));
-        string name = "x." + to_string(Cyclenewrow2ndPH + i);
-        const char* varName = name.c_str();
-        cyvar[cyvar.getSize() - 1].setName(varName);
-        cyvar[cyvar.getSize() - 1].setBounds(0, 1);
-        
-        //Update Beta constraint
-        col+= ConsBeta[0](-1);
-        //UpdateSelVert2ndPH
-        for (int i = 0; i < OldSelVert2ndPH.size(); i++){
-            SelVert2ndPH[OldSelVert2ndPH[i]](-1);
+                //Create new cycle column
+                IloNumColumn col(env);
+                //Create new variable
+                cyvar.add(IloNumVar(col));
+                string name = "x." + to_string(Cyclenewrow2ndPH + i);
+                const char* varName = name.c_str();
+                cyvar[cyvar.getSize() - 1].setName(varName);
+                cyvar[cyvar.getSize() - 1].setBounds(0, 1);
+                
+                //Update Beta constraint
+                col+= ConsBeta[0](-1);
+                //UpdateSelVert2ndPH
+                for (int i = 0; i < OldSelVert2ndPH.size(); i++){
+                    SelVert2ndPH[OldSelVert2ndPH[i]](-1);
+                }
+                //UpdateActiveCCSubP_CY
+                for (int i = 0; i < OldActiveCY.size(); i++){
+                    ActiveCCSubP_CY[OldActiveCY[i]](-1);
+                }
+                //NewActiveCCSubP_CY
+                GetNewIloRangeCY3rd(tcysol3rd[i], Cycles2ndStage);
+                GrandSubProb.add(ActiveCCSubP_CY[ActiveCCSubP_CY.getSize() - 1]);
+                
+            }
+            for (int i = 0; i < tchsol3rd.size(); i++){
+                //OldActiveCCSubP_CH
+                vector<int> OldActiveCH;
+                OldActiveCH = ModifyOldActiveCCSubP_CH(tchsol3rd[i], Cycles2ndTo3rd, Chainnewrow2ndPH, Chains2ndStage);
+                //OldSelVert2ndPH
+                vector<int> OldSelVert2ndPH;
+                OldSelVert2ndPH = ModifyOldSelectVex_CH(tchsol3rd[i], ListSelVertices, Chains2ndStage);
+                //Create new chain column
+                IloNumColumn col(env);
+                //Create new variable
+                chvar.add(IloNumVar(col));
+                string name = "y." + to_string(Chainnewrow2ndPH + i);
+                const char* varName = name.c_str();
+                chvar[chvar.getSize() - 1].setName(varName);
+                chvar[chvar.getSize() - 1].setBounds(0, 1);
+                
+                //Update Beta constraint
+                col+= ConsBeta[0](-1);
+                //UpdateSelVert2ndPH
+                for (int i = 0; i < OldSelVert2ndPH.size(); i++){
+                    SelVert2ndPH[OldSelVert2ndPH[i]](-1);
+                }
+                //UpdateActiveCCSubP_CH
+                for (int i = 0; i < OldActiveCH.size(); i++){
+                    ActiveCCSubP_CH[OldActiveCH[i]](-1);
+                }
+                //NewActiveCCSubP_CH
+                GetNewIloRangeCH3rd(tcysol3rd[i], Chains2ndStage);
+                GrandSubProb.add(ActiveCCSubP_CH[ActiveCCSubP_CH.getSize() - 1]);
+            }
         }
-        //UpdateActiveCCSubP_CY
-        for (int i = 0; i < OldActiveCY.size(); i++){
-            ActiveCCSubP_CY[OldActiveCY[i]](-1);
-        }
-        //NewActiveCCSubP_CY
-        GetNewIloRangeCY3rd(tcysol3rd[i], Cycles2ndStage);
-        GrandSubProb.add(ActiveCCSubP_CY[ActiveCCSubP_CY.getSize() - 1]);
+        //Add NoGoodCut
+        ConsBeta.add(ConsBeta[ConsBeta.getSize() - 1]);
+        //Solve 2ndPhase
+    }
+    else{
         
     }
-    for (int i = 0; i < tchsol3rd.size(); i++){
-        //OldActiveCCSubP_CH
-        vector<int> OldActiveCH;
-        OldActiveCH = ModifyOldActiveCCSubP_CH(tchsol3rd[i], Cycles2ndTo3rd, Chainnewrow2ndPH, Chains2ndStage);
-        //OldSelVert2ndPH
-        vector<int> OldSelVert2ndPH;
-        OldSelVert2ndPH = ModifyOldSelectVex_CH(tchsol3rd[i], ListSelVertices, Chains2ndStage);
-        //Create new chain column
-        IloNumColumn col(env);
-        //Create new variable
-        chvar.add(IloNumVar(col));
-        string name = "y." + to_string(Chainnewrow2ndPH + i);
-        const char* varName = name.c_str();
-        chvar[chvar.getSize() - 1].setName(varName);
-        chvar[chvar.getSize() - 1].setBounds(0, 1);
-        
-        //Update Beta constraint
-        col+= ConsBeta[0](-1);
-        //UpdateSelVert2ndPH
-        for (int i = 0; i < OldSelVert2ndPH.size(); i++){
-            SelVert2ndPH[OldSelVert2ndPH[i]](-1);
-        }
-        //UpdateActiveCCSubP_CH
-        for (int i = 0; i < OldActiveCH.size(); i++){
-            ActiveCCSubP_CH[OldActiveCH[i]](-1);
-        }
-        //NewActiveCCSubP_CH
-        GetNewIloRangeCH3rd(tcysol3rd[i], Chains2ndStage);
-        GrandSubProb.add(ActiveCCSubP_CH[ActiveCCSubP_CH.getSize() - 1]);
-    }
-    //Add NoGoodCut
-    
-    
     //Get THPMIP_Obj
         //if (THPMIP_Obj >= FPMIP_Obj){
         //  if (SPMIP_Obj < THPMIP_Obj){
@@ -195,14 +208,14 @@ IloRangeArray Problem::DisjointTHP(IloNumVarArray& tcyvar, IloNumVarArray& tchva
     }
     return DisjointTHPArray;
 }
-void Problem::AddNewCols3rdTo2nd (IloNumArray tcysol, IloNumArray tchsol, map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, map<int,int>& Cycles3rdTo2nd, map<int,int>& Chains3rdTo2nd, int& Cyclenewrow2ndPH, int& Chainnewrow2ndPH, vector<int>& tcysol2nd, vector<int>& tchsol2nd, vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage){
+void Problem::AddNewCols3rdTo2nd (IloNumArray tcysol, IloNumArray tchsol, map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, map<int,int>& Cycles3rdTo2nd, map<int,int>& Chains3rdTo2nd, int& Cyclenewrow2ndPH, int& Chainnewrow2ndPH, vector<int>& tcysol3rd, vector<int>& tchsol3rd, vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage){
     Cyclenewrow2ndPH = int(Cycles2ndTo3rd.size());
     Chainnewrow2ndPH = int(Chains2ndTo3rd.size());
-    tcysol2nd.clear();
-    tchsol2nd.clear();
+    tcysol3rd.clear();
+    tchsol3rd.clear();
     for (int i = 0; i < tcysol.getSize(); i++){
         if (tcysol[i] > 0.9){
-            tcysol2nd.push_back(i);
+            tcysol3rd.push_back(i);
             map<int,int>::iterator it = Cycles3rdTo2nd.find(i);
             if (it == Cycles3rdTo2nd.end()){
                 Cycles2ndTo3rd[int(Cycles2ndTo3rd.size() - 1)] = i;
@@ -216,7 +229,7 @@ void Problem::AddNewCols3rdTo2nd (IloNumArray tcysol, IloNumArray tchsol, map<in
     }
     for (int i = 0; i < tchsol.getSize(); i++){
         if (tchsol[i] > 0.9){
-            tchsol2nd.push_back(i);
+            tchsol3rd.push_back(i);
             map<int,int>::iterator it = Chains3rdTo2nd.find(i);
             if (it == Chains3rdTo2nd.end()){
                 Chains2ndTo3rd[int(Chains2ndTo3rd.size() - 1)] = i;
@@ -295,7 +308,7 @@ vector<int>Problem::ModifyOldSelectVex_CH(int tOnechsol2nd, vector<int>ListSelVe
     
     return UpdateOldSelectVex_CH;
 }
-IloRange Problem::GetNewIloRangeCY3rd(int tOnecysol3rd, vector<Cycles>&Cycles2ndStage){
+void Problem::GetNewIloRangeCY3rd(int tOnecysol3rd, vector<Cycles>&Cycles2ndStage){
     
     IloExpr ExprArcsVtx (env, 0);
     IloExpr AllccVars (env, 0);
@@ -335,9 +348,8 @@ IloRange Problem::GetNewIloRangeCY3rd(int tOnecysol3rd, vector<Cycles>&Cycles2nd
     //cout << cyvar[i].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
     ActiveCCSubP_CY.add(IloRange(env, 1, cyvar[Cycles3rdTo2nd[idx]] + ExprArcsVtx + AllccVars, IloInfinity, cName));
     
-    return NewIloRangeCY3rd;
 }
-IloRange Problem::GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage){
+void Problem::GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage){
     IloExpr Expr2ArcsVtx (env, 0);
     IloExpr All2ccVars (env, 0);
     map<int,bool>forcycles;
@@ -369,5 +381,19 @@ IloRange Problem::GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndS
     //cout << cyvar[i].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
     ActiveCCSubP_CH.add(IloRange(env, 1, chvar[Cycles3rdTo2nd[idx]] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName));
     
-    return NewIloRangeCH3rd;
+}
+void Problem::GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices){
+    IloExpr expr(env);
+    
+    for (int i = 0; i < AdjacencyList.getSize(); i++){
+        map<int, bool>::iterator it = FailedVertices.find(i);
+        if (it == FailedVertices.end()){
+            expr+= vertex[i];
+            for (int j = 0; j < AdjacencyList[i].getSize(); j++){
+                map<pair<int,int>, bool>::iterator it2 = FailedArcs.find(make_pair(i, AdjacencyList[i][j] - 1));
+                if (it2 == FailedArcs.end()) expr+= arc[i][j];
+            }
+        }
+    }
+    ConsBeta.add(IloRange(env, 0, Beta + expr - TPMIP_Obj, IloInfinity));
 }

@@ -190,8 +190,8 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         cout << "S.O.S. This should not happen." << endl;
     }
     else{
-        SPMIP_Obj = cplexGrandSubP.getObjValue();
-        env.out() << "Objective: " << SPMIP_Obj - cplexGrandSubP.getValue(Excess) << endl;
+        SPMIP_Obj = cplexGrandSubP.getValue(Beta);
+        env.out() << "Objective: " << SPMIP_Obj << endl;//cplexGrandSubP.getValue(Excess)
         
         //Retrieve solution
         IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
