@@ -60,6 +60,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
         //NewActiveCCSubP_CY
         GetNewIloRangeCY3rd(tcysol3rd[i], Cycles2ndStage);
+        GrandSubProb.add(ActiveCCSubP_CY[ActiveCCSubP_CY.getSize() - 1]);
         
     }
     for (int i = 0; i < tchsol3rd.size(); i++){
@@ -90,8 +91,9 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
         //NewActiveCCSubP_CH
         GetNewIloRangeCH3rd(tcysol3rd[i], Chains2ndStage);
+        GrandSubProb.add(ActiveCCSubP_CH[ActiveCCSubP_CH.getSize() - 1]);
     }
-    //NoGoodCut
+    //Add NoGoodCut
     
     
     //Get THPMIP_Obj
@@ -331,7 +333,7 @@ IloRange Problem::GetNewIloRangeCY3rd(int tOnecysol3rd, vector<Cycles>&Cycles2nd
     string name = "Active_cyvar2nd." + to_string(Cycles3rdTo2nd[idx]);
     const char* cName = name.c_str();
     //cout << cyvar[i].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
-    NewIloRangeCY3rd = IloRange(env, 1, cyvar[Cycles3rdTo2nd[idx]] + ExprArcsVtx + AllccVars, IloInfinity, cName);
+    ActiveCCSubP_CY.add(IloRange(env, 1, cyvar[Cycles3rdTo2nd[idx]] + ExprArcsVtx + AllccVars, IloInfinity, cName));
     
     return NewIloRangeCY3rd;
 }
@@ -365,7 +367,7 @@ IloRange Problem::GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndS
     string name = "Active_chvar2nd." + to_string(Cycles3rdTo2nd[idx]);
     const char* cName = name.c_str();
     //cout << cyvar[i].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
-    NewIloRangeCH3rd = IloRange(env, 1, chvar[Cycles3rdTo2nd[idx]] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName);
+    ActiveCCSubP_CH.add(IloRange(env, 1, chvar[Cycles3rdTo2nd[idx]] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName));
     
     return NewIloRangeCH3rd;
 }
