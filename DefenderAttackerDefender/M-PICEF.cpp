@@ -122,8 +122,8 @@ void Problem::M_PICEF(){
    else {
        //Retrieve solution
 
-       int Obj_MPICEF = cplexmPICEF.getObjValue();
-       env.out() << "M-PICEF Objective: " << Obj_MPICEF << endl;
+       FPMIP_Obj = cplexmPICEF.getObjValue();
+       env.out() << "M-PICEF Objective: " << FPMIP_Obj << endl;
        
        
        for (int i = 0; i < xsol.getSize(); i++){
@@ -190,7 +190,7 @@ void Problem::M_PICEF(){
        vector<Chain>Chains2ndStage;
        Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
        Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
-       GrandSubProbMaster(Cycles2ndStage,Chains2ndStage);
+       GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
    }
 }
 IloExpr Problem::GetObjMPICEF(){

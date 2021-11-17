@@ -68,24 +68,24 @@ void Problem::KEP_CycleFormulation(){
                env.out() << "No solution" << endl;
            }
            else {
-               CFObj = cplexGrandP.getObjValue();
+               FPMIP_Obj = cplexGrandP.getObjValue();
                BestObj = cplexGrandP.getBestObjValue();
                Gap = cplexGrandP.getMIPRelativeGap();
                NCycles = ListCycles.size();
                SolTime = time2 - time1;
                
-               env.out() << "Objective: " << CFObj << endl;
+               env.out() << "Objective: " << FPMIP_Obj << endl;
                
                IloNumArray z_sol(env, ListCycles.size());
                cplexGrandP.getValues(z_sol,z);
                
                GrandProbSol.clear();
-               for (int f = 0; f < z_sol.getSize(); f++){
-                   if (z_sol[f] > 0.9){
-                       GrandProbSol.push_back(IndexGrandSubSol(ListCycles[f].get_c(), ListCycles[f].get_w()));
-                       GrandProbSol.back().set_ite(1);
-                   }
-               }
+//               for (int f = 0; f < z_sol.getSize(); f++){
+//                   if (z_sol[f] > 0.9){
+//                       GrandProbSol.push_back(IndexGrandSubSol(ListCycles[f].get_c(), ListCycles[f].get_w()));
+//                       GrandProbSol.back().set_ite(1);
+//                   }
+//               }
                //GrandSubProbMaster();
                cout << "hi";
            }
@@ -148,8 +148,8 @@ void Problem::AddNewColsConsGP(){
     }
     cplexGrandP.exportModel("GrandProb.lp");
     cplexGrandP.solve();
-    CFObj = cplexGrandP.getObjValue();
-    env.out() << "Objective: " << CFObj << endl;
+    FPMIP_Obj = cplexGrandP.getObjValue();
+    env.out() << "Objective: " << FPMIP_Obj << endl;
     
 }
 void Problem::SetName1Index(IloNumVar& var, const char* prefix, IloInt i){

@@ -7,7 +7,7 @@
 //
 
 #include "GrandSubproblem.hpp"
-void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage){
+void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
     // Create model
     GrandSubProb = IloModel(env);
     cplexGrandSubP = IloCplex(GrandSubProb);
@@ -30,7 +30,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     
     //Create arc variables
-    map<pair<int,int>,int> mapArcs;
+    mapArcs.clear();
     arc = IloNumVarArray2(env,AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
         arc[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, 1, ILOINT);
@@ -44,10 +44,37 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     for (int i = 0; i < Nodes; i++){
         SetName1Index( vertex[i], "vertex",i + 1);
     }
+    //Create selected-vertex variables
+    vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
+    selvertex = IloNumVarArray(env, ListSelVertices.size(), 0, 1, ILOINT);
+    for (int i = 0; i < selvertex.getSize(); i++){
+        SetName1Index(selvertex[i], "selv", ListSelVertices[i] + 1);
+    }
+    
     //Create bounding variable
     Beta = IloNumVar(env);
     SetName1Index(Beta, "Beta", 0);
-    
+    //Create excess variable in objective
+    Excess = IloNumVar(env);
+    IloExpr excess (env, 0);
+    SetName1Index(Excess, "Excess", 0);
+    for (int i = 0; i < ListSelVertices.size(); i++){
+        excess += 1 - selvertex[i];
+    }
+    GrandSubProb.add(IloRange(env, 0, Excess - excess, 0));
+    SelVert2ndPH = IloRangeArray(env, 0);
+    //Add vertex-selection constraint
+    for (int i = 0; i < ListSelVertices.size(); i++){
+        IloExpr exSel(env, 0);
+        for (int j = 0; j < CycleNodeSPH[ListSelVertices[i]].size(); j++){
+            exSel+= cyvar[CycleNodeSPH[ListSelVertices[i]][j]];
+        }
+        for (int j = 0; j < ChainNodeSPH[ListSelVertices[i]].size(); j++){
+            exSel+= chvar[ChainNodeSPH[ListSelVertices[i]][j]];
+        }
+        SelVert2ndPH.add(IloRange(env, -IloInfinity, selvertex[i] - exSel, 0));
+    }
+    GrandSubProb.add(SelVert2ndPH);
     //Add Objective function and Bounding Constraint
     string name = "Obj_GrandSubP";
     
@@ -59,14 +86,15 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     for (int i = 0; i < Chains2ndTo3rd.size(); i++){
         obj += Chains2ndStage[Chains2ndTo3rd[i]].AccumWeight*chvar[i];
     }
-    ObjGrandSubP = IloObjective(env, Beta, IloObjective::Minimize, cName);
+    ObjGrandSubP = IloObjective(env, Beta + Excess, IloObjective::Minimize, cName);
     GrandSubProb.add(ObjGrandSubP);
-    ConsBeta = IloRange(env, 0, Beta - obj, IloInfinity);
+    ConsBeta.add(IloRange(env, 0, Beta - obj , IloInfinity));
     GrandSubProb.add(ConsBeta);
     //obj.end();
     
     //Select a cycle/chain if it has not failed and no other was selected
-    ActiveCCSubP_LB = IloRangeArray(env);
+    ActiveCCSubP_CY = IloRangeArray(env);
+    ActiveCCSubP_CH = IloRangeArray(env);
     for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
         IloExpr ExprArcsVtx (env, 0);
         IloExpr AllccVars (env, 0);
@@ -101,11 +129,11 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         for (auto it = forchains.begin(); it != forchains.end(); it++){
             AllccVars+= chvar[it->first];
         }
-        name = "ActiveCC_LB.cyvar." + to_string(i);
+        name = "Active_cyvar2nd." + to_string(i);
         cName = name.c_str();
         //cout << cyvar[i].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
-        ActiveCCSubP_LB.add(IloRange(env, 1, cyvar[i] + ExprArcsVtx + AllccVars, IloInfinity, cName));
-        GrandSubProb.add(ActiveCCSubP_LB[ActiveCCSubP_LB.getSize() - 1]);
+        ActiveCCSubP_CY.add(IloRange(env, 1, cyvar[i] + ExprArcsVtx + AllccVars, IloInfinity, cName));
+        GrandSubProb.add(ActiveCCSubP_CY[ActiveCCSubP_CY.getSize() - 1]);
     }
     //Chain variables
     for (int i = 0; i < Chains2ndTo3rd.size(); i++){
@@ -117,16 +145,10 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
             int u = Chains2ndStage[idx].Vnodes[j].vertex;
             Expr2ArcsVtx+= vertex[u];
-            if (j == Chains2ndStage[idx].Vnodes.size() - 1){
-                int v = Cycles2ndStage[idx].get_c()[0];
-                int s = mapArcs[make_pair(u,v)];
-                Expr2ArcsVtx+= arc[u][s];
-            }
-            else{
-                int v = Cycles2ndStage[idx].get_c()[j + 1];
-                int s = mapArcs[make_pair(u,v)];
-                Expr2ArcsVtx+= arc[u][s];
-            }
+            int v = Chains2ndStage[idx].Vnodes[j + 1].vertex;
+            if (j == Chains2ndStage[idx].Vnodes.size() - 2) Expr2ArcsVtx+= vertex[v];
+            int s = mapArcs[make_pair(u,v)];
+            Expr2ArcsVtx+= arc[u][s];
             for (int k = 0; k < CycleNodeSPH[u].size(); k++){
                 forcycles[CycleNodeSPH[u][k]];
             }
@@ -140,11 +162,11 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         for (auto it = forchains.begin(); it != forchains.end(); it++){
             All2ccVars+= chvar[it->first];
         }
-        name = "ActiveCC_LB.chvar." + to_string(i);
+        name = "Active_chvar2nd." + to_string(i);
         cName = name.c_str();
         //cout << cyvar[i].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
-        ActiveCCSubP_LB.add(IloRange(env, 1, chvar[i] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName));
-        GrandSubProb.add(ActiveCCSubP_LB[ActiveCCSubP_LB.getSize() - 1]);
+        ActiveCCSubP_CH.add(IloRange(env, 1, chvar[i] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName));
+        GrandSubProb.add(ActiveCCSubP_CH[ActiveCCSubP_CH.getSize() - 1]);
     }
     
     IloExpr sumVertices (env, 0);
@@ -162,14 +184,13 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     GrandSubProb.add(sumArcs <= 0);
     
     cplexGrandSubP.exportModel("GrandSubP.lp");
-    IloNum GrandSubObj = 0;
     cplexGrandSubP.solve();
     if (cplexGrandSubP.getStatus() == 'Infeasible'){
         cout << "S.O.S. This should not happen." << endl;
     }
     else{
-        GrandSubObj = cplexGrandSubP.getObjValue();
-        env.out() << "Objective: " << GrandSubObj << endl;
+        SPMIP_Obj = cplexGrandSubP.getObjValue();
+        env.out() << "Objective: " << SPMIP_Obj - cplexGrandSubP.getValue(Excess) << endl;
         
         //Retrieve solution
         IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
@@ -200,7 +221,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
 }
 void Problem::FillRobustSolTHP(){
     for(int i = 0; i < GrandProbSol.size(); i++){
-        RobustSolTHP.push_back(Cycles(GrandProbSol[i].get_cc(), GrandProbSol[i].get_w()));
+        //RobustSolTHP.push_back(Cycles(GrandProbSol[i].get_cc(), GrandProbSol[i].get_w()));
     }
 }
 void Problem::PrintSolSNP(IloNumArray vertex_sol, IloNumArray2 arc_sol){
@@ -233,7 +254,7 @@ void Problem::UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj){
     RobustSolTHP.clear();
     for (int i = 0; i < r_sol.getSize(); i++){
         if (r_sol[i] > 0.9){
-            RobustSolTHP.push_back(Cycles(GrandProbSol[i].get_cc(), GrandProbSol[i].get_w()));
+            //RobustSolTHP.push_back(Cycles(GrandProbSol[i].get_cc(), GrandProbSol[i].get_w()));
         }
     }
 }
@@ -642,6 +663,7 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles){
     int counter = 0;
     for (int i = 0; i < Cycles.size(); i++){
         Cycles2ndTo3rd[counter] = i;
+        Cycles3rdTo2nd[i] = counter;
         for (int j = 0; j < Cycles[i].get_c().size(); j++){
             CycleNodeSPH[Cycles[i].get_c()[j]].push_back(counter);
         }
@@ -651,6 +673,7 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles){
     counter = 0;
     for (int i = 0; i < Chains.size(); i++){
         Chains2ndTo3rd[counter] = i;
+        Cycles3rdTo2nd[i] = counter;
         for (int j = 0; j < Chains[i].Vnodes.size(); j++){
             int u = Chains[i].Vnodes[j].vertex;
             ChainNodeSPH[u].push_back(counter);
@@ -659,3 +682,14 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles){
         if (counter == 100) break;
     }
 }
+vector<int>Problem::GetSelVertices(vector<IndexGrandSubSol>&SolFirstStage){
+    vector<int>ListSelVertices;
+    for (auto it = SolFirstStage.begin(); it != SolFirstStage.end(); it++){
+        for (auto it2 = it->get_cc().begin(); it2 != it->get_cc().end(); it2++){
+            ListSelVertices.push_back(*it2);
+        }
+    }
+    
+    return ListSelVertices;
+}
+
