@@ -145,10 +145,11 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
             int u = Chains2ndStage[idx].Vnodes[j].vertex;
             Expr2ArcsVtx+= vertex[u];
-            int v = Chains2ndStage[idx].Vnodes[j + 1].vertex;
-            if (j == Chains2ndStage[idx].Vnodes.size() - 2) Expr2ArcsVtx+= vertex[v];
-            int s = mapArcs[make_pair(u,v)];
-            Expr2ArcsVtx+= arc[u][s];
+            if (j <= Chains2ndStage[idx].Vnodes.size() - 2){
+                int v = Chains2ndStage[idx].Vnodes[j + 1].vertex;
+                int s = mapArcs[make_pair(u,v)];
+                Expr2ArcsVtx+= arc[u][s];
+            }
             for (int k = 0; k < CycleNodeSPH[u].size(); k++){
                 forcycles[CycleNodeSPH[u][k]];
             }

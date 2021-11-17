@@ -266,7 +266,7 @@ public:
         vector<int>ModifyOldSelectVex_CY(int tOnecysol3rd, vector<int>ListSelVertices, vector<Cycles>&Cycles2ndStage);
         vector<int>ModifyOldSelectVex_CH(int tOnechsol3rd, vector<int>ListSelVertices, vector<Chain>&Chains2ndStage);
         IloRange GetNewIloRangeCY3rd(int tOnecysol3rd, vector<Cycles>&Cycles2ndStage);
-        IloRange GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage)
+        IloRange GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage);
         
 
     void HeadingCF();

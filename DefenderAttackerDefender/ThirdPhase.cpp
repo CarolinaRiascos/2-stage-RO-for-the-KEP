@@ -59,7 +59,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             ActiveCCSubP_CY[OldActiveCY[i]](-1);
         }
         //NewActiveCCSubP_CY
-        IloRange NewArrayCY3rd = GetNewIloRangeCY3rd(tcysol3rd[i], Cycles2ndStage);
+        GetNewIloRangeCY3rd(tcysol3rd[i], Cycles2ndStage);
         
     }
     for (int i = 0; i < tchsol3rd.size(); i++){
@@ -73,10 +73,10 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         IloNumColumn col(env);
         //Create new variable
         chvar.add(IloNumVar(col));
-        string name = "x." + to_string(Chainnewrow2ndPH + i);
+        string name = "y." + to_string(Chainnewrow2ndPH + i);
         const char* varName = name.c_str();
-        chvar[cyvar.getSize() - 1].setName(varName);
-        chvar[cyvar.getSize() - 1].setBounds(0, 1);
+        chvar[chvar.getSize() - 1].setName(varName);
+        chvar[chvar.getSize() - 1].setBounds(0, 1);
         
         //Update Beta constraint
         col+= ConsBeta[0](-1);
@@ -89,7 +89,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             ActiveCCSubP_CH[OldActiveCH[i]](-1);
         }
         //NewActiveCCSubP_CH
-        
+        GetNewIloRangeCH3rd(tcysol3rd[i], Chains2ndStage);
     }
     //NoGoodCut
     
@@ -344,13 +344,8 @@ IloRange Problem::GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndS
     for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
         int u = Chains2ndStage[idx].Vnodes[j].vertex;
         Expr2ArcsVtx+= vertex[u];
-        if (j == Chains2ndStage[idx].Vnodes.size() - 1){
-            int v = Cycles2ndStage[idx].get_c()[0];
-            int s = mapArcs[make_pair(u,v)];
-            Expr2ArcsVtx+= arc[u][s];
-        }
-        else{
-            int v = Cycles2ndStage[idx].get_c()[j + 1];
+        if (j <= Chains2ndStage[idx].Vnodes.size() - 2){
+            int v = Chains2ndStage[idx].Vnodes[j + 1].vertex;
             int s = mapArcs[make_pair(u,v)];
             Expr2ArcsVtx+= arc[u][s];
         }
@@ -358,7 +353,7 @@ IloRange Problem::GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndS
             forcycles[CycleNodeSPH[u][k]];
         }
         for (int k = 0; k < ChainNodeSPH[u].size(); k++){
-            if (ChainNodeSPH[u][k] != i) forchains[ChainNodeSPH[u][k]];
+            if (ChainNodeSPH[u][k] != Cycles3rdTo2nd[idx]) forchains[ChainNodeSPH[u][k]];
         }
     }
     for (auto it = forcycles.begin(); it != forcycles.end(); it++){
@@ -367,8 +362,10 @@ IloRange Problem::GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndS
     for (auto it = forchains.begin(); it != forchains.end(); it++){
         All2ccVars+= chvar[it->first];
     }
-    name = "Active_chvar2nd." + to_string(i);
-    cName = name.c_str();
+    string name = "Active_chvar2nd." + to_string(Cycles3rdTo2nd[idx]);
+    const char* cName = name.c_str();
     //cout << cyvar[i].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
-    ActiveCCSubP_CH.add(IloRange(env, 1, chvar[i] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName));
+    NewIloRangeCH3rd = IloRange(env, 1, chvar[Cycles3rdTo2nd[idx]] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName);
+    
+    return NewIloRangeCH3rd;
 }
