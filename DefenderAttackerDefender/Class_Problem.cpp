@@ -7,10 +7,14 @@
 //
 
 #include "Class_Problem.hpp"
-Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy){
+Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun){
     FolderName = _FolderName;
     FileName = _FileName;
     CycleLength = _cycleLength;
     ChainLength = _chainLength;
     RecoursePolicy = _RecoursePolicy;
+    THP_Method = _THP_Method;
+    MaxVertexFailures = _VertexBudget;
+    MaxArcFailures = _ArcBudget;
+    WhereItisRun = _WhereItisRun;
 }

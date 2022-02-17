@@ -186,11 +186,15 @@ void Problem::M_PICEF(){
            SolFirstStage.push_back(IndexGrandSubSol(chsol[i], chsol[i].size()));
        }
        
-       vector<Cycles>Cycles2ndStage;
-       vector<Chain>Chains2ndStage;
        Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
        Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
-       GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+       if (THP_Method != "Literature"){
+           GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+       }
+       else{
+           GrandSubProbMaster2(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+       }
+       
    }
 }
 IloExpr Problem::GetObjMPICEF(){

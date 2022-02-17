@@ -11,8 +11,8 @@
 
 
 int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
-    if (argc != 6){
-        cout <<"Not enough parameters. They must be 6." << endl;
+    if (argc != 10){
+        cout <<"Not enough parameters. They must be 10." << endl;
         return -1;
     }
     
@@ -24,8 +24,14 @@ int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
     IloInt CycleLength; str >> CycleLength;
     str.clear(); str << argv[4];
     IloInt ChainLength; str >> ChainLength;
-    string RecoursePolicy = argv[5];
-    Problem P(FolderName, FileName, CycleLength, ChainLength, RecoursePolicy);
+    str.clear(); str << argv[5];
+    IloInt VertexBudget; str >> VertexBudget;
+    str.clear(); str << argv[6];
+    IloInt ArcBudget; str >> ArcBudget;
+    string RecoursePolicy = argv[7];
+    string THP_Method = argv[8];
+    string WhereItisRun = argv[9];
+    Problem P(FolderName, FileName, CycleLength, ChainLength, RecoursePolicy, THP_Method, VertexBudget, ArcBudget, WhereItisRun);
     
     cout << "Start reading" << endl;
     //clock_t tStart = clock();
@@ -34,8 +40,7 @@ int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
         return -1;
     }
     
-    
-    P.M_PICEF();
+    P.ROBUST_KEP();
     cout << endl << "End" << endl;
     return 0;
 }

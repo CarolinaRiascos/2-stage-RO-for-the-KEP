@@ -9,8 +9,14 @@
 #include "Reading.hpp"
 
 int Problem::Reading() {
-
-    string direDonde = "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/0TestInstances/InstancesFormat/" + FolderName + "/";
+    string direDonde;
+    if (WhereItisRun == "PC"){
+        direDonde = "../../../../../../0TestInstances/ROCarvalho2021/" + FolderName + "/";
+    }
+    else{
+        direDonde = "../../0TestInstances/PrefLib/" + FolderName + "/";
+    }
+    
     //
     //"/home/criascos/codes/LagBB/Instances/" + FolderName + "/";
 
@@ -21,14 +27,20 @@ int Problem::Reading() {
     }
     AdjacencyList = IloNumArray2(env);
     WeightMatrix = IloNumArray2(env);
+    PRAList = IloNumArray(env);
     //Leer Argumentos
-    inFile >> Nodes >> NDDs >> Pairs >> NumArcs >> AdjacencyList >> WeightMatrix;
+    inFile >> Nodes >> NDDs >> Pairs >> NumArcs >> AdjacencyList >> WeightMatrix >> PRAList;
 
 
     //Build weights matrix
     for (int i = 0; i < AdjacencyList.getSize(); i++){
         for (int j = 0; j < AdjacencyList[i].getSize(); j++){
-            Weights[make_pair(i,AdjacencyList[i][j] - 1)] = WeightMatrix[i][j];
+            if (WeightMatrix.getSize() == 1){
+                Weights[make_pair(i,AdjacencyList[i][j] - 1)] = 1;
+            }
+            else{
+                Weights[make_pair(i,AdjacencyList[i][j] - 1)] = WeightMatrix[i][j];
+            }
         }
     }
     
@@ -42,4 +54,26 @@ int Problem::Reading() {
     }
     
     return 1;
+}
+void Problem::Print2ndStage(){
+    //Print summary of results
+    //"/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/Output/LagrangianBB/LagResults.txt"
+    string OutputDire;
+    if (WhereItisRun == "PC"){
+        OutputDire = "../../../../../../Output/ROResults/2ndStageRO.txt";
+    }else{
+        OutputDire = "../Output/2ndStageRO.txt";
+    }
+    file.open(OutputDire, fstream::in);
+    if (this->file) {
+        this->file.close();
+        this->file.open(OutputDire, fstream::app);
+    }else{
+        file.open(OutputDire, fstream::out);
+        file << "Instance" << '\t' << "PDP" << '\t' << "NDD" << '\t' << "K" << '\t' << "L" << '\t' << "VertexBudget" << '\t' << "ArcBudget" << '\t' <<"Ite" << '\t' << "Time(s)" << '\t' << "Method" << '\t' << "Policy" << '\t' << "SPMIP_Obj" << endl;
+    }
+    
+    file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures <<'\t' << Ite2ndS << '\t' << tEnd2ndS << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << SPMIP_Obj << endl;
+    
+    file.close();
 }

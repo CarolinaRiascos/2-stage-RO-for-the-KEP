@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5B0F54AA27BAEEAA0058CB27 /* M-PICEF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B0F54A927BAEEAA0058CB27 /* M-PICEF.cpp */; };
 		5B2589BF25FFF02900708D26 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B2589BE25FFF02900708D26 /* main.cpp */; };
 		5B2589C725FFF0AC00708D26 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B2589C625FFF0AC00708D26 /* CoreFoundation.framework */; };
 		5B2589C925FFF0B500708D26 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B2589C825FFF0B500708D26 /* IOKit.framework */; };
@@ -16,7 +17,7 @@
 		5B2589D125FFF1F200708D26 /* libilocplex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B2589CF25FFF19B00708D26 /* libilocplex.a */; };
 		5B2589D92600189500708D26 /* Class_Problem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B2589D72600189500708D26 /* Class_Problem.cpp */; };
 		5B7F88B9273DA4F500F325D0 /* ThirdPhase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B7F88B7273DA4F500F325D0 /* ThirdPhase.cpp */; };
-		5B808FEB26FBB12300494C96 /* M-PICEF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B808FE926FBB12300494C96 /* M-PICEF.cpp */; };
+		5B7F88BC275AC32000F325D0 /* GrandSubproblem2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B7F88BA275AC31C00F325D0 /* GrandSubproblem2.cpp */; };
 		5B808FEE270E00F600494C96 /* Dijkstra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B808FEC270E00F600494C96 /* Dijkstra.cpp */; };
 		5B8E69302601592900DA8F8A /* Reading.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B8E692F2601592900DA8F8A /* Reading.cpp */; };
 		5B8E693326017DA500DA8F8A /* GrandProblem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B8E693126017DA500DA8F8A /* GrandProblem.cpp */; };
@@ -36,6 +37,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5B0F54A827BAEEAA0058CB27 /* M-PICEF.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = "M-PICEF.hpp"; sourceTree = "<group>"; };
+		5B0F54A927BAEEAA0058CB27 /* M-PICEF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "M-PICEF.cpp"; sourceTree = "<group>"; };
 		5B2589BB25FFF02900708D26 /* DefenderAttackerDefender */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DefenderAttackerDefender; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B2589BE25FFF02900708D26 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		5B2589C625FFF0AC00708D26 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
@@ -49,8 +52,8 @@
 		5B2589D82600189500708D26 /* Class_Problem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Class_Problem.hpp; sourceTree = "<group>"; };
 		5B7F88B7273DA4F500F325D0 /* ThirdPhase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ThirdPhase.cpp; sourceTree = "<group>"; };
 		5B7F88B8273DA4F500F325D0 /* ThirdPhase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ThirdPhase.hpp; sourceTree = "<group>"; };
-		5B808FE926FBB12300494C96 /* M-PICEF.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "M-PICEF.cpp"; sourceTree = "<group>"; };
-		5B808FEA26FBB12300494C96 /* M-PICEF.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = "M-PICEF.hpp"; sourceTree = "<group>"; };
+		5B7F88BA275AC31C00F325D0 /* GrandSubproblem2.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GrandSubproblem2.cpp; sourceTree = "<group>"; };
+		5B7F88BB275AC31C00F325D0 /* GrandSubproblem2.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GrandSubproblem2.hpp; sourceTree = "<group>"; };
 		5B808FEC270E00F600494C96 /* Dijkstra.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Dijkstra.cpp; sourceTree = "<group>"; };
 		5B808FED270E00F600494C96 /* Dijkstra.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Dijkstra.hpp; sourceTree = "<group>"; };
 		5B8E692E2601592900DA8F8A /* Reading.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Reading.hpp; sourceTree = "<group>"; };
@@ -106,14 +109,16 @@
 				5B8E692F2601592900DA8F8A /* Reading.cpp */,
 				5B8E693226017DA500DA8F8A /* GrandProblem.hpp */,
 				5B8E693126017DA500DA8F8A /* GrandProblem.cpp */,
-				5BF7A236260E5240000FB3E2 /* GrandSubproblem.cpp */,
 				5BF7A237260E5240000FB3E2 /* GrandSubproblem.hpp */,
-				5B808FE926FBB12300494C96 /* M-PICEF.cpp */,
-				5B808FEA26FBB12300494C96 /* M-PICEF.hpp */,
+				5BF7A236260E5240000FB3E2 /* GrandSubproblem.cpp */,
+				5B7F88BB275AC31C00F325D0 /* GrandSubproblem2.hpp */,
+				5B7F88BA275AC31C00F325D0 /* GrandSubproblem2.cpp */,
+				5B7F88B8273DA4F500F325D0 /* ThirdPhase.hpp */,
+				5B7F88B7273DA4F500F325D0 /* ThirdPhase.cpp */,
 				5B808FED270E00F600494C96 /* Dijkstra.hpp */,
 				5B808FEC270E00F600494C96 /* Dijkstra.cpp */,
-				5B7F88B7273DA4F500F325D0 /* ThirdPhase.cpp */,
-				5B7F88B8273DA4F500F325D0 /* ThirdPhase.hpp */,
+				5B0F54A827BAEEAA0058CB27 /* M-PICEF.hpp */,
+				5B0F54A927BAEEAA0058CB27 /* M-PICEF.cpp */,
 			);
 			path = DefenderAttackerDefender;
 			sourceTree = "<group>";
@@ -190,11 +195,12 @@
 			files = (
 				5B8E69302601592900DA8F8A /* Reading.cpp in Sources */,
 				5B808FEE270E00F600494C96 /* Dijkstra.cpp in Sources */,
-				5B808FEB26FBB12300494C96 /* M-PICEF.cpp in Sources */,
+				5B7F88BC275AC32000F325D0 /* GrandSubproblem2.cpp in Sources */,
 				5B7F88B9273DA4F500F325D0 /* ThirdPhase.cpp in Sources */,
 				5B8E693326017DA500DA8F8A /* GrandProblem.cpp in Sources */,
 				5B2589D92600189500708D26 /* Class_Problem.cpp in Sources */,
 				5B2589BF25FFF02900708D26 /* main.cpp in Sources */,
+				5B0F54AA27BAEEAA0058CB27 /* M-PICEF.cpp in Sources */,
 				5BF7A238260E5240000FB3E2 /* GrandSubproblem.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

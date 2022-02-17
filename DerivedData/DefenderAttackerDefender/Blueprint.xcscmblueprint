@@ -1,0 +1,23 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "D5127222D63C4CAC95F4BA751B78A75DCD85697B",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "D5127222D63C4CAC95F4BA751B78A75DCD85697B" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "481E5DD1-80A1-4871-8C82-7A34233EAB64",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "D5127222D63C4CAC95F4BA751B78A75DCD85697B" : "DefenderAttackerDefender\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "DefenderAttackerDefender",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "DefenderAttackerDefender.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/CarolinaRiascos\/2-stage-RO-for-the-KEP.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "D5127222D63C4CAC95F4BA751B78A75DCD85697B"
+    }
+  ]
+}

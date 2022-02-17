@@ -63,6 +63,12 @@ struct Chain{
     double AccumWeight = 0;
     Chain(vChain v){Vnodes.push_back(v);}
 };
+struct KEPSol{
+    vector<int> cycles;
+    vector<int> chains;
+    KEPSol(vector<int> v_cy, vector<int> v_ch){cycles = v_cy, chains = v_ch;}
+    KEPSol(){;}
+};
 
 class Problem{
 public:
@@ -78,15 +84,22 @@ public:
     IloInt Nodes;//altruists + pairs
     IloInt NumArcs;
     IloInt CycleLength;//K
-    IloInt ChainLength;//F
+    IloInt ChainLength;//L
+    IloInt Ite2ndS = 0;
     IloInt Iteration = 0;
     IloRangeArray ActiveGrandSubSol;
     IloRangeArray BoundObjective;
     IloNumArray2 WeightMatrix;
     IloNumArray2 AdjacencyList;//Successors
+    IloNumArray PRAList;//Successors
     string FileName;
+    fstream file;
+    clock_t tStart2ndS;
+    double tEnd2ndS;
     string FolderName;
     string RecoursePolicy;
+    string THP_Method;
+    string WhereItisRun;
     map<pair<int,int>,double>Weights;
     map<int,vector<int>>CycleNode;
     vector<vector<int>>PredList;
@@ -95,7 +108,7 @@ public:
     
     
     //Functions
-    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy);
+    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun);
     int Reading();
    
     //M-PICEF
@@ -185,8 +198,8 @@ public:
     IloNumVar Excess;
     IloObjective ObjGrandSubP;
     IloArray<IloNumColumn> NewCycleTPH;
-    IloInt MaxArcFailures = 4;
-    IloInt MaxVertexFailures = 2;
+    IloInt MaxArcFailures;
+    IloInt MaxVertexFailures;
     IloInt RepSolCounter = 1;
     IloNum RobustObjTPH = 0;
     IloNum SPMIP_Obj = 0;
@@ -200,8 +213,14 @@ public:
     IloRangeArray BoundObjGrandSubP;
     IloRangeArray ActiveCCSubP_CY;
     IloRangeArray ActiveCCSubP_CH;
+    IloRangeArray IfNoFailures_CY;
+    IloRangeArray IfNoFailures_CH;
+    IloRangeArray Once;
     IloRangeArray SelVert2ndPH;
     IloRangeArray ConsBeta;
+    IloRangeArray AtLeastOneFails;
+    IloNumArray vertex_sol;
+    IloNumArray2 arc_sol;
     map<pair<int,int>,int> mapArcs;
     vector<Cycles> RepairedListCCs;
     vector<Cycles> RobustSolTHP;
@@ -211,6 +230,8 @@ public:
     map<pair<int,int>, vector<int>> ArcsinChainsTHP;
     map<pair<int,int>, bool> FailedArcs;
     map<int, bool> FailedVertices;
+    map<pair<int,int>, bool> OptFailedArcs;
+    map<int, bool> OptFailedVertices;
     map<int,int>Cycles2ndTo3rd;
     map<int,int>Chains2ndTo3rd;
     map<int,int>Cycles3rdTo2nd;
@@ -227,7 +248,7 @@ public:
     vector<Chain>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
     vector<Chain> Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     vector<Cycles> Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy);
-    void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles);
+    void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
     vector<int>GetSelVertices(vector<IndexGrandSubSol>&SolFirstStage);
     
     
@@ -237,39 +258,76 @@ public:
     void FillRobustSolTHP();
     
     //Third Phase
+    IloObjective ObjTHP;
+    vector<Cycles>Cycles2ndStage;
+    vector<Chain>Chains2ndStage;
     void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&ListSelVertices);
-        //Model
-        IloModel mTHPMIP;
-        IloCplex cplexmTHPMIP;
-        //Decision variables
-        IloNumVarArray tcyvar;
-        IloNumVarArray tchvar;
-        IloNumVarArray Create_tcyvar(const char* prefix, vector<Cycles>&Cycles2ndStage);
-        IloNumVarArray Create_tchvar(const char* prefix, vector<Chain>&Chains2ndStage);
-        map<int,bool> GetUB_tcyvar(map<pair<int,int>, bool>&FailedArcs, map<int, bool>& FailedVertices);
-        map<int,bool> GetUB_tchvar(map<pair<int,int>, bool>&FailedArcs, map<int, bool>& FailedVertices);
-        //Constraints
-        IloRangeArray DisjointTHPArray;
-        IloRangeArray DisjointTHP(IloNumVarArray& tcyvar, IloNumVarArray& tchvar);
-        //Objective
-        IloNum TPMIP_Obj = 0;
-        int Cyclenewrow2ndPH = 0;
-        int Chainnewrow2ndPH = 0;
-        vector<int> tcysol3rd;
-        vector<int> tchsol3rd;
-        IloRange NewIloRangeCY3rd;
-        IloRange NewIloRangeCH3rd;
-        //Algorithm
-        void AddNewCols3rdTo2nd (IloNumArray tcysol, IloNumArray tchsol, map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, map<int,int>& Cycles3rdTo2nd, map<int,int>& Chains3rdTo2nd, int& Cyclenewrow2ndPH, int& Chainnewrow2ndPH, vector<int>& tcysol3rd, vector<int>& tchsol3rd, vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage);
-        vector<int>ModifyOldActiveCCSubP_CY(int tOnecysol3rd, map<int,int>& Cycles2ndTo3rd, int& Cyclenewrow2ndPH, vector<Cycles>&Cycles2ndStage);
-        vector<int>ModifyOldActiveCCSubP_CH(int tOnechsol3rd, map<int,int>& Chains2ndTo3rd, int& Chainnewrow2ndPH, vector<Chain>&Chains2ndStage);
-        vector<int>ModifyOldSelectVex_CY(int tOnecysol3rd, vector<int>ListSelVertices, vector<Cycles>&Cycles2ndStage);
-        vector<int>ModifyOldSelectVex_CH(int tOnechsol3rd, vector<int>ListSelVertices, vector<Chain>&Chains2ndStage);
-        void GetNewIloRangeCY3rd(int tOnecysol3rd, vector<Cycles>&Cycles2ndStage);
-        void GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage);
-        void GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices);
+    //Model
+    IloModel mTHPMIP;
+    IloCplex cplexmTHPMIP;
+    //Decision variables
+    IloNumVarArray tcyvar;
+    IloNumVarArray tchvar;
+    IloNumVarArray Create_tcyvar(const char* prefix, vector<Cycles>&Cycles2ndStage);
+    IloNumVarArray Create_tchvar(const char* prefix, vector<Chain>&Chains2ndStage);
+    map<int,bool> GetUB_tcyvar(map<pair<int,int>, bool>&FailedArcs, map<int, bool>& FailedVertices);
+    map<int,bool> GetUB_tchvar(map<pair<int,int>, bool>&FailedArcs, map<int, bool>& FailedVertices);
+    //Constraints
+    IloRangeArray DisjointTHPArray;
+    IloRangeArray DisjointTHP(IloNumVarArray& tcyvar, IloNumVarArray& tchvar);
+    //Objective
+    IloNum TPMIP_Obj = 0;
+    IloNum LOWEST_TPMIP_Obj = INT_MAX;
+    IloNumArray vals;
+    int Cyclenewrow2ndPH = 0;
+    int Chainnewrow2ndPH = 0;
+    vector<int> tcysol3rd;
+    vector<int> tchsol3rd;
+    IloRange NewIloRangeCY3rd;
+    IloRange NewIloRangeCH3rd;
+    //Solution
+    vector<Cycles>Cycles3rdSol;
+    vector<Chain>Chains3rdSol;
+    IloNumArray cyvar_sol2nd;
+    IloNumArray chvar_sol2nd;
+    //Algorithm
+    void AddNewCols3rdTo2nd (IloNumArray tcysol, IloNumArray tchsol, map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, map<int,int>& Cycles3rdTo2nd, map<int,int>& Chains3rdTo2nd, int& Cyclenewrow2ndPH, int& Chainnewrow2ndPH, vector<int>& tcysol3rd, vector<int>& tchsol3rd, vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage);
+    vector<int>ModifyOldActiveCCSubP_CY(int tOnecysol3rd, map<int,int>& Cycles2ndTo3rd, int& Cyclenewrow2ndPH, vector<Cycles>&Cycles2ndStage);
+    vector<int>ModifyOldActiveCCSubP_CH(int tOnechsol3rd, map<int,int>& Chains2ndTo3rd, int& Chainnewrow2ndPH, vector<Chain>&Chains2ndStage);
+    vector<int>ModifyOldSelectVex_CY(int tOnecysol3rd, vector<int>ListSelVertices, vector<Cycles>&Cycles2ndStage);
+    vector<int>ModifyOldSelectVex_CH(int tOnechsol3rd, vector<int>ListSelVertices, vector<Chain>&Chains2ndStage);
+    vector<int>ModifyOldActiveCCSubP_CYtoCH(int tOnecysol3rd, map<int,int>&Chains2ndTo3rd, int&Chainnewrow2ndPH, vector<Cycles>&Cycles2ndStage);
+    vector<int>ModifyOldActiveCCSubP_CHtoCY(int tOnechsol3rd, map<int,int>& Cycles2ndTo3rd, int& Cyclenewrow2ndPH, vector<Chain>&Chains2ndStage);
+    void selOnce(map<int,vector<int>>CycleNodeSPH, map<int,vector<int>>ChainNodeSPH);
+    //void selOnceCH(map<int,vector<int>>CycleNodeSPH, map<int,vector<int>>ChainNodeSPH);
+    void IfNoFailuresCY(map<int,int>& Cycles2ndTo3rd, int i);
+    void IfNoFailuresCH(map<int,int>& Chains2ndTo3rd, int i);
+    void GetNewIloRangeCY3rd(int tOnecysol3rd, vector<Cycles>&Cycles2ndStage);
+    void GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage);
+    void GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArcs, map<int, bool> FailedVertices);
+    void GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices);
+    void GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol);
+    void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
+    void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
+    IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
+    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&ListSelVertices, bool RemoveExcess);
         
-
+    //Literature method
+    void ROBUST_KEP();
+    void GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
+    bool Literature(IloNumArray& tcysol, IloNumArray& tchsol);
+    void SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
+    vector<KEPSol>KEPSols2ndStage;
+    IloRangeArray vBoundConstraint;
+    IloRangeArray vFailedMatches;
+    void Const11b(vector<KEPSol>&KEPSols2ndStage);
+    void Const11c(vector<KEPSol>&KEPSols2ndStage);
+    IloExpr exprVxtArcsCY;
+    IloExpr exprVxtArcsCH;
+    IloExpr exprBound;
+    
+    void Print2ndStage();
+    
     void HeadingCF();
     void PrintCF();
 private:

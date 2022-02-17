@@ -1,0 +1,60 @@
+{
+  "_buildCommand2" : {
+    "command" : "prepareForIndexing",
+    "enableIndexBuildArena" : true,
+    "targets" : null
+  },
+  "buildCommand" : "build",
+  "configuredTargets" : [
+    {
+      "guid" : "ec76d651c1614756284e704dbecb25b59196a262c5539a3021b8cd004ca0b8a4"
+    }
+  ],
+  "containerPath" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DefenderAttackerDefender.xcodeproj",
+  "continueBuildingAfterErrors" : true,
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "indexbuild",
+    "activeArchitecture" : "x86_64",
+    "activeRunDestination" : {
+      "disableOnlyActiveArch" : false,
+      "platform" : "macosx",
+      "sdk" : "macosx12.1",
+      "sdkVariant" : "macos",
+      "supportedArchitectures" : [
+        "x86_64h",
+        "x86_64"
+      ],
+      "targetArchitecture" : "x86_64"
+    },
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DerivedData/DefenderAttackerDefender/Index/Build/Intermediates.noindex",
+      "buildProductsPath" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DerivedData/DefenderAttackerDefender/Index/Build/Products",
+      "derivedDataPath" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DerivedData",
+      "indexDataStoreFolderPath" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DerivedData/DefenderAttackerDefender/Index/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DerivedData/DefenderAttackerDefender/Index/PrecompiledHeaders",
+      "pchPath" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DerivedData/DefenderAttackerDefender/Index/Build/Intermediates.noindex/PrecompiledHeaders"
+    },
+    "configurationName" : "Debug",
+    "overrides" : {
+      "synthesized" : {
+        "table" : {
+          "ENABLE_PREVIEWS" : "NO",
+          "INDEX_ARENA_INFO_REGULAR_BUILD_PRODUCTS_DIR" : "/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/DefenderAttackerDefender/DerivedData/DefenderAttackerDefender/Build/Products",
+          "ONLY_ACTIVE_ARCH" : "YES"
+        }
+      }
+    }
+  },
+  "qos" : "default",
+  "schemeCommand" : "launch",
+  "schemeCommand2" : "launch",
+  "shouldCollectMetrics" : false,
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}
