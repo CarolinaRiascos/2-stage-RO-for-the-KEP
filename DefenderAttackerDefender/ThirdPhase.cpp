@@ -37,6 +37,11 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     Ite2ndS = 0;
     bool RemoveExcess = false;
     while(true){
+        tEnd2ndS = (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+        if (tEnd2ndS > 1800){
+            status = "Incomplete";
+            break;
+        }
         Ite2ndS++;
         //Solve formulation
         //cplexmTHPMIP.exportModel("mTHPMIP.lp");
@@ -70,7 +75,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             tchsol.end();
         }
     }
-    tEnd2ndS = (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+    if (tEnd2ndS <= 1800) status = "Complete";
     Print2ndStage();
     
     //Check whether a new scenario was found
@@ -321,7 +326,8 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
                 cyvar[cyvar.getSize() - 1].setName(varName);
                 cyvar[cyvar.getSize() - 1].setBounds(0, 1);
                 //Increase counter
-                Cycles3rdTo2nd[i] = int(Cycles3rdTo2nd.size());
+                int aux = int(Cycles3rdTo2nd.size());
+                Cycles3rdTo2nd[i] = aux;
                 Cycles2ndTo3rd[Cycles3rdTo2nd[i]] = i;
                 //Add cycle to KEPSols2ndStage
                 KEPSols2ndStage.back().cycles.push_back(Cycles3rdTo2nd[i]);
@@ -354,7 +360,8 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
                 chvar[chvar.getSize() - 1].setName(varName);
                 chvar[chvar.getSize() - 1].setBounds(0, 1);
                 //Increase counter
-                Chains3rdTo2nd[i] = int(Chains3rdTo2nd.size());
+                int aux = int(Chains3rdTo2nd.size());
+                Chains3rdTo2nd[i] = aux;
                 Chains2ndTo3rd[Chains3rdTo2nd[i]] = i;
                 //Add cycle to KEPSols2ndStage
                 KEPSols2ndStage.back().chains.push_back(Chains3rdTo2nd[i]);
@@ -366,6 +373,8 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
             }
         }
     }
+    
+    
     //Obtain true TPMIP_Obj if THP_Method == Literature
     TPMIP_Obj = Actual_THPObjective;
     

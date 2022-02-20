@@ -15,7 +15,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
     cplexGrandSubP.setOut(env.getNullStream());
     AtLeastOneFails = IloRangeArray(env);
-
+    tStart2ndS = clock();
     
     KEPSols2ndStage.clear();
     SampleCols2ndStage2(Chains2ndStage, Cycles2ndStage, SolFirstStage);

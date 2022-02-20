@@ -52,11 +52,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "50"
+            argument = "Kidney_Matching_17_1"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "CarvalhoRO2021_29_50_1.txt"
+            argument = "KP_Num11_N17_A1.txt"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -72,7 +72,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1"
+            argument = "0"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

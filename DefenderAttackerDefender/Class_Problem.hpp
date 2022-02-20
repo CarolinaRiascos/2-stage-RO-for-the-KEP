@@ -96,6 +96,7 @@ public:
     fstream file;
     clock_t tStart2ndS;
     double tEnd2ndS;
+    string status;
     string FolderName;
     string RecoursePolicy;
     string THP_Method;
