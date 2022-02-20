@@ -11,7 +11,7 @@
 int Problem::Reading() {
     string direDonde;
     if (WhereItisRun == "PC"){
-        direDonde = "../../../../../../0TestInstances/ROCarvalho2021/" + FolderName + "/";
+        direDonde = "../../../../../../0TestInstances/PrefLib/" + FolderName + "/";
     }
     else{
         direDonde = "../../0TestInstances/PrefLib/" + FolderName + "/";

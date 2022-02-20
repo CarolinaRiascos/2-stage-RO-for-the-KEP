@@ -19,6 +19,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     
     KEPSols2ndStage.clear();
     SampleCols2ndStage2(Chains2ndStage, Cycles2ndStage, SolFirstStage);
+    
     //Get selected vertices
     vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
     
@@ -94,7 +95,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     GrandSubProb.add(ObjGrandSubP);
     
     
-    cplexGrandSubP.exportModel("GrandSubP2.lp");
+    //cplexGrandSubP.exportModel("GrandSubP2.lp");
     cplexGrandSubP.solve();
     if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
         cout << "S.O.S. This should not happen." << endl;
@@ -125,7 +126,6 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
             arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
             cplexGrandSubP.getValues(arc_sol[f],arc[f]);
         }
-
         THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
     }
 
@@ -142,10 +142,13 @@ void Problem::Const11b(vector<KEPSol>&KEPSols2ndStage){
         int w = Chains2ndStage[Chains2ndTo3rd[KEPSols2ndStage.back().chains[i]]].AccumWeight;
         exprBound+= w*chvar[KEPSols2ndStage.back().chains[i]];
     }
+    
     //cout << Beta.getName() << ">=" << exprBound << endl;
     string name = "Const11b."  + to_string(vBoundConstraint.getSize());
     const char* cName = name.c_str();
+   
     vBoundConstraint.add(IloRange(env, 0, Beta - exprBound , IloInfinity, cName));
+    
 }
 void Problem::Const11c(vector<KEPSol>&KEPSols2ndStage){
     
@@ -305,6 +308,5 @@ void Problem::SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, 
         }
     }
     
-
     cout << endl;
 }

@@ -771,7 +771,7 @@ void Problem::ROBUST_KEP(){
     IloObjective exprObj = IloObjective(env, Z, IloObjective::Maximize, auxName.c_str());
     RobustMod.add(exprObj);
     
-    cplexRobust.exportModel("RO_Model.lp");
+    //cplexRobust.exportModel("RO_Model.lp");
     cplexRobust.solve();
     //cout << "Status " << cplexRobust.getStatus() << endl;
     //cout << "Objetive: " << cplexRobust.getObjValue();
@@ -812,8 +812,22 @@ void Problem::ROBUST_KEP(){
     vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
     
     for (int i = 0; i < vChains.size(); i++){
-        SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains.size() - 1));
+        SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
     }
+    
+//    for (int i = 0; i < SolFirstStage.size(); i++){
+//        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
+//            cout << SolFirstStage[i].get_cc()[j] << '\t';
+//            if (j == SolFirstStage[i].get_cc().size() - 1) cout << "weight: " << SolFirstStage[i].get_w() << endl;
+//        }
+//    }
+//
+//    SolFirstStage.clear();
+//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{2,14}, 2));
+//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{3,11,15}, 3));
+//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{4,12}, 2));
+//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{5,9}, 2));
+//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{16,0,6}, 2));
     
     //Call 2nd. stage
     Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);

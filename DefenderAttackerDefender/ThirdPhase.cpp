@@ -9,6 +9,7 @@
 #include "ThirdPhase.hpp"
 void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&ListSelVertices){
     //Get scenario
+    
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     //Create model
     mTHPMIP = IloModel (env);
@@ -45,16 +46,20 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
         else{
             TPMIP_Obj = cplexmTHPMIP.getObjValue();
+            
             if (TPMIP_Obj < LOWEST_TPMIP_Obj){
                 LOWEST_TPMIP_Obj = TPMIP_Obj;
                 OptFailedArcs = FailedArcs;
                 OptFailedVertices = FailedVertices;
             }
+            
             IloNumArray tcysol(env);
             IloNumArray tchsol(env);
             cplexmTHPMIP.getValues(tcysol,tcyvar);
             cplexmTHPMIP.getValues(tchsol,tchvar);
+
             Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
+            
             if (THP_Method == "Covering" || THP_Method == "BoundedCovering"){
                 if (ThisWork(tcysol, tchsol, ListSelVertices, RemoveExcess) == true) break;
             }else{//Literature's approach
@@ -285,9 +290,12 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&Lis
 }
 bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     //Create new solution
+    
     KEPSols2ndStage.push_back(KEPSol());
+   
     vector<KEPSol> KEPSol2ndStageMissing;
     KEPSol2ndStageMissing.push_back(KEPSol());
+    
     map<int,bool>ub_tcyvar; // <cycle number, 0 or 1>
     map<int,bool>ub_tchvar; // <cycle number, 0 or 1>
     double Actual_THPObjective = 0;
@@ -325,6 +333,7 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
             }
         }
     }
+
     for (int i = 0; i < tchsol.getSize(); i++){
         if (tchsol[i] > 0.9){
             //Compute actual THP Objective
@@ -362,8 +371,10 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     
     //Create Bounding Constraint
     Const11b(KEPSols2ndStage);
+    
     GrandSubProb.add(vBoundConstraint[vBoundConstraint.getSize() - 1]);
     exprBound.end();
+    
     
     //Create Active Cols Constraint
     Const11c(KEPSol2ndStageMissing);
@@ -378,7 +389,8 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
         cout << "IT SHOULD NEVER HAPPEN" << endl;
     }
     else{
-        SPMIP_Obj = cplexGrandSubP.getValue(Beta);
+        SPMIP_Obj = cplexGrandSubP.getObjValue();
+        SPMIP_Obj = round(SPMIP_Obj);
         if (SPMIP_Obj >= TPMIP_Obj){
             return true;
         }
