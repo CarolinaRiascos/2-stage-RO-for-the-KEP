@@ -18,6 +18,9 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     tStart2ndS = clock();
     
     SampleCols2ndStage(Chains2ndStage, Cycles2ndStage, SolFirstStage);
+    //Get selected vertices
+    vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
+    
     //Create cycle variables
     cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
     for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
@@ -47,151 +50,11 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     for (int i = 0; i < Nodes; i++){
         SetName1Index( vertex[i], "vertex",i + 1);
     }
-    //Create selected-vertex variables
-    vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
-    selvertex = IloNumVarArray(env, ListSelVertices.size(), 0, 1, ILOINT);
-    for (int i = 0; i < selvertex.getSize(); i++){
-        SetName1Index(selvertex[i], "selv", ListSelVertices[i] + 1);
-    }
     
-    //Create bounding variable
-    Beta = IloNumVar(env);
-    SetName1Index(Beta, "Beta", 0);
-    //Create excess variable in objective
-    Excess = IloNumVar(env);
-    IloExpr excess (env, 0);
-    SetName1Index(Excess, "Excess", 0);
-    for (int i = 0; i < ListSelVertices.size(); i++){
-        excess += 1 - selvertex[i];
-    }
-    string name = "ExcessConst";
-    const char* cName = name.c_str();
-    //GrandSubProb.add(IloRange(env, 0, Excess - excess, 0, cName));
-    SelVert2ndPH = IloRangeArray(env, 0);
-    //Add vertex-selection constraint
-    for (int i = 0; i < ListSelVertices.size(); i++){
-        IloExpr exSel(env, 0);
-        for (int j = 0; j < CycleNodeSPH[ListSelVertices[i]].size(); j++){
-            exSel+= cyvar[CycleNodeSPH[ListSelVertices[i]][j]];
-        }
-        for (int j = 0; j < ChainNodeSPH[ListSelVertices[i]].size(); j++){
-            exSel+= chvar[ChainNodeSPH[ListSelVertices[i]][j]];
-        }
-        string name = "Selected." + to_string(ListSelVertices[i] + 1);
-        const char* cName = name.c_str();
-        SelVert2ndPH.add(IloRange(env, -IloInfinity, selvertex[i] - exSel, 0, cName));
-    }
-    //GrandSubProb.add(SelVert2ndPH);
-    
-    //Add Objective function and Bounding Constraint
-    if (THP_Method == "BoundedCovering"){
-    name = "Obj_GrandSubP";
-    cName = name.c_str();
-        ObjGrandSubP = IloObjective(env, Beta, IloObjective::Minimize, cName);//+ 0*Excess
-        GrandSubProb.add(ObjGrandSubP);
+    //CONSTRAINTS
+    string name;
+    const char* cName;
 
-        IloExpr obj (env,0);
-        for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
-            obj += Cycles2ndStage[Cycles2ndTo3rd[i]].get_Many()*cyvar[i];
-        }
-        for (int i = 0; i < Chains2ndTo3rd.size(); i++){
-            obj += Chains2ndStage[Chains2ndTo3rd[i]].AccumWeight*chvar[i];
-        }
-    
-        ConsBeta = IloRangeArray(env);
-        name = "BetaLB";
-        ConsBeta.add(IloRange(env, 0, Beta - obj , IloInfinity, name.c_str()));
-        GrandSubProb.add(ConsBeta);
-        obj.end();
-    
-        //Select a cycle/chain if it has not failed and no other was selected
-        ActiveCCSubP_CY = IloRangeArray(env);
-        ActiveCCSubP_CH = IloRangeArray(env);
-        //Select a cycle/chain if it has not failed
-        IfNoFailures_CY = IloRangeArray(env);
-        IfNoFailures_CH = IloRangeArray(env);
-        //Guarantee a cycle/chain is selected once
-        Once = IloRangeArray(env);
-        //selOnce(CycleNodeSPH, ChainNodeSPH);
-       
-        //Cycles
-        for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
-            //IfNoFailuresCY(Cycles2ndTo3rd, i);
-            IloExpr ExprArcsVtx (env, 0);
-            IloExpr AllccVars (env, 0);
-            map<int,bool>forcycles;
-            map<int,bool>forchains;
-            int idx = Cycles2ndTo3rd[i];
-            for (int j = 0; j < Cycles2ndStage[idx].get_c().size(); j++){
-                ExprArcsVtx+= vertex[Cycles2ndStage[idx].get_c()[j]];
-                int u = Cycles2ndStage[idx].get_c()[j];
-                if (j == Cycles2ndStage[idx].get_c().size() - 1){
-                    int v = Cycles2ndStage[idx].get_c()[0];
-                    int s = mapArcs[make_pair(u,v)];
-                    ExprArcsVtx+= arc[u][s];
-                }
-                else{
-                    int v = Cycles2ndStage[idx].get_c()[j + 1];
-                    int s = mapArcs[make_pair(u,v)];
-                    ExprArcsVtx+= arc[u][s];
-                }
-                for (int k = 0; k < CycleNodeSPH[u].size(); k++){
-                    if (CycleNodeSPH[u][k] != i) forcycles[CycleNodeSPH[u][k]];
-                    //check whether CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] exixts in Cycles2ndTo3rd
-                }
-                //cout << Cycles2ndStage[idx].get_c()[j] << endl;
-                for (int k = 0; k < ChainNodeSPH[u].size(); k++){
-                    forchains[ChainNodeSPH[u][k]];
-                }
-            }
-            for (auto it = forcycles.begin(); it != forcycles.end(); it++){
-                AllccVars+= cyvar[it->first];
-            }
-            for (auto it = forchains.begin(); it != forchains.end(); it++){
-                AllccVars+= chvar[it->first];
-            }
-            name = "Active_CY_." + to_string(i + 1);
-            cName = name.c_str();
-            //cout << cyvar[i].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
-            ActiveCCSubP_CY.add(IloRange(env, 1, cyvar[i] + ExprArcsVtx , IloInfinity, cName)); //+ AllccVars
-            GrandSubProb.add(ActiveCCSubP_CY[ActiveCCSubP_CY.getSize() - 1]);
-        }
-        //Chain variables
-        for (int i = 0; i < Chains2ndTo3rd.size(); i++){
-            //IfNoFailuresCH(Chains2ndTo3rd, i);
-            IloExpr Expr2ArcsVtx (env, 0);
-            IloExpr All2ccVars (env, 0);
-            map<int,bool>forcycles;
-            map<int,bool>forchains;
-            int idx = Chains2ndTo3rd[i];
-            for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
-                int u = Chains2ndStage[idx].Vnodes[j].vertex;
-                Expr2ArcsVtx+= vertex[u];
-                if (j <= Chains2ndStage[idx].Vnodes.size() - 2){
-                    int v = Chains2ndStage[idx].Vnodes[j + 1].vertex;
-                    int s = mapArcs[make_pair(u,v)];
-                    Expr2ArcsVtx+= arc[u][s];
-                }
-                for (int k = 0; k < CycleNodeSPH[u].size(); k++){
-                    forcycles[CycleNodeSPH[u][k]];
-                }
-                for (int k = 0; k < ChainNodeSPH[u].size(); k++){
-                    if (ChainNodeSPH[u][k] != i) forchains[ChainNodeSPH[u][k]];
-                }
-            }
-            for (auto it = forcycles.begin(); it != forcycles.end(); it++){
-                All2ccVars+= cyvar[it->first];
-            }
-            for (auto it = forchains.begin(); it != forchains.end(); it++){
-                All2ccVars+= chvar[it->first];
-            }
-            name = "Active_CH_." + to_string(i + 1);
-            cName = name.c_str();
-            //cout << cyvar[i].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
-            ActiveCCSubP_CH.add(IloRange(env, 1, chvar[i] + Expr2ArcsVtx , IloInfinity, cName));//+ All2ccVars
-            GrandSubProb.add(ActiveCCSubP_CH[ActiveCCSubP_CH.getSize() - 1]);
-        }
-    }
     IloExpr sumVertices (env, 0);
     for (int i = 0; i < Nodes; i++){
         sumVertices+=  vertex[i];
@@ -210,30 +73,42 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     cName = name.c_str();
     GrandSubProb.add(IloRange(env, -IloInfinity, sumArcs, MaxArcFailures, cName));
     
+    //Do not pick a failed arc adjacent to a failed vertex
+    for (int i = 0; i < AdjacencyList.getSize(); i++){
+        IloExpr in (env,0);  IloExpr out (env,0);
+        for (int j = 0; j < AdjacencyList[i].getSize(); j++){
+            out+= arc[i][j];
+        }
+        for (int j = 0; j < PredMap[i].size(); j++){
+            in+= arc[PredMap[i][j].first][PredMap[i][j].second];
+        }
+        GrandSubProb.add(IloRange(env, -IloInfinity, in + out + 2*vertex[i], 2, cName));
+        in.end();
+        out.end();
+    }
+    
+    //First Get at least one vertex/arc fails
+    for (int i = 0; i < SolFirstStage.size(); i++){
+        if (SolFirstStage[i].get_cc()[0] < Pairs){
+            Cycles3rdSol.push_back(Cycles(SolFirstStage[i].get_cc(), SolFirstStage[i].get_w()));
+            Cycles3rdSol.back().set_Many(SolFirstStage[i].get_w());
+        }
+        else{
+            Chains3rdSol.push_back(Chain(vChain(SolFirstStage[i].get_cc()[0], vector<int>())));
+            Chains3rdSol.back().AccumWeight = SolFirstStage[i].get_w();
+            for (int j = 1; j < SolFirstStage[i].get_cc().size(); j++){
+                Chains3rdSol.back().Vnodes.push_back(vChain(SolFirstStage[i].get_cc()[j], vector<int>()));
+            }
+        }
+    }
+    GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
+    
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     cplexGrandSubP.solve();
     if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
         cout << "S.O.S. This should not happen." << endl;
     }
     else{
-        if (THP_Method == "BoundedCovering"){
-            SPMIP_Obj = cplexGrandSubP.getValue(Beta);
-            env.out() << "Objective: " << SPMIP_Obj << endl;//cplexGrandSubP.getValue(Excess)
-        
-
-            //Retrieve solution
-            cyvar_sol2nd = IloNumArray(env, Cycles2ndTo3rd.size());
-            chvar_sol2nd = IloNumArray (env, Chains2ndTo3rd.size());
-            cplexGrandSubP.getValues(cyvar_sol2nd,cyvar);
-            cplexGrandSubP.getValues(chvar_sol2nd,chvar);
-            
-            for (int i = 0; i < cyvar_sol2nd.getSize(); i++){
-                if (cyvar_sol2nd[i] > 0.9) cout << cyvar[i].getName() << endl;
-            }
-            for (int i = 0; i < chvar_sol2nd.getSize(); i++){
-                if (chvar_sol2nd[i] > 0.9) cout << chvar[i].getName() << endl;
-            }
-        }
         vertex_sol = IloNumArray(env, Nodes);
         cplexGrandSubP.getValues(vertex_sol,vertex);
         

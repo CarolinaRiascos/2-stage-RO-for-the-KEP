@@ -24,7 +24,7 @@ class Cycles{
 private:
     vector<int> _cycle;
     double _weight;
-    int _HowMany;
+    double _HowMany;
 public:
     Cycles(){}
     Cycles(vector<int> cycle, double weight){_cycle = cycle, _weight = weight;}
@@ -312,7 +312,7 @@ public:
     void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
-    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&ListSelVertices, bool RemoveExcess);
+    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol);
         
     //Literature method
     void ROBUST_KEP();

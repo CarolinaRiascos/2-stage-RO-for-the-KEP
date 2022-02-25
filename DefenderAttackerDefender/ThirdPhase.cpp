@@ -35,7 +35,6 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     mTHPMIP.add(ObjTHP);
     
     Ite2ndS = 0;
-    bool RemoveExcess = false;
     while(true){
         tEnd2ndS = (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
         if (tEnd2ndS > 1800){
@@ -66,7 +65,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
             
             if (THP_Method == "Covering" || THP_Method == "BoundedCovering"){
-                if (ThisWork(tcysol, tchsol, ListSelVertices, RemoveExcess) == true) break;
+                if (ThisWork(tcysol, tchsol) == true) break;
             }else{//Literature's approach
                 if (Literature(tcysol, tchsol) == true) break;
             }
@@ -91,7 +90,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     }
     
 }
-bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&ListSelVertices, bool RemoveExcess){
+bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol){
 
     //Add AtLeastOneFails Cut
     GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
@@ -120,6 +119,14 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&Lis
     //Change variables' UB in 3rd phase
     map<int,bool>ub_tcyvar; // <cycle number, 0 or 1>
     ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
+//    for (auto it = FailedVertices.begin(); it != FailedVertices.end(); it++){
+//        for (auto it2 = FailedArcs.begin(); it2 != FailedArcs.end(); it2++){
+//            if (it->first == it2->first.first || it->first == it2->first.second){
+//                cout << "not expected";
+//            }
+//        }
+//    }
+    
     for(int i = 0; i < tcyvar.getSize(); i++){
         map<int,bool>::iterator find = ub_tcyvar.find(i);
         if (find != ub_tcyvar.end()){
@@ -391,7 +398,7 @@ void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chai
         TotalW+= Chains3rdSol[i].AccumWeight;
     }
     int RHS = 1;
-    if (TotalW > LOWEST_TPMIP_Obj){
+    if (TotalW > LOWEST_TPMIP_Obj && Ite2ndS >= 1){
         sort(Weights3rdSol.begin(), Weights3rdSol.end(), sortint);
         int accum = 0;
         int i = 0;
@@ -409,7 +416,7 @@ void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chai
     }
     
     
-    string name = "AtLeastOneFails." + to_string(AtLeastOneFails.getSize() + 1);
+    string name = "AtLeastOneFails_" + to_string(AtLeastOneFails.getSize() + 1);
     const char* cName = name.c_str();
     //cout << expr << endl;
     AtLeastOneFails.add(IloRange(env, RHS, expr, IloInfinity, cName));
