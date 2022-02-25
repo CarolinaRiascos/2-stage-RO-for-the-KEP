@@ -92,167 +92,18 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     
 }
 bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&ListSelVertices, bool RemoveExcess){
-    
 
-    if (THP_Method == "BoundedCovering"){
-        //Check whether the cycles are contained in Cycles2ndTo3rd and Chains2ndTo3rd
-        AddNewCols3rdTo2nd (tcysol, tchsol, Cycles2ndTo3rd, Chains2ndTo3rd, Cycles3rdTo2nd, Chains3rdTo2nd, Cyclenewrow2ndPH, Chainnewrow2ndPH, tcysol3rd, tchsol3rd, Cycles2ndStage, Chains2ndStage);
-
-        if (tcysol3rd.size() != 0 || tchsol3rd.size() != 0){
-            //Add cols and constraints to SPMIP
-            for (int i = 0; i < tcysol3rd.size(); i++){
-                
-                //OldSelVert2ndPH_CY
-                vector<int> OldSelVert2ndPH;
-                //OldSelVert2ndPH = ModifyOldSelectVex_CY(tcysol3rd[i], ListSelVertices, Cycles2ndStage);
-                //OldActiveCCSubP_CY
-                vector<int> OldActiveCY;
-                OldActiveCY = ModifyOldActiveCCSubP_CY(tcysol3rd[i], Cycles2ndTo3rd, Cyclenewrow2ndPH, Cycles2ndStage);
-                //OldActiveCCSubP_CH
-                vector<int> OldActiveCYtoCH;
-                OldActiveCYtoCH = ModifyOldActiveCCSubP_CYtoCH(tcysol3rd[i], Chains2ndTo3rd, Chainnewrow2ndPH, Cycles2ndStage);
-
-                //Create new cycle column
-                IloNumColumn col(env);
-                
-                //Update Beta constraint
-                col+= ConsBeta[0](-Cycles2ndStage[tcysol3rd[i]].get_Many());
-                //UpdateSelVert2ndPH
-//                for (int j = 0; j < OldSelVert2ndPH.size(); j++){
-//                    col+= SelVert2ndPH[OldSelVert2ndPH[j]](1);
-//                }
-                //UpdateActiveCCSubP_CY
-                for (int j = 0; j < OldActiveCY.size(); j++){
-                    col+= ActiveCCSubP_CY[OldActiveCY[j]](1);
-                }
-                //UpdateActiveCCSubP_CH
-                for (int j = 0; j < OldActiveCYtoCH.size(); j++){
-                    col+= ActiveCCSubP_CH[OldActiveCYtoCH[j]](1);
-                }
-                //Update selOnce
-                for (int j = 0; j < Cycles2ndStage[tcysol3rd[i]].get_c().size(); j++){
-                    auto it = CycleNodeTPH.find(Cycles2ndStage[tcysol3rd[i]].get_c()[j]);
-                    if (it != CycleNodeTPH.end()){
-                        col+= Once[Cycles2ndStage[tcysol3rd[i]].get_c()[j]](1);
-                    }
-                }
-                
-                //Create new variable
-                cyvar.add(IloIntVar(col, 0, 1));
-                string name = "x." + to_string(Cyclenewrow2ndPH + i + 1);
-                const char* varName = name.c_str();
-                cyvar[cyvar.getSize() - 1].setName(varName);
-                cyvar[cyvar.getSize() - 1].setBounds(0, 1);
-                //NewActiveCCSubP_CY
-                GetNewIloRangeCY3rd(tcysol3rd[i], Cycles2ndStage);
-                //IfNoFailuresCY
-                IfNoFailuresCY(Cycles2ndTo3rd, Cycles3rdTo2nd[tcysol3rd[i]]);
-            }
-            for (int i = 0; i < tchsol3rd.size(); i++){
-                //OldSelVert2ndPH
-                //vector<int> OldSelVert2ndPH;
-                //OldSelVert2ndPH = ModifyOldSelectVex_CH(tchsol3rd[i], ListSelVertices, Chains2ndStage);
-                //OldActiveCCSubP_CH
-                vector<int> OldActiveCH;
-                OldActiveCH = ModifyOldActiveCCSubP_CH(tchsol3rd[i], Chains2ndTo3rd, Chainnewrow2ndPH, Chains2ndStage);
-                //OldActiveCCSubP_CH
-                vector<int> OldSelVert2ndPH_CHtoCY;
-                //OldActiveCCSubP_CHtoCY
-                OldSelVert2ndPH_CHtoCY = ModifyOldActiveCCSubP_CHtoCY(tchsol3rd[i], Cycles2ndTo3rd, Cyclenewrow2ndPH, Chains2ndStage);
-                
-                //Create new chain column
-                IloNumColumn col(env);
-                
-                //Update Beta constraint
-                col+= ConsBeta[0](-Chains2ndStage[tchsol3rd[i]].AccumWeight);
-                //UpdateSelVert2ndPH
-//                for (int j = 0; j < OldSelVert2ndPH.size(); j++){
-//                    col+= SelVert2ndPH[OldSelVert2ndPH[j]](1);
-//                }
-                //UpdateActiveCCSubP_CH
-                for (int j = 0; j < OldActiveCH.size(); j++){
-                    col+= ActiveCCSubP_CH[OldActiveCH[j]](1);
-                }
-                //UpdateActiveCCSubP_CY
-                for (int j = 0; j < OldSelVert2ndPH_CHtoCY.size(); j++){
-                    col+= ActiveCCSubP_CY[OldSelVert2ndPH_CHtoCY[j]](1);
-                }
-                
-                //Update selOnce
-                for (int j = 0; j < Chains2ndStage[tchsol3rd[i]].Vnodes.size(); j++){
-                    auto it = ChainNodeTPH.find(Chains2ndStage[tchsol3rd[i]].Vnodes[j].vertex);
-                    if (it != ChainNodeTPH.end()){
-                        col+= Once[Chains2ndStage[tchsol3rd[i]].Vnodes[j].vertex](1);
-                    }
-                }
-                
-                //Create new variable
-                chvar.add(IloIntVar(col, 0, 1));
-                string name = "y." + to_string(Chainnewrow2ndPH + i + 1);
-                const char* varName = name.c_str();
-                chvar[chvar.getSize() - 1].setName(varName);
-                chvar[chvar.getSize() - 1].setBounds(0, 1);
-                //NewActiveCCSubP_CH
-                GetNewIloRangeCH3rd(tchsol3rd[i], Chains2ndStage);
-                //IfNoFailuresCY
-                IfNoFailuresCH(Chains2ndTo3rd, Chains3rdTo2nd[tchsol3rd[i]]);
-            }
-        }
-        
-        
-    }
-
-    if (THP_Method == "Covering"){
-        //Add AtLeastOneFails Cut
-        GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
-    }else{
-        //Add New Beta Constraint
-        GetNewBetaCut(TPMIP_Obj, FailedArcs, FailedVertices);
-        GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
-    }
-    
+    //Add AtLeastOneFails Cut
+    GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
     
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     cplexGrandSubP.solve();
     
-    if (THP_Method == "Covering"){
-        if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
-            cout << "2nd. stage solved" << endl;
-            SPMIP_Obj = LOWEST_TPMIP_Obj;
-            return true;
-        }
-    }
-    else{
-        SPMIP_Obj = cplexGrandSubP.getValue(Beta);
-        if (SPMIP_Obj >= TPMIP_Obj){
-             cout << "2nd. stage solved" << endl;
-            //SPMIP_Obj = LOWEST_TPMIP_Obj;
-            //return true;
-        }
-    }
-
-
-    if (THP_Method == "BoundedCovering"){
-        if (SPMIP_Obj >= TPMIP_Obj){
-            cout << "This should not happen" << endl;
-        }
-        cout << "2nd. Phase Obj: " << SPMIP_Obj << endl;
-        
-        cyvar_sol2nd = IloNumArray(env, Cycles2ndTo3rd.size());
-        chvar_sol2nd = IloNumArray (env, Chains2ndTo3rd.size());
-        cplexGrandSubP.getValues(cyvar_sol2nd,cyvar);
-        cplexGrandSubP.getValues(chvar_sol2nd,chvar);
-        
-//        cout << "Sol. 2nd. Phase: " << endl;
-//        for (int i = 0; i < cyvar_sol2nd.getSize(); i++){
-//            if (cyvar_sol2nd[i] > 0.1) cout << cyvar[i].getName() << endl;
-//        }
-//        for (int i = 0; i < chvar_sol2nd.getSize(); i++){
-//            if (chvar_sol2nd[i] > 0.1) cout << chvar[i].getName() << endl;
-//        }
-        cyvar_sol2nd.end();
-        chvar_sol2nd.end();
+    if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
+        cout << "2nd. stage solved" << endl;
+        SPMIP_Obj = LOWEST_TPMIP_Obj;
+        return true;
     }
 
     //Get failing arcs and failing vertices
@@ -502,72 +353,71 @@ void Problem::GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArc
 //    GrandSubProb.add(ConsBeta[ConsBeta.getSize() - 1]);
 }
 void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol){
-    map<int, bool>::iterator it1;
-    map<pair<int,int>, bool>::iterator it2;
-    bool alreadyfails = false;
     IloExpr expr(env);
     
     for (int i = 0; i < Cycles3rdSol.size(); i++){
         for (int j = 0; j < Cycles3rdSol[i].get_c().size(); j++){
             int u = Cycles3rdSol[i].get_c()[j];
             expr+= vertex[u];
-            it1 = FailedVertices.find(u);
-            if (it1 != FailedVertices.end()) {
-                alreadyfails = true;
-                break;
-            }
             if (j == Cycles3rdSol[i].get_c().size() - 1){
                 int s = mapArcs[make_pair(u,Cycles3rdSol[i].get_c()[0])];
                 expr+= arc[u][s];
-                it2 = FailedArcs.find(make_pair(u,Cycles3rdSol[i].get_c()[0]));
-                if (it2 != FailedArcs.end()){
-                    alreadyfails = true;
-                    break;
-                }
             }
             else{
                 int s = mapArcs[make_pair(u,Cycles3rdSol[i].get_c()[j + 1])];
                 expr+= arc[u][s];
-                it2 = FailedArcs.find(make_pair(u,Cycles3rdSol[i].get_c()[j + 1]));
-                if (it2 != FailedArcs.end()){
-                    alreadyfails = true;
-                    break;
-                }
             }
         }
-        if (alreadyfails == true) break;
     }
-    if (alreadyfails == false){
-        for (int i = 0; i < Chains3rdSol.size(); i++){
-            for (int j = 0; j < Chains3rdSol[i].Vnodes.size(); j++){
-                int u = Chains3rdSol[i].Vnodes[j].vertex;
-                it1 = FailedVertices.find(u);
-                if (it1 != FailedVertices.end()){
-                    alreadyfails = true;
-                    break;
-                }
-                expr+= vertex[u];
-                if (j <= Chains3rdSol[i].Vnodes.size() - 2){
-                    int s = mapArcs[make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex)];
-                    expr+= arc[u][s];
-                    it2 = FailedArcs.find(make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex));
-                    if (it2 != FailedArcs.end()){
-                        alreadyfails = true;
-                        break;
-                    }
-                }
+    for (int i = 0; i < Chains3rdSol.size(); i++){
+        for (int j = 0; j < Chains3rdSol[i].Vnodes.size(); j++){
+            int u = Chains3rdSol[i].Vnodes[j].vertex;
+            expr+= vertex[u];
+            if (j <= Chains3rdSol[i].Vnodes.size() - 2){
+                int s = mapArcs[make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex)];
+                expr+= arc[u][s];
             }
-            if (alreadyfails == true) break;
         }
     }
-    if (alreadyfails == false){
-        string name = "AtLeastOneFails." + to_string(AtLeastOneFails.getSize() + 1);
-        const char* cName = name.c_str();
-        //cout << expr << endl;
-        AtLeastOneFails.add(IloRange(env, 1, expr, IloInfinity, cName));
-        GrandSubProb.add(AtLeastOneFails[AtLeastOneFails.getSize() - 1]);
+    //Sort Cycles3rdSol and Chains3rdSol
+    vector<int>Weights3rdSol;
+    double TotalW = 0;
+    for (int i = 0; i < Cycles3rdSol.size(); i++){
+        Weights3rdSol.push_back(Cycles3rdSol[i].get_Many());
+        TotalW+= Cycles3rdSol[i].get_Many();
     }
+    for (int i = 0; i < Chains3rdSol.size(); i++){
+        Weights3rdSol.push_back(Chains3rdSol[i].AccumWeight);
+        TotalW+= Chains3rdSol[i].AccumWeight;
+    }
+    int RHS = 1;
+    if (TotalW > LOWEST_TPMIP_Obj){
+        sort(Weights3rdSol.begin(), Weights3rdSol.end(), sortint);
+        int accum = 0;
+        int i = 0;
+        while (true){
+            if (TotalW - Weights3rdSol[i] - accum > LOWEST_TPMIP_Obj){
+                accum+= Weights3rdSol[i];
+                i++;
+            }
+            else{
+                RHS = i + 1;
+                break;
+            }
+        }
+        if (i >= 2) VI_I++;
+    }
+    
+    
+    string name = "AtLeastOneFails." + to_string(AtLeastOneFails.getSize() + 1);
+    const char* cName = name.c_str();
+    //cout << expr << endl;
+    AtLeastOneFails.add(IloRange(env, RHS, expr, IloInfinity, cName));
+    GrandSubProb.add(AtLeastOneFails[AtLeastOneFails.getSize() - 1]);
     expr.end();
+}
+bool sortint(int& c1, int& c2){
+    return (c1 > c2);
 }
 void Problem::Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd){
     Cycles3rdSol.clear();

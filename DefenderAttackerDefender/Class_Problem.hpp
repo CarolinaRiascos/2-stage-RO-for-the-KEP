@@ -263,6 +263,7 @@ public:
     vector<Cycles>Cycles2ndStage;
     vector<Chain>Chains2ndStage;
     void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&ListSelVertices);
+    IloNum VI_I = 0;
     //Model
     IloModel mTHPMIP;
     IloCplex cplexmTHPMIP;
