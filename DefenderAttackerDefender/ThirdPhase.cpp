@@ -44,19 +44,15 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         Ite2ndS++;
         //Solve formulation
         //cplexmTHPMIP.exportModel("mTHPMIP.lp");
+        tStartReco = clock();
         cplexmTHPMIP.solve();
+        tTotalReco += (clock() - tStartReco)/double(CLOCKS_PER_SEC);
         if (cplexmTHPMIP.getStatus() == IloAlgorithm::Infeasible){
             cout << "S.O.S. This should not happen." << endl;
         }
         else{
             TPMIP_Obj = cplexmTHPMIP.getObjValue();
-            
-            if (TPMIP_Obj < LOWEST_TPMIP_Obj){
-                LOWEST_TPMIP_Obj = TPMIP_Obj;
-                OptFailedArcs = FailedArcs;
-                OptFailedVertices = FailedVertices;
-            }
-            
+                        
             IloNumArray tcysol(env);
             IloNumArray tchsol(env);
             cplexmTHPMIP.getValues(tcysol,tcyvar);
@@ -64,7 +60,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
 
             Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
             
-            if (THP_Method == "Covering" || THP_Method == "BoundedCovering"){
+            if (THP_Method == "Covering"){
                 if (ThisWork(tcysol, tchsol) == true) break;
             }else{//Literature's approach
                 if (Literature(tcysol, tchsol) == true) break;
@@ -91,6 +87,19 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     
 }
 bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol){
+    
+    if (TPMIP_Obj < LOWEST_TPMIP_Obj){
+        LOWEST_TPMIP_Obj = TPMIP_Obj;
+        OptFailedArcs = FailedArcs;
+        OptFailedVertices = FailedVertices;
+        for (int i = 0; i < RecoSolCovering.size(); i++){
+            int RHS;
+            RHS = Update_RHS_Covering(i);
+            if (RHS > AtLeastOneFails[i].getLB()){
+                AtLeastOneFails[i].setLB(RHS);
+            }
+        }
+    }
 
     //Add AtLeastOneFails Cut
     GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
@@ -386,35 +395,27 @@ void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chai
             }
         }
     }
-    //Sort Cycles3rdSol and Chains3rdSol
-    vector<int>Weights3rdSol;
-    double TotalW = 0;
-    for (int i = 0; i < Cycles3rdSol.size(); i++){
-        Weights3rdSol.push_back(Cycles3rdSol[i].get_Many());
-        TotalW+= Cycles3rdSol[i].get_Many();
-    }
-    for (int i = 0; i < Chains3rdSol.size(); i++){
-        Weights3rdSol.push_back(Chains3rdSol[i].AccumWeight);
-        TotalW+= Chains3rdSol[i].AccumWeight;
-    }
-    int RHS = 1;
-    if (TotalW > LOWEST_TPMIP_Obj && Ite2ndS >= 1){
-        sort(Weights3rdSol.begin(), Weights3rdSol.end(), sortint);
-        int accum = 0;
-        int i = 0;
-        while (true){
-            if (TotalW - Weights3rdSol[i] - accum > LOWEST_TPMIP_Obj){
-                accum+= Weights3rdSol[i];
-                i++;
-            }
-            else{
-                RHS = i + 1;
-                break;
-            }
-        }
-        if (i >= 2) VI_I++;
-    }
     
+    int RHS = 1;
+    if (Ite2ndS >= 1){
+        //Sort Cycles3rdSol and Chains3rdSol
+        RecoSolCovering.push_back(vector<double>());
+        double TotalW = 0;
+        for (int i = 0; i < Cycles3rdSol.size(); i++){
+            RecoSolCovering.back().push_back(Cycles3rdSol[i].get_Many());
+            TotalW+= Cycles3rdSol[i].get_Many();
+        }
+        for (int i = 0; i < Chains3rdSol.size(); i++){
+            RecoSolCovering.back().push_back(Chains3rdSol[i].AccumWeight);
+            TotalW+= Chains3rdSol[i].AccumWeight;
+        }
+        RecoTotalWCovering.push_back(TotalW);
+        sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortint);
+    }
+
+    if (RecoTotalWCovering.back() > LOWEST_TPMIP_Obj){
+        RHS = Update_RHS_Covering(int (RecoSolCovering.size() - 1));
+    }
     
     string name = "AtLeastOneFails_" + to_string(AtLeastOneFails.getSize() + 1);
     const char* cName = name.c_str();
@@ -423,8 +424,25 @@ void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chai
     GrandSubProb.add(AtLeastOneFails[AtLeastOneFails.getSize() - 1]);
     expr.end();
 }
-bool sortint(int& c1, int& c2){
+bool sortint(double& c1, double& c2){
     return (c1 > c2);
+}
+int Problem::Update_RHS_Covering(int row){
+    int i = 0, RHS = 0, accum = 0;
+        
+    while (true){
+        if (RecoTotalWCovering[row] - RecoSolCovering.back()[i] - accum > LOWEST_TPMIP_Obj){
+            accum+= RecoSolCovering.back()[i];
+            i++;
+        }
+        else{
+            RHS = i + 1;
+            break;
+        }
+    }
+    if (i >= 2) VI_I++;
+    
+    return RHS;
 }
 void Problem::Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd){
     Cycles3rdSol.clear();

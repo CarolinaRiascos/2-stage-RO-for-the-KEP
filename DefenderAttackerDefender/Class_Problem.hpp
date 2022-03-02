@@ -95,7 +95,9 @@ public:
     string FileName;
     fstream file;
     clock_t tStart2ndS;
-    double tEnd2ndS;
+    clock_t tStartReco;
+    double tTotalReco = 0;
+    double tEnd2ndS = 0;
     string status;
     string FolderName;
     string RecoursePolicy;
@@ -264,6 +266,8 @@ public:
     vector<Chain>Chains2ndStage;
     void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&ListSelVertices);
     IloNum VI_I = 0;
+    vector<vector<double>>RecoSolCovering;
+    vector<double>RecoTotalWCovering;
     //Model
     IloModel mTHPMIP;
     IloCplex cplexmTHPMIP;
@@ -313,6 +317,7 @@ public:
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
     bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol);
+    int Update_RHS_Covering(int row);
         
     //Literature method
     void ROBUST_KEP();

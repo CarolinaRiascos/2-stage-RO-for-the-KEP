@@ -88,19 +88,27 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     
     //First Get at least one vertex/arc fails
+    RecoSolCovering.push_back(vector<double>());
+    double w = 0;
     for (int i = 0; i < SolFirstStage.size(); i++){
         if (SolFirstStage[i].get_cc()[0] < Pairs){
             Cycles3rdSol.push_back(Cycles(SolFirstStage[i].get_cc(), SolFirstStage[i].get_w()));
             Cycles3rdSol.back().set_Many(SolFirstStage[i].get_w());
+            RecoSolCovering.back().push_back(SolFirstStage[i].get_w());
+            w+=SolFirstStage[i].get_w();
         }
         else{
             Chains3rdSol.push_back(Chain(vChain(SolFirstStage[i].get_cc()[0], vector<int>())));
             Chains3rdSol.back().AccumWeight = SolFirstStage[i].get_w();
-            for (int j = 1; j < SolFirstStage[i].get_cc().size(); j++){
+            RecoSolCovering.back().push_back(SolFirstStage[i].get_w());
+            w+=SolFirstStage[i].get_w();
+            for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
                 Chains3rdSol.back().Vnodes.push_back(vChain(SolFirstStage[i].get_cc()[j], vector<int>()));
             }
         }
     }
+    RecoTotalWCovering.push_back(w);
+    sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortint);
     GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
     
     //cplexGrandSubP.exportModel("GrandSubP.lp");

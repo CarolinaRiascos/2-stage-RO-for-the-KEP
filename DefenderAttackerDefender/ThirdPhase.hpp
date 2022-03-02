@@ -14,6 +14,6 @@
 #include "GrandSubproblem.hpp"
 #include "M-PICEF.hpp"
 
-bool sortint(int& c1, int& c2);
+bool sortint(double& c1, double& c2);
 
 #endif /* ThirdPhase_hpp */

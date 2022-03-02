@@ -70,10 +70,10 @@ void Problem::Print2ndStage(){
         this->file.open(OutputDire, fstream::app);
     }else{
         file.open(OutputDire, fstream::out);
-        file << "Instance" << '\t' << "PDP" << '\t' << "NDD" << '\t' << "K" << '\t' << "L" << '\t' << "VertexBudget" << '\t' << "ArcBudget" << '\t' <<"Ite" << '\t' << "Time(s)" << '\t' << "Method" << '\t' << "Policy" << '\t' << "SPMIP_Obj" << '\t' << "Status" << endl;
+        file << "Instance" << '\t' << "PDP" << '\t' << "NDD" << '\t' << "K" << '\t' << "L" << '\t' << "VertexBudget" << '\t' << "ArcBudget" << '\t' <<"Ite" << '\t' << "Time(s)" << '\t' << "Method" << '\t' << "Policy"<< '\t' << "tRecoProb" << '\t' << "SPMIP_Obj" << '\t' << "Status" << endl;
     }
     
-    file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures <<'\t' << Ite2ndS << '\t' << tEnd2ndS << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << SPMIP_Obj << '\t' << status << endl;
+    file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures <<'\t' << Ite2ndS << '\t' << tEnd2ndS << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << tTotalReco << '\t' << SPMIP_Obj << '\t' << status << endl;
     
     file.close();
 }
