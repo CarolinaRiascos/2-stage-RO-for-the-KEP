@@ -247,8 +247,8 @@ public:
     vector<Cycles> AmongPolicy(vector<int>&vinFirstStageSol);
     vector<Cycles> AllPolicy(vector<int>&vinFirstStageSol);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
-    void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain);
-    vector<Chain>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol);
+    void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain, IloNumArray2 AdjaList);
+    vector<Chain>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol, vector<int>& ListVertices, bool onlyOne);
     vector<Chain> Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     vector<Cycles> Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
@@ -312,12 +312,18 @@ public:
     void GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage);
     void GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArcs, map<int, bool> FailedVertices);
     void GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices);
-    void GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol);
+    void GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, vector<int>&vinFirstStage);
     void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
-    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol);
+    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage);
     int Update_RHS_Covering(int row);
+    
+    //SVIs
+    bool UnMVtxdueToVtx(map<int, bool>& FailedVertices, vector<int>vinFirstStage);
+    IloNumArray2 BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int>vinFirstStage);
+    IloNumArray2 BuildAdjaListVtxChains(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage);
+    
         
     //Literature method
     void ROBUST_KEP();

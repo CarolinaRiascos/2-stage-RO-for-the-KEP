@@ -7,7 +7,7 @@
 //
 
 #include "ThirdPhase.hpp"
-void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&ListSelVertices){
+void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&vinFirstStage){
     //Get scenario
     
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
@@ -61,7 +61,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
             
             if (THP_Method == "Covering"){
-                if (ThisWork(tcysol, tchsol) == true) break;
+                if (ThisWork(tcysol, tchsol, vinFirstStage) == true) break;
             }else{//Literature's approach
                 if (Literature(tcysol, tchsol) == true) break;
             }
@@ -86,7 +86,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     }
     
 }
-bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol){
+bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage){
     
     if (TPMIP_Obj < LOWEST_TPMIP_Obj){
         LOWEST_TPMIP_Obj = TPMIP_Obj;
@@ -102,7 +102,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol){
     }
 
     //Add AtLeastOneFails Cut
-    GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol);
+    GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol, vinFirstStage);
     
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
@@ -125,17 +125,20 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol){
     }
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     
+    //Inspect scenario and resolve GrandSP if needed
+    //while(true){
+        //Unmatchable vertex due to another vertex failure
+    UnMVtxdueToVtx(FailedVertices, vinFirstStage);
+        //Unmatchable arc due to a vertex failure
+        
+        //Unmatchable vertex due to an arc failure
+        
+        //Unmatchable arc due to another arc failure
+    //}
+    
     //Change variables' UB in 3rd phase
     map<int,bool>ub_tcyvar; // <cycle number, 0 or 1>
     ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
-//    for (auto it = FailedVertices.begin(); it != FailedVertices.end(); it++){
-//        for (auto it2 = FailedArcs.begin(); it2 != FailedArcs.end(); it2++){
-//            if (it->first == it2->first.first || it->first == it2->first.second){
-//                cout << "not expected";
-//            }
-//        }
-//    }
-    
     for(int i = 0; i < tcyvar.getSize(); i++){
         map<int,bool>::iterator find = ub_tcyvar.find(i);
         if (find != ub_tcyvar.end()){
@@ -368,7 +371,7 @@ void Problem::GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArc
 //    ConsBeta.add(IloRange(env, 0, Beta + expr, IloInfinity, name.c_str()));
 //    GrandSubProb.add(ConsBeta[ConsBeta.getSize() - 1]);
 }
-void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol){
+void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, vector<int>&vinFirstStage){
     IloExpr expr(env);
     
     for (int i = 0; i < Cycles3rdSol.size(); i++){
@@ -644,204 +647,139 @@ void Problem::AddNewCols3rdTo2nd (IloNumArray tcysol, IloNumArray tchsol, map<in
     }
     
 }
-vector<int>Problem::ModifyOldActiveCCSubP_CHtoCY(int tOnechsol, map<int,int>& Cycles2ndTo3rd, int& Cyclenewrow2ndPH, vector<Chain>&Chains2ndStage){
-    vector<int>UpdateActiveCCSubP_CY;
-    for (int i = 0; i < Cyclenewrow2ndPH; i++){
-        bool found = false;
-        for (int j = 0; j < Cycles2ndStage[Cycles2ndTo3rd[i]].get_c().size(); j++){
-            int u = Cycles2ndStage[Cycles2ndTo3rd[i]].get_c()[j];
-            for (int h = 0; h < Chains2ndStage[tOnechsol].Vnodes.size(); h++){
-                int v = Chains2ndStage[tOnechsol].Vnodes[h].vertex;
-                if (u == v){
-                    UpdateActiveCCSubP_CY.push_back(i);
-                    found = true;
-                    break;
+//////////////////////////// SVIs ////////////////////////////
+bool IsxinChain(int v, Chain c){
+    for (int i = 0; i < c.Vnodes.size(); i++){
+        if (c.Vnodes[i].vertex == v){
+            return true;
+        }
+    }
+    return false;
+}
+bool Problem::UnMVtxdueToVtx(map<int, bool>& FailedVertices, vector<int> vinFirstStage){
+    //Build Adjacency List
+    IloNumArray2 AdjaList (env);
+    bool thereischain = false;
+    //Check whether vertex it->first fails naturally due to another vertex failure
+    for (auto it = FailedVertices.begin(); it!= FailedVertices.end(); it++){
+        vector<int>others;
+        for (auto it2 = FailedVertices.begin(); it2 != FailedVertices.end(); it2++){
+            if (it->first != it2->first){
+                others.push_back(it2->first);
+            }
+        }
+        //Create modified Adjacency List
+        AdjaList = BuildAdjaListVtxCycles(others, vector<pair<int,int>>(), vinFirstStage);
+        //Call SubCycleFinder
+        int origin = it->first;
+        vector<Cycles> ListC;
+        ListC = SubCycleFinder(env, AdjaList, origin);
+        //If no cycle then:
+        if (ListC.size() == 0){
+            //Build AdjacencyList to find chains
+            AdjaList = BuildAdjaListVtxChains(others, vector<pair<int,int>>(), vinFirstStage);
+            
+            //Check whether there's a feasible path from an NDD to vertex i
+            vector<int>ChainStarters; ChainStarters.push_back(it->first);
+            vector<vChain> VertexinSolChain;
+            vector<int>Altruists;
+            vector<int>Vertices;
+            if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
+                for (int i = 0; i < vinFirstStage.size(); i++){
+                    if (vinFirstStage[i] > Pairs - 1) Altruists.push_back(i);
                 }
             }
-            if (found == true) break;
-        }
-    }
-    return UpdateActiveCCSubP_CY;
-}
-vector<int>Problem::ModifyOldActiveCCSubP_CYtoCH(int tOnecysol, map<int,int>&Chains2ndTo3rd, int&Chainnewrow2ndPH, vector<Cycles>&Cycles2ndStage){
-    vector<int>UpdateActiveCCSubP_CH;
-    for (int i = 0; i < Chainnewrow2ndPH; i++){
-        bool found = false;
-        for (int j = 0; j < Chains2ndStage[Chains2ndTo3rd[i]].Vnodes.size(); j++){
-            int u = Chains2ndStage[Chains2ndTo3rd[i]].Vnodes[j].vertex;
-            for (int h = 0; h < Cycles2ndStage[tOnecysol].get_c().size(); h++){
-                int v = Cycles2ndStage[tOnecysol].get_c()[h];
-                if (u == v){
-                    UpdateActiveCCSubP_CH.push_back(i);
-                    found = true;
-                    break;
+            else{//Full
+                for (int i = 0; i < Nodes; i++) {
+                    Vertices.push_back(i);
+                    if (i > Pairs - 1){
+                        Altruists.push_back(i);
+                    }
                 }
             }
-            if (found == true) break;
+            if (RecoursePolicy == "Full"){
+                InitializeVertexinSolChain(Vertices, VertexinSolChain, AdjaList);
+            }
+            else{
+                InitializeVertexinSolChain(vinFirstStage, VertexinSolChain, AdjaList);
+            }
+            vector<Chain>ChainResult;
+            ChainResult = FindChains(VertexinSolChain, Altruists, ChainStarters, true);
+            if (ChainResult.size() == 0){
+                cout << "Hi";
+            }
+        }
+            
+    }
+    return thereischain;
+}
+IloNumArray2 Problem::BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage){
+    IloNumArray2 AdjaList(env, AdjacencyList.getSize());
+    
+    if (RecoursePolicy == "Full"){
+        for (int i = 0; i < AdjacencyList.getSize(); i++){
+            AdjaList[i] = AdjacencyList[i];
+        }
+    }
+    else if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
+        for (int i = 0; i < vinFirstStage.size(); i++){
+            AdjaList[vinFirstStage[i]] = AdjacencyList[vinFirstStage[i]];
         }
     }
     
-    return UpdateActiveCCSubP_CH;
-}
-vector<int>Problem::ModifyOldActiveCCSubP_CY(int tOnecysol, map<int,int>& Cycles2ndTo3rd, int& Cyclenewrow2ndPH, vector<Cycles>&Cycles2ndStage){
-    vector<int>UpdateActiveCCSubP_CY;
-    for (int i = 0; i < Cyclenewrow2ndPH; i++){
-        bool found = false;
-        for (int j = 0; j < Cycles2ndStage[Cycles2ndTo3rd[i]].get_c().size(); j++){
-            int u = Cycles2ndStage[Cycles2ndTo3rd[i]].get_c()[j];
-            for (int h = 0; h < Cycles2ndStage[tOnecysol].get_c().size(); h++){
-                int v = Cycles2ndStage[tOnecysol].get_c()[h];
-                if (u == v){
-                    UpdateActiveCCSubP_CY.push_back(i);
-                    found = true;
-                    break;
+    //For all policies
+    if (delete_vertex.size() > 0){
+        for(int i = 0; i < delete_vertex.size(); i++) AdjaList[delete_vertex[i]] = IloNumArray(env);
+    }
+    if (delete_arc.size() > 0){
+        for (int i = 0; i < delete_arc.size(); i++){
+            int val = AdjacencyList[delete_arc[i].first][delete_arc[i].second];
+            IloNumArray newrow (env);
+            for (int j = 0; j < AdjaList[delete_arc[i].first].getSize(); j++){
+                if (AdjaList[delete_arc[i].first][j] != val){
+                    newrow.add(AdjaList[i]);
                 }
             }
-            if (found == true) break;
+            //Replace new row into AdjaList
+            AdjaList[delete_arc[i].first] = newrow;
         }
     }
-    return UpdateActiveCCSubP_CY;
+    
+    return AdjaList;
 }
-vector<int>Problem::ModifyOldActiveCCSubP_CH(int tOnechsol, map<int,int>& Chains2ndTo3rd, int& Chainnewrow2ndPH, vector<Chain>&Chains2ndStage){
-    vector<int>UpdateActiveCCSubP_CH;
-    for (int i = 0; i < Chainnewrow2ndPH; i++){
-        bool found = false;
-        for (int j = 0; j < Chains2ndStage[Chains2ndTo3rd[i]].Vnodes.size(); j++){
-            int u = Chains2ndStage[Chains2ndTo3rd[i]].Vnodes[j].vertex;
-            for (int h = 0; h < Chains2ndStage[tOnechsol].Vnodes.size(); h++){
-                int v = Chains2ndStage[tOnechsol].Vnodes[h].vertex;
-                if (u == v){
-                    UpdateActiveCCSubP_CH.push_back(i);
-                    found = true;
-                    break;
+bool isArcTobeDeleted(vector<pair<int, int>> delete_arc, pair<int, int> arc){
+    for (int i = 0; i < delete_arc.size(); i++){
+        if (arc == delete_arc[i])  return true;
+    }
+    return false;
+}
+IloNumArray2 Problem::BuildAdjaListVtxChains(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage){
+    IloNumArray2 AdjaList(env, AdjacencyList.getSize());
+    
+    if (RecoursePolicy == "Full"){
+        for (int i = 0; i < PredMap.size(); i++){
+            AdjaList[i] = IloNumArray(env);
+            if (IsxinStack(i, delete_vertex) == false){
+                for (int j = 0; j < PredMap[i].size(); j++){
+                    if (isArcTobeDeleted(delete_arc, make_pair(PredMap[i][j].first, i)) == false){
+                        AdjaList[i].add(PredMap[i][j].first);
+                    }
                 }
             }
-            if (found == true) break;
         }
     }
-    
-    return UpdateActiveCCSubP_CH;
-}
-vector<int>Problem::ModifyOldSelectVex_CY(int tOnecysol2nd, vector<int>ListSelVertices, vector<Cycles>&Cycles2ndStage){
-    vector<int>UpdateOldSelectVex_CY;
-    
-    for (int i = 0; i < ListSelVertices.size(); i++){
-        for (int j = 0; j < Cycles2ndStage[tOnecysol2nd].get_c().size(); j++){
-            if (Cycles2ndStage[tOnecysol2nd].get_c()[j] == ListSelVertices[i]){
-                UpdateOldSelectVex_CY.push_back(i);
-                break;
+    else if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
+        for (int i = 0; i < PredMap.size(); i++){
+            if (IsxinStack(i, delete_vertex) == false && IsxinStack (i, vinFirstStage) == true){
+                for (int j = 0; j < PredMap[i].size(); j++){
+                    int v = AdjacencyList[PredMap[i][j].first][PredMap[i][j].second];
+                    if (isArcTobeDeleted(delete_arc, make_pair(v,i)) == false && IsxinStack (v, vinFirstStage) == true){
+                        AdjaList[i].add(v);
+                    }
+                }
             }
         }
     }
     
-    return UpdateOldSelectVex_CY;
-}
-vector<int>Problem::ModifyOldSelectVex_CH(int tOnechsol2nd, vector<int>ListSelVertices, vector<Chain>&Chains2ndStage){
-    vector<int>UpdateOldSelectVex_CH;
-    
-    for (int i = 0; i < ListSelVertices.size(); i++){
-        for (int j = 0; j < Chains2ndStage[tOnechsol2nd].Vnodes.size(); j++){
-            if (Chains2ndStage[tOnechsol2nd].Vnodes[j].vertex == ListSelVertices[i]){
-                UpdateOldSelectVex_CH.push_back(i);
-                break;
-            }
-        }
-    }
-    
-    return UpdateOldSelectVex_CH;
-}
-void Problem::GetNewIloRangeCY3rd(int idx, vector<Cycles>&Cycles2ndStage){
-    
-    IloExpr ExprArcsVtx (env, 0);
-    IloExpr AllccVars (env, 0);
-    vector<int>forcycles;
-    vector<int>forchains;
-    for (int j = 0; j < Cycles2ndStage[idx].get_c().size(); j++){
-        int u = Cycles2ndStage[idx].get_c()[j];
-        ExprArcsVtx+= vertex[u];
-        if (j == Cycles2ndStage[idx].get_c().size() - 1){
-            int v = Cycles2ndStage[idx].get_c()[0];
-            int s = mapArcs[make_pair(u,v)];
-            ExprArcsVtx+= arc[u][s];
-        }
-        else{
-            int v = Cycles2ndStage[idx].get_c()[j + 1];
-            int s = mapArcs[make_pair(u,v)];
-            ExprArcsVtx+= arc[u][s];
-        }
-        for (int k = 0; k < CycleNodeSPH[u].size(); k++){
-            if (CycleNodeSPH[u][k] != Cycles3rdTo2nd[idx]) forcycles.push_back(CycleNodeSPH[u][k]);
-            //check whether CycleNodeSPH[Cycles2ndStage[idx].get_c()[j]][k] exixts in Cycles2ndTo3rd
-        }
-        //cout << Cycles2ndStage[idx].get_c()[j] << endl;
-        for (int k = 0; k < ChainNodeSPH[u].size(); k++){
-            forchains.push_back(ChainNodeSPH[u][k]);
-        }
-    }
-    for (auto it = forcycles.begin(); it != forcycles.end(); it++){
-        AllccVars+= cyvar[*it];
-    }
-    for (auto it = forchains.begin(); it != forchains.end(); it++){
-        AllccVars+= chvar[*it];
-    }
-    string name = "Active_CY_." + to_string(Cycles3rdTo2nd[idx] + 1);
-    const char* cName = name.c_str();
-    //cout << cyvar[Cycles3rdTo2nd[idx]].getName()  << ">=" <<  1 - ExprArcsVtx - AllccVars << endl;
-    ActiveCCSubP_CY.add(IloRange(env, 1, cyvar[Cycles3rdTo2nd[idx]] + ExprArcsVtx + AllccVars, IloInfinity, cName));
-    GrandSubProb.add(ActiveCCSubP_CY[ActiveCCSubP_CY.getSize() - 1]);
-    ExprArcsVtx.end();
-    AllccVars.end();
-    
-}
-void Problem::GetNewIloRangeCH3rd(int idx, vector<Chain>&Chains2ndStage){
-    IloExpr Expr2ArcsVtx (env, 0);
-    IloExpr All2ccVars (env, 0);
-    vector<int>forcycles;
-    vector<int>forchains;
-    for (int j = 0; j < Chains2ndStage[idx].Vnodes.size(); j++){
-        int u = Chains2ndStage[idx].Vnodes[j].vertex;
-        Expr2ArcsVtx+= vertex[u];
-        if (j <= Chains2ndStage[idx].Vnodes.size() - 2){
-            int v = Chains2ndStage[idx].Vnodes[j + 1].vertex;
-            int s = mapArcs[make_pair(u,v)];
-            Expr2ArcsVtx+= arc[u][s];
-        }
-        for (int k = 0; k < CycleNodeSPH[u].size(); k++){
-            forcycles.push_back(CycleNodeSPH[u][k]);
-        }
-        for (int k = 0; k < ChainNodeSPH[u].size(); k++){
-            if (ChainNodeSPH[u][k] != Chains3rdTo2nd[idx]) forchains.push_back(ChainNodeSPH[u][k]);
-        }
-    }
-    for (auto it = forcycles.begin(); it != forcycles.end(); it++){
-        All2ccVars+= cyvar[*it];
-    }
-    for (auto it = forchains.begin(); it != forchains.end(); it++){
-        All2ccVars+= chvar[*it];
-    }
-    string name = "Active_CH_." + to_string(Chains3rdTo2nd[idx] + 1);
-    const char* cName = name.c_str();
-    //cout << chvar[Chains3rdTo2nd[idx]].getName()  << ">=" <<  1 - Expr2ArcsVtx - All2ccVars << endl;
-    ActiveCCSubP_CH.add(IloRange(env, 1, chvar[Chains3rdTo2nd[idx]] + Expr2ArcsVtx + All2ccVars, IloInfinity, cName));
-    GrandSubProb.add(ActiveCCSubP_CH[ActiveCCSubP_CH.getSize() - 1]);
-    Expr2ArcsVtx.end();
-    All2ccVars.end();
-}
-void Problem::GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices){
-    IloExpr expr(env);
-    
-    for (int i = 0; i < AdjacencyList.getSize(); i++){
-        map<int, bool>::iterator it = FailedVertices.find(i);
-        if (it == FailedVertices.end()){
-            expr+= vertex[i];
-            for (int j = 0; j < AdjacencyList[i].getSize(); j++){
-                map<pair<int,int>, bool>::iterator it2 = FailedArcs.find(make_pair(i, AdjacencyList[i][j] - 1));
-                if (it2 == FailedArcs.end()) expr+= arc[i][j];
-            }
-        }
-    }
-    cout << expr << endl;
-    string name = "NewBound." + to_string(ConsBeta.getSize());
-    const char* cName = name.c_str();
-    ConsBeta.add(IloRange(env, 0, Beta + (Nodes + NumArcs)*expr - TPMIP_Obj, IloInfinity, cName));
+    return AdjaList;
 }

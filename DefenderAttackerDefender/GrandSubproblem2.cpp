@@ -255,7 +255,7 @@ void Problem::SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, 
             }
         }
     }
-    
+
     //Fill in CycleNodeTPH
     for (int i = 0; i < Cycles.size(); i++){
         for (int j = 0; j < Cycles[i].get_c().size(); j++){
