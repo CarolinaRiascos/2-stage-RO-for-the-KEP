@@ -61,7 +61,8 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     name = "VtxSum";
     cName = name.c_str();
-    GrandSubProb.add(IloRange(env, -IloInfinity, sumVertices, MaxVertexFailures, cName));
+    VxtBudget = IloRange(env, -IloInfinity, sumVertices, MaxVertexFailures, cName);
+    GrandSubProb.add(VxtBudget);
     
     IloExpr sumArcs (env, 0);
     for (int i = 0; i < AdjacencyList.getSize(); i++){
@@ -71,7 +72,8 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     name = "ArcSum";
     cName = name.c_str();
-    GrandSubProb.add(IloRange(env, -IloInfinity, sumArcs, MaxArcFailures, cName));
+    ArcBudget = IloRange(env, -IloInfinity, sumArcs, MaxArcFailures, cName);
+    GrandSubProb.add(ArcBudget);
     
     //Do not pick a failed arc adjacent to a failed vertex
     for (int i = 0; i < AdjacencyList.getSize(); i++){
@@ -102,7 +104,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
             Chains3rdSol.back().AccumWeight = SolFirstStage[i].get_w();
             RecoSolCovering.back().push_back(SolFirstStage[i].get_w());
             w+=SolFirstStage[i].get_w();
-            for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
+            for (int j = 1; j < SolFirstStage[i].get_cc().size(); j++){
                 Chains3rdSol.back().Vnodes.push_back(vChain(SolFirstStage[i].get_cc()[j], vector<int>()));
             }
         }

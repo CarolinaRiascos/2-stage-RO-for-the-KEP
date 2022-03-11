@@ -34,6 +34,38 @@ public:
     int get_Many(){return _HowMany;}
 };
 
+class coverConst{
+private:
+    int RHS;
+//    vector<int> chains2ndStage;
+//    vector<int> cycles2ndStage;
+    vector<pair<int,int>> coveringEls;
+public:
+    coverConst(){}
+    coverConst(int i){RHS = i;}
+//    vector<int> get_chains2nd(){return chains2ndStage;}
+//    vector<int> get_cycles2nd(){return chains2ndStage;}
+    int get_coversize(){return int(coveringEls.size());}
+    int get_RHS(){return RHS;}
+    void add_cover(pair<int,int> p){coveringEls.push_back(p);}
+    void set_RHS(int i){RHS = i;}
+    void deleteEls(){coveringEls.clear();}
+};
+
+class coveringElements{
+private:
+    bool taken;
+    vector<int> coveredconsts;
+public:
+    coveringElements(){taken = false;}
+    int get_coversize(){return int(coveredconsts.size());}
+    bool get_state(){return taken;}
+    vector<int> get_coveredconsts(){return coveredconsts;}
+    void add_const(int i){coveredconsts.push_back(i);}
+    void set_state(bool s){taken = s;}
+    
+};
+
 class IndexGrandSubSol{
 private:
     vector<int> _GrandSubSol;
@@ -261,6 +293,9 @@ public:
     void FillRobustSolTHP();
     
     //Third Phase
+    vector<coverConst>Const2ndPhase;
+    map<pair<int,int>, coveringElements>Elms2ndPhase;
+    vector<pair<int,int>>scenarioHeuristics;
     IloObjective ObjTHP;
     vector<Cycles>Cycles2ndStage;
     vector<Chain>Chains2ndStage;
@@ -281,6 +316,8 @@ public:
     //Constraints
     IloRangeArray DisjointTHPArray;
     IloRangeArray DisjointTHP(IloNumVarArray& tcyvar, IloNumVarArray& tchvar);
+    IloRange VxtBudget;
+    IloRange ArcBudget;
     //Objective
     IloNum TPMIP_Obj = 0;
     IloNum LOWEST_TPMIP_Obj = INT_MAX;
@@ -318,6 +355,7 @@ public:
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
     bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage);
     int Update_RHS_Covering(int row);
+    bool Heuristcs2ndPH();
     
     //SVIs
     bool UnMVtxdueToVtx(map<int, bool>& FailedVertices, vector<int>vinFirstStage);
