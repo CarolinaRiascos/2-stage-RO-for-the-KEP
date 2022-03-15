@@ -9,7 +9,6 @@
 #include "ThirdPhase.hpp"
 void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&vinFirstStage){
     //Get scenario
-    
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     //Create model
     mTHPMIP = IloModel (env);
@@ -45,30 +44,45 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         //Solve formulation
         //cplexmTHPMIP.exportModel("mTHPMIP.lp");
         tStartReco = clock();
-        cplexmTHPMIP.solve();
-        tTotalReco += (clock() - tStartReco)/double(CLOCKS_PER_SEC);
-        if (cplexmTHPMIP.getStatus() == IloAlgorithm::Infeasible){
-            cout << "S.O.S. This should not happen." << endl;
+        //Compute actual THP Objective
+        ub_tchvar = GetUB_tchvar(FailedArcs, FailedVertices);
+        ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
+        bool runColGen = ColumnGeneration(ub_tcyvar, ub_tchvar);
+        if (runColGen == false){
+            cplexmTHPMIP.solve();
+            tTotalReco += (clock() - tStartReco)/double(CLOCKS_PER_SEC);
+            if (cplexmTHPMIP.getStatus() == IloAlgorithm::Infeasible){
+                cout << "S.O.S. This should not happen." << endl;
+            }
+            else{
+                TPMIP_Obj = cplexmTHPMIP.getObjValue();
+                            
+                IloNumArray tcysol(env);
+                IloNumArray tchsol(env);
+                cplexmTHPMIP.getValues(tcysol,tcyvar);
+                cplexmTHPMIP.getValues(tchsol,tchvar);
+
+                //Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
+                
+                if (THP_Method == "Covering"){
+                    if (ThisWork(tcysol, tchsol, vinFirstStage) == true) break;
+                }else{//Literature's approach
+                    if (Literature(tcysol, tchsol) == true) break;
+                }
+                
+                tcysol.end();
+                tchsol.end();
+            }
         }
         else{
-            TPMIP_Obj = cplexmTHPMIP.getObjValue();
-                        
-            IloNumArray tcysol(env);
-            IloNumArray tchsol(env);
-            cplexmTHPMIP.getValues(tcysol,tcyvar);
-            cplexmTHPMIP.getValues(tchsol,tchvar);
-
-            Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
-            
+            tTotalReco += (clock() - tStartReco)/double(CLOCKS_PER_SEC);
             if (THP_Method == "Covering"){
-                if (ThisWork(tcysol, tchsol, vinFirstStage) == true) break;
+                if (ThisWork(tcysolColGen, tchsolColGen, vinFirstStage) == true) break;
             }else{//Literature's approach
-                if (Literature(tcysol, tchsol) == true) break;
+                if (Literature(tcysolColGen, tchsolColGen) == true) break;
             }
-            
-            tcysol.end();
-            tchsol.end();
         }
+
     }
     if (tEnd2ndS <= 1800) status = "Complete";
     Print2ndStage();
@@ -103,11 +117,11 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     }
 
     //Add AtLeastOneFails Cut
-    GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol, vinFirstStage);
+    GetAtLeastOneFails(tcysol, tchsol, vinFirstStage);
     
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
-    bool runH = false;//Heuristcs2ndPH();
+    bool runH = Heuristcs2ndPH();
     if (runH == false){
         cplexGrandSubP.solve();
 
@@ -147,14 +161,13 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
                         break;
                     }
                 }
-                
             }
         }
     }
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     
     //Change variables' UB in 3rd phase
-    map<int,bool>ub_tcyvar; // <cycle number, 0 or 1>
+    ub_tcyvar.clear(); // <cycle number, 0 or 1>
     ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
     for(int i = 0; i < tcyvar.getSize(); i++){
         map<int,bool>::iterator find = ub_tcyvar.find(i);
@@ -166,7 +179,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
         }
     }
     
-    map<int,bool>ub_tchvar; // <chain number, 0 or 1>
+    ub_tchvar.clear(); // <chain number, 0 or 1>
     ub_tchvar = GetUB_tchvar(FailedArcs, FailedVertices);
     for(int i = 0; i < tchvar.getSize(); i++){
         map<int,bool>::iterator find = ub_tchvar.find(i);
@@ -188,8 +201,8 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     vector<KEPSol> KEPSol2ndStageMissing;
     KEPSol2ndStageMissing.push_back(KEPSol());
     
-    map<int,bool>ub_tcyvar; // <cycle number, 0 or 1>
-    map<int,bool>ub_tchvar; // <cycle number, 0 or 1>
+    ub_tcyvar.clear(); // <cycle number, 0 or 1>
+    ub_tchvar.clear(); // <cycle number, 0 or 1>
     double Actual_THPObjective = 0;
     
     //Check whether the selected cycles and chains already exist in the 2nd. stage
@@ -390,59 +403,72 @@ void Problem::GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArc
 //    ConsBeta.add(IloRange(env, 0, Beta + expr, IloInfinity, name.c_str()));
 //    GrandSubProb.add(ConsBeta[ConsBeta.getSize() - 1]);
 }
-void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, vector<int>&vinFirstStage){
+void Problem::GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage){
     IloExpr expr(env);
+    Cycles3rdSol.clear();
+    Chains3rdSol.clear();
+    vector<int>cycles;
+    vector<int>chains;
     
-    
-    for (int i = 0; i < Cycles3rdSol.size(); i++){
-        for (int j = 0; j < Cycles3rdSol[i].get_c().size(); j++){
-            int u = Cycles3rdSol[i].get_c()[j];
-            auto it = Elms2ndPhase.find(make_pair(-1,u));
-            if (it == Elms2ndPhase.end()){
-                Elms2ndPhase[make_pair(-1,u)] = coveringElements();
-            }
-            Elms2ndPhase[make_pair(-1,u)].add_const(int(AtLeastOneFails.getSize()));
-            expr+= vertex[u];
-            if (j == Cycles3rdSol[i].get_c().size() - 1){
-                int s = mapArcs[make_pair(u,Cycles3rdSol[i].get_c()[0])];
-                expr+= arc[u][s];
-                auto it = Elms2ndPhase.find(make_pair(u,Cycles3rdSol[i].get_c()[0]));
+    for (int i = 0; i < tcysol.getSize(); i++){
+        if (tcysol[i] > 0.9){
+            cycles.push_back(i);
+            Cycles3rdSol.push_back(Cycles2ndStage[i]);
+            for (int j = 0; j < Cycles2ndStage[i].get_c().size(); j++){
+                int u = Cycles2ndStage[i].get_c()[j];
+                auto it = Elms2ndPhase.find(make_pair(-1,u));
                 if (it == Elms2ndPhase.end()){
-                    Elms2ndPhase[make_pair(u,Cycles3rdSol[i].get_c()[0])] = coveringElements();
+                    Elms2ndPhase[make_pair(-1,u)] = coveringElements();
                 }
-                Elms2ndPhase[make_pair(u,Cycles3rdSol[i].get_c()[0])].add_const(int(AtLeastOneFails.getSize()));
-            }
-            else{
-                int s = mapArcs[make_pair(u,Cycles3rdSol[i].get_c()[j + 1])];
-                expr+= arc[u][s];
-                auto it = Elms2ndPhase.find(make_pair(u,Cycles3rdSol[i].get_c()[j + 1]));
-                if (it == Elms2ndPhase.end()){
-                    Elms2ndPhase[make_pair(u,Cycles3rdSol[i].get_c()[j + 1])] = coveringElements();
+                Elms2ndPhase[make_pair(-1,u)].add_const(int(AtLeastOneFails.getSize()));
+                Elms2ndPhase[make_pair(-1,u)].add_weight(Cycles3rdSol[i].get_Many());
+                expr+= vertex[u];
+                if (j == Cycles2ndStage[i].get_c().size() - 1){
+                    int s = mapArcs[make_pair(u,Cycles2ndStage[i].get_c()[0])];
+                    expr+= arc[u][s];
+                    auto it = Elms2ndPhase.find(make_pair(u,Cycles2ndStage[i].get_c()[0]));
+                    if (it == Elms2ndPhase.end()){
+                        Elms2ndPhase[make_pair(u,Cycles2ndStage[i].get_c()[0])] = coveringElements();
+                    }
+                    Elms2ndPhase[make_pair(u,Cycles2ndStage[i].get_c()[0])].add_const(int(AtLeastOneFails.getSize()));
+                    Elms2ndPhase[make_pair(u,Cycles2ndStage[i].get_c()[0])].add_weight(Cycles2ndStage[i].get_Many());
                 }
-                Elms2ndPhase[make_pair(u,Cycles3rdSol[i].get_c()[j + 1])].add_const(int(AtLeastOneFails.getSize()));
+                else{
+                    int s = mapArcs[make_pair(u,Cycles2ndStage[i].get_c()[j + 1])];
+                    expr+= arc[u][s];
+                    auto it = Elms2ndPhase.find(make_pair(u,Cycles2ndStage[i].get_c()[j + 1]));
+                    if (it == Elms2ndPhase.end()){
+                        Elms2ndPhase[make_pair(u,Cycles2ndStage[i].get_c()[j + 1])] = coveringElements();
+                    }
+                    Elms2ndPhase[make_pair(u,Cycles2ndStage[i].get_c()[j + 1])].add_const(int(AtLeastOneFails.getSize()));
+                    Elms2ndPhase[make_pair(u,Cycles2ndStage[i].get_c()[j + 1])].add_weight(Cycles2ndStage[i].get_Many());
+                }
             }
         }
     }
-    for (int i = 0; i < Chains3rdSol.size(); i++){
-        for (int j = 0; j < Chains3rdSol[i].Vnodes.size(); j++){
-            int u = Chains3rdSol[i].Vnodes[j].vertex;
-            auto it = Elms2ndPhase.find(make_pair(-1,u));
-            if (it == Elms2ndPhase.end()){
-                Elms2ndPhase[make_pair(-1,u)] = coveringElements();
-            }
-            Elms2ndPhase[make_pair(-1,u)].add_const(int(AtLeastOneFails.getSize()));
-            expr+= vertex[u];
-            if (j <= Chains3rdSol[i].Vnodes.size() - 2){
-                int s = mapArcs[make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex)];
-                expr+= arc[u][s];
-                auto it = Elms2ndPhase.find(make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex));
-                if (make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex) == make_pair(34, 34)){
-                    cout << "hi";
-                }
+    for (int i = 0; i < tchsol.getSize(); i++){
+        if (tchsol[i] > 0.9){
+            chains.push_back(i);
+            Chains3rdSol.push_back(Chains2ndStage[i]);
+            for (int j = 0; j < Chains2ndStage[i].Vnodes.size(); j++){
+                int u = Chains2ndStage[i].Vnodes[j].vertex;
+                auto it = Elms2ndPhase.find(make_pair(-1,u));
                 if (it == Elms2ndPhase.end()){
-                    Elms2ndPhase[make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex)] = coveringElements();
+                    Elms2ndPhase[make_pair(-1,u)] = coveringElements();
                 }
-                Elms2ndPhase[make_pair(u,Chains3rdSol[i].Vnodes[j + 1].vertex)].add_const(int(AtLeastOneFails.getSize()));
+                Elms2ndPhase[make_pair(-1,u)].add_const(int(AtLeastOneFails.getSize()));
+                Elms2ndPhase[make_pair(-1,u)].add_weight(Chains2ndStage[i].AccumWeight);
+                expr+= vertex[u];
+                if (j <= Chains2ndStage[i].Vnodes.size() - 2){
+                    int s = mapArcs[make_pair(u,Chains2ndStage[i].Vnodes[j + 1].vertex)];
+                    expr+= arc[u][s];
+                    auto it = Elms2ndPhase.find(make_pair(u,Chains2ndStage[i].Vnodes[j + 1].vertex));
+                    if (it == Elms2ndPhase.end()){
+                        Elms2ndPhase[make_pair(u,Chains2ndStage[i].Vnodes[j + 1].vertex)] = coveringElements();
+                    }
+                    Elms2ndPhase[make_pair(u,Chains2ndStage[i].Vnodes[j + 1].vertex)].add_const(int(AtLeastOneFails.getSize()));
+                    Elms2ndPhase[make_pair(u,Chains2ndStage[i].Vnodes[j + 1].vertex)].add_weight(Chains2ndStage[i].AccumWeight);
+                }
             }
         }
     }
@@ -461,14 +487,15 @@ void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chai
             TotalW+= Chains3rdSol[i].AccumWeight;
         }
         RecoTotalWCovering.push_back(TotalW);
-        sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortint);
+        sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
     }
 
     if (RecoTotalWCovering.back() > LOWEST_TPMIP_Obj){
         RHS = Update_RHS_Covering(int (RecoSolCovering.size() - 1));
     }
     //Add new constraint to Const2ndPhase
-    Const2ndPhase.push_back(RHS);
+    Const2ndPhase.push_back(coverConst(cycles, chains));
+    Const2ndPhase.back().set_RHS(RHS);
     
     string name = "AtLeastOneFails_" + to_string(AtLeastOneFails.getSize() + 1);
     const char* cName = name.c_str();
@@ -477,10 +504,13 @@ void Problem::GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chai
     GrandSubProb.add(AtLeastOneFails[AtLeastOneFails.getSize() - 1]);
     expr.end();
 }
-bool sortint(double& c1, double& c2){
+bool sortdouble(double& c1, double& c2){
     return (c1 > c2);
 }
-bool sortCovElms(pair< pair<int,int>, int>& c1, pair< pair<int,int>, int>& c2){
+bool sortduals(pair<int,double>& c1, pair<int,double>& c2){
+    return (c1.second < c2.second);
+}
+bool sortCovElms(pair< pair<int,int>, double>& c1, pair< pair<int,int>, double>& c2){
     return (c1.second > c2.second);
 }
 int Problem::Update_RHS_Covering(int row){
@@ -718,13 +748,15 @@ bool Problem::Heuristcs2ndPH(){
         UsedVertices = 0;
         ite++;
         while (true){
-            vector<pair< pair<int,int>, int>>auxCov;
+            vector<pair< pair<int,int>, double>>auxCov;
             for (auto it = Elms2ndPhase.begin(); it != Elms2ndPhase.end(); it++){
                 if (it->first.first == -1 && UsedVertices < MaxVertexFailures && Elms2ndPhase[it->first].get_state() == false){
-                    auxCov.push_back(make_pair(it->first, it->second.get_coversize()));
+                    double w = 0.4*it->second.get_maxw() +  0.6*it->second.get_coversize();
+                    auxCov.push_back(make_pair(it->first, w));
                 }
                 if (it->first.first != -1 && UsedArcs < MaxArcFailures && Elms2ndPhase[it->first].get_state() == false){
-                    auxCov.push_back(make_pair(it->first, it->second.get_coversize()));
+                    double w = 0.4*it->second.get_maxw() +  0.6*it->second.get_coversize();
+                    auxCov.push_back(make_pair(it->first, w));
                 }
             }
             //If no Elements to pick from
@@ -734,7 +766,7 @@ bool Problem::Heuristcs2ndPH(){
             //Sort elements
             sort(auxCov.begin(), auxCov.end(), sortCovElms);
             while(true){
-                int search = auxCov[0].second;
+                double search = auxCov[0].second;
                 int UpTo = auxCov.size();//In case all values are repeated equally
                 another = false;
                 //Choose among the most repeated ones
@@ -790,7 +822,21 @@ bool Problem::Heuristcs2ndPH(){
             for (int i = 0; i < Const2ndPhase.size(); i++){
                 if (Const2ndPhase[i].get_coversize() < Const2ndPhase[i].get_RHS()){
                     keepgoing = true;
+                    break;
                 }
+            }
+            if (keepgoing == true){
+                //Update auxCov
+//                for (int i = 0; i < auxCov.size(); i++){
+//                    vector<int> count;
+//                    for (int j = 0; j < ELE2ndPhase[auxCov[i].first].get_coveredconsts().size(); j++){
+//                        int e = ELE2ndPhase[auxCov[i].first].get_coveredconsts()[j];
+//                        if (Const2ndPhase[e].get_coversize() < Const2ndPhase[e].get_RHS()){
+//                            count.push_back(e);
+//                        }
+//                    }
+//                    ELE2ndPhase[auxCov[i].first].set_coveredconsts(count);
+//                }
             }
             if (keepgoing == false) break;
         }
@@ -936,4 +982,212 @@ IloNumArray2 Problem::BuildAdjaListVtxChains(vector<int> delete_vertex, vector<p
     }
     
     return AdjaList;
+}
+////////////////////Column Generation//////////////////
+bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar){
+    
+    //Create model
+    IloEnv env;
+    IloModel ColGen(env);
+    IloCplex Colcplex(ColGen);
+    Colcplex.setOut(env.getNullStream());
+    Colcplex.setParam(IloCplex::RootAlg, 1);
+    Colcplex.setParam(IloCplex::Param::Preprocessing::Presolve, 0);
+    Colcplex.setParam(IloCplex::Param::TimeLimit, 1800);
+    Colcplex.setParam(IloCplex::Param::Threads, 1);
+    clock_t tStartMP = clock();
+    tStartMP = clock();
+    
+    //Create variables
+    IloNumVar y(env, 0, 1, ILOFLOAT);
+    IloNumVarArray zcol(env, 0, 0, 1, ILOFLOAT);//AllCycles.size()
+    
+    //Create variables
+    int pimany = 0;
+    if (ChainLength == 0){
+        pimany = int(Pairs);
+    }
+    else{
+        pimany = int(Nodes);
+    }
+    
+    //Arrays for constraints and objective
+    IloRangeArray onecycle(env);
+    IloObjective Obj(env);
+    //Objective
+    Obj = IloAdd(ColGen, IloMaximize(env,-10000*y));
+    for (int i = 0; i < pimany; i++){
+       string name = "c." + to_string(i);
+       const char* cName = name.c_str();
+       onecycle.add(IloRange(env, -IloInfinity, y,1, cName));
+    }
+    ColGen.add(onecycle);
+    
+    double UpperBound = 0;
+    IloBool NewCycleAdded = true;
+    IloNumArray solpi (env,pimany);
+    vector<int>ColumnsAdded;
+    vector<pair<int,double>>dualOrder;
+    map<int,int>cycles;//zcol variable, cycle in Cycles2ndStage
+    map<int,int>chains;//zcol variable, chain in Chains2ndStage
+    
+    while(NewCycleAdded == true){
+
+        Colcplex.setOut(env.getNullStream());
+        clock_t tStartMP2 = clock();
+        tStartMP2 = clock();
+        Colcplex.solve();
+        
+        if (Colcplex.getStatus() == IloAlgorithm::Infeasible) {
+            cout << "Infeasible";
+        }
+        else{
+            //cplex.exportModel("LagProb.lp");
+            //Get objective value
+            UpperBound = Colcplex.getObjValue();
+            //cout << "Upper Bound:" << UpperBound << endl;
+            
+            //Get dual variables
+            Colcplex.getDuals(solpi,onecycle);
+            dualOrder.clear();
+            for (int i = 0; i < solpi.getSize(); i++){
+                dualOrder.push_back(make_pair(i, solpi[i]));
+            }
+            //Sort duals
+            sort(dualOrder.begin(), dualOrder.end(), sortduals);
+            
+            int naddedCH = 0, naddedCY = 0;
+            for (int i = 0; i < dualOrder.size(); i++){
+                for (int k = 0; k < ChainNodeTPH[dualOrder[i].first].size(); k++){
+                    int h = ChainNodeTPH[dualOrder[i].first][k];
+                    auto it = ub_tchvar.find(h);
+                    double dualWeight = 0, Total = 0;
+                    if (it == ub_tchvar.end()){
+                        if (THP_Method == "Literature"){
+                            dualWeight = (Chains2ndStage[h].AccumWeight*Nodes + 1);
+                        }
+                        else if (THP_Method == "Covering"){
+                            dualWeight = Chains2ndStage[h].AccumWeight;
+                        }
+                    }
+                    else{
+                        if (THP_Method == "Literature"){
+                            dualWeight = 1;
+                        }
+                    }
+                    Total = dualWeight;
+                    for (int j = 0; j < Chains2ndStage[h].Vnodes.size(); j++){
+                        Total-= solpi[Chains2ndStage[h].Vnodes[j].vertex];
+                    }
+                    if (Total > 0.005){
+                        naddedCH++;
+                        //Create chain column
+                        IloNumColumn col(env);
+                        //Update constraints
+                        for (int j = 0; j < Chains2ndStage[h].Vnodes.size(); j++){
+                            col+= onecycle[Chains2ndStage[h].Vnodes[j].vertex](1);
+                        }
+                        //Add weight of new column
+                        col += Obj(dualWeight);
+                        //Create new chain variable
+                        zcol.add(IloNumVar(col, 0, 1));
+                        string name = "zcol." + to_string(zcol.getSize());
+                        zcol[zcol.getSize() - 1].setName(name.c_str());
+                        //Store new variable
+                        chains[int(zcol.getSize()) - 1] = h;
+                        col.end();
+                        if (naddedCH >= 10) break;
+                    }
+                    
+                }
+                for (int k = 0; k < CycleNodeTPH[dualOrder[i].first].size(); k++){
+                    int h = CycleNodeTPH[dualOrder[i].first][k];
+                    auto it = ub_tcyvar.find(h);
+                    double dualWeight = 0, Total = 0;
+                    if (it == ub_tcyvar.end()){
+                        if (THP_Method == "Literature"){
+                            dualWeight = (Cycles2ndStage[h].get_Many()*Nodes + 1);
+                        }
+                        else if (THP_Method == "Covering"){
+                            dualWeight = Cycles2ndStage[h].get_Many();
+                        }
+                    }
+                    else{
+                        if (THP_Method == "Literature"){
+                            dualWeight = 1;
+                        }
+                    }
+                    Total = dualWeight;
+                    for (int j = 0; j < Cycles2ndStage[h].get_c().size(); j++){
+                        Total-= solpi[Cycles2ndStage[h].get_c()[j]];
+                    }
+                    if (Total > 0.005){
+                        naddedCY++;
+                        //Create chain column
+                        IloNumColumn col(env);
+                        //Update constraints
+                        for (int j = 0; j < Cycles2ndStage[h].get_c().size(); j++){
+                            col+= onecycle[Cycles2ndStage[h].get_c()[j]](1);
+                        }
+                        //Add weight of new column
+                        col += Obj(dualWeight);
+                        //Create new chain variable
+                        zcol.add(IloNumVar(col, 0, 1));
+                        string name = "zcol." + to_string(zcol.getSize());
+                        zcol[zcol.getSize() - 1].setName(name.c_str());
+                        //Store new variable
+                        cycles[int(zcol.getSize()) - 1] = h;
+                        col.end();
+                        if (naddedCY >= 10) break;
+                    }
+                }
+            }
+
+            if (naddedCY == 0 && naddedCH == 0){
+                NewCycleAdded = false;
+            }
+        }
+    }
+    UpperBound = floor (UpperBound + 0.1);
+    //Get feasible solution
+    Colcplex.setParam(IloCplex::Param::TimeLimit, 100);
+    //Transform variables into integers
+    ColGen.add(IloConversion(env, zcol, ILOBOOL));
+    //Set start MIP solution
+    Colcplex.solve();
+    double objCol = Colcplex.getObjValue();
+    if (objCol == UpperBound){
+        //Retrieve solution
+        TPMIP_Obj = UpperBound;
+        IloNumArray zsol(env, zcol.getSize());
+        tcysolColGen = IloNumArray(env, Cycles2ndStage.size());
+        tchsolColGen = IloNumArray(env, Chains2ndStage.size());
+        Colcplex.getValues(zsol,zcol);
+        for (int i = 0; i < zsol.getSize(); i++){
+            if (zsol[i] > 0.9){
+                auto it = cycles.find(i);
+                //cout << endl;
+                if (it!= cycles.end()){
+                    tcysolColGen[cycles[i]] = 1;
+//                    for (int j = 0; j < Cycles2ndStage[cycles[i]].get_c().size();j++){
+//                        //cout << Cycles2ndStage[cycles[i]].get_c()[j] <<"\t";
+//                    }
+                }
+                else{
+                    tchsolColGen[chains[i]] = 1;
+//                    for (int j = 0; j < Chains2ndStage[chains[i]].Vnodes.size();j++){
+//                        //cout << Chains2ndStage[chains[i]].Vnodes[j].vertex << "\t";
+//                    }
+                }
+            }
+        }
+        
+        ColGen.end();
+        Colcplex.end();
+        return true;
+    }
+    
+    ColGen.end();
+    Colcplex.end();
+    return false;
 }

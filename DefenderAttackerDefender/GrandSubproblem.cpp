@@ -21,19 +21,19 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     //Get selected vertices
     vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
     
-    //Create cycle variables
-    cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
-    for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
-       SetName1Index(cyvar[i], "x", i + 1);
-       //cout << r[i].getName() << endl;
-    }
-    
-    //Create chain variables
-    chvar = IloNumVarArray(env, Chains2ndTo3rd.size(), 0, 1, ILOINT);
-    for (int i = 0; i < Chains2ndTo3rd.size(); i++){
-       SetName1Index(chvar[i], "y", i + 1);
-       //cout << r[i].getName() << endl;
-    }
+//    //Create cycle variables
+//    cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
+//    for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
+//       SetName1Index(cyvar[i], "x", i + 1);
+//       //cout << r[i].getName() << endl;
+//    }
+//
+//    //Create chain variables
+//    chvar = IloNumVarArray(env, Chains2ndTo3rd.size(), 0, 1, ILOINT);
+//    for (int i = 0; i < Chains2ndTo3rd.size(); i++){
+//       SetName1Index(chvar[i], "y", i + 1);
+//       //cout << r[i].getName() << endl;
+//    }
     
     //Create arc variables
     mapArcs.clear();
@@ -61,7 +61,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     name = "VtxSum";
     cName = name.c_str();
-    VxtBudget = IloRange(env, -IloInfinity, sumVertices, MaxVertexFailures, cName);
+    VxtBudget = IloRange(env, MaxVertexFailures, sumVertices, MaxVertexFailures, cName);
     GrandSubProb.add(VxtBudget);
     
     IloExpr sumArcs (env, 0);
@@ -72,7 +72,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     name = "ArcSum";
     cName = name.c_str();
-    ArcBudget = IloRange(env, -IloInfinity, sumArcs, MaxArcFailures, cName);
+    ArcBudget = IloRange(env, MaxArcFailures, sumArcs, MaxArcFailures, cName);
     GrandSubProb.add(ArcBudget);
     
     //Do not pick a failed arc adjacent to a failed vertex
@@ -91,27 +91,23 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     
     //First Get at least one vertex/arc fails
     RecoSolCovering.push_back(vector<double>());
+    IloNumArray tcysol(env, Cycles2ndStage.size());
+    IloNumArray tchsol(env, Chains2ndStage.size());
     double w = 0;
-    for (int i = 0; i < SolFirstStage.size(); i++){
-        if (SolFirstStage[i].get_cc()[0] < Pairs){
-            Cycles3rdSol.push_back(Cycles(SolFirstStage[i].get_cc(), SolFirstStage[i].get_w()));
-            Cycles3rdSol.back().set_Many(SolFirstStage[i].get_w());
-            RecoSolCovering.back().push_back(SolFirstStage[i].get_w());
-            w+=SolFirstStage[i].get_w();
-        }
-        else{
-            Chains3rdSol.push_back(Chain(vChain(SolFirstStage[i].get_cc()[0], vector<int>())));
-            Chains3rdSol.back().AccumWeight = SolFirstStage[i].get_w();
-            RecoSolCovering.back().push_back(SolFirstStage[i].get_w());
-            w+=SolFirstStage[i].get_w();
-            for (int j = 1; j < SolFirstStage[i].get_cc().size(); j++){
-                Chains3rdSol.back().Vnodes.push_back(vChain(SolFirstStage[i].get_cc()[j], vector<int>()));
-            }
-        }
+    for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
+        tcysol[Cycles2ndTo3rd[i]] = 1;
+        w+=Cycles2ndStage[Cycles2ndTo3rd[i]].get_Many();
+        RecoSolCovering.back().push_back(Cycles2ndStage[Cycles2ndTo3rd[i]].get_Many());
+    }
+    for (int i = 0; i < Chains2ndTo3rd.size(); i++){
+        tchsol[Chains2ndTo3rd[i]] = 1;
+        w+=Chains2ndStage[Chains2ndTo3rd[i]].AccumWeight;
+        RecoSolCovering.back().push_back(Chains2ndStage[Chains2ndTo3rd[i]].AccumWeight);
     }
     RecoTotalWCovering.push_back(w);
-    sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortint);
-    GetAtLeastOneFails(Cycles3rdSol, Chains3rdSol, ListSelVertices);
+    sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
+    
+    GetAtLeastOneFails(tcysol, tchsol, ListSelVertices);
     
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     cplexGrandSubP.solve();

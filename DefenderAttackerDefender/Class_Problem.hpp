@@ -37,17 +37,19 @@ public:
 class coverConst{
 private:
     int RHS;
-//    vector<int> chains2ndStage;
-//    vector<int> cycles2ndStage;
+    vector<int> chains3rdStage;
+    vector<int> cycles3rdStage;
     vector<pair<int,int>> coveringEls;
 public:
-    coverConst(){}
+    coverConst(vector<int> _cycles, vector<int> _chains){cycles3rdStage = _cycles, chains3rdStage = _chains;}
     coverConst(int i){RHS = i;}
-//    vector<int> get_chains2nd(){return chains2ndStage;}
-//    vector<int> get_cycles2nd(){return chains2ndStage;}
+    vector<int> get_chains3rd(){return chains3rdStage;}
+    vector<int> get_cycles3rd(){return chains3rdStage;}
     int get_coversize(){return int(coveringEls.size());}
     int get_RHS(){return RHS;}
     void add_cover(pair<int,int> p){coveringEls.push_back(p);}
+    void add_chain(int i){chains3rdStage.push_back(i);}
+    void add_cycle(int i){cycles3rdStage.push_back(i);}
     void set_RHS(int i){RHS = i;}
     void deleteEls(){coveringEls.clear();}
 };
@@ -56,13 +58,23 @@ class coveringElements{
 private:
     bool taken;
     vector<int> coveredconsts;
+    vector<int> weightconsts;
 public:
     coveringElements(){taken = false;}
     int get_coversize(){return int(coveredconsts.size());}
     bool get_state(){return taken;}
     vector<int> get_coveredconsts(){return coveredconsts;}
     void add_const(int i){coveredconsts.push_back(i);}
+    void add_weight(double i){weightconsts.push_back(i);}
     void set_state(bool s){taken = s;}
+    void set_coveredconsts(vector<int>v){coveredconsts = v;}
+    double get_maxw(){
+        double max = 0;
+        for (int i = 0; i < weightconsts.size(); i++){
+            if (weightconsts[i] > max) max = weightconsts[i];
+        }
+        return max;
+    ;}
     
 };
 
@@ -256,6 +268,8 @@ public:
     IloRangeArray AtLeastOneFails;
     IloNumArray vertex_sol;
     IloNumArray2 arc_sol;
+    map<int,bool>ub_tcyvar;
+    map<int,bool>ub_tchvar;
     map<pair<int,int>,int> mapArcs;
     vector<Cycles> RepairedListCCs;
     vector<Cycles> RobustSolTHP;
@@ -326,6 +340,8 @@ public:
     int Chainnewrow2ndPH = 0;
     vector<int> tcysol3rd;
     vector<int> tchsol3rd;
+    IloNumArray tcysolColGen;
+    IloNumArray tchsolColGen;
     IloRange NewIloRangeCY3rd;
     IloRange NewIloRangeCH3rd;
     //Solution
@@ -349,13 +365,14 @@ public:
     void GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage);
     void GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArcs, map<int, bool> FailedVertices);
     void GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices);
-    void GetAtLeastOneFails(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, vector<int>&vinFirstStage);
+    void GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage);
     void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
     bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage);
     int Update_RHS_Covering(int row);
     bool Heuristcs2ndPH();
+    bool ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar);
     
     //SVIs
     bool UnMVtxdueToVtx(map<int, bool>& FailedVertices, vector<int>vinFirstStage);
