@@ -44,7 +44,7 @@ public:
     coverConst(vector<int> _cycles, vector<int> _chains){cycles3rdStage = _cycles, chains3rdStage = _chains;}
     coverConst(int i){RHS = i;}
     vector<int> get_chains3rd(){return chains3rdStage;}
-    vector<int> get_cycles3rd(){return chains3rdStage;}
+    vector<int> get_cycles3rd(){return cycles3rdStage;}
     int get_coversize(){return int(coveringEls.size());}
     int get_RHS(){return RHS;}
     void add_cover(pair<int,int> p){coveringEls.push_back(p);}
@@ -59,11 +59,14 @@ private:
     bool taken;
     vector<int> coveredconsts;
     vector<int> weightconsts;
+    map<int,int>nConsToCyCh;
 public:
     coveringElements(){taken = false;}
     int get_coversize(){return int(coveredconsts.size());}
     bool get_state(){return taken;}
+    map<int,int> get_map(){return nConsToCyCh;}
     vector<int> get_coveredconsts(){return coveredconsts;}
+    void add_map(int a, int b){nConsToCyCh[a] = b;}
     void add_const(int i){coveredconsts.push_back(i);}
     void add_weight(double i){weightconsts.push_back(i);}
     void set_state(bool s){taken = s;}

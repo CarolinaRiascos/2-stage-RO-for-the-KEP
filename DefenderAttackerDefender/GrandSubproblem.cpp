@@ -61,7 +61,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     name = "VtxSum";
     cName = name.c_str();
-    VxtBudget = IloRange(env, MaxVertexFailures, sumVertices, MaxVertexFailures, cName);
+    VxtBudget = IloRange(env, -IloInfinity, sumVertices, MaxVertexFailures, cName);
     GrandSubProb.add(VxtBudget);
     
     IloExpr sumArcs (env, 0);
@@ -72,7 +72,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     name = "ArcSum";
     cName = name.c_str();
-    ArcBudget = IloRange(env, MaxArcFailures, sumArcs, MaxArcFailures, cName);
+    ArcBudget = IloRange(env, -IloInfinity, sumArcs, MaxArcFailures, cName);
     GrandSubProb.add(ArcBudget);
     
     //Do not pick a failed arc adjacent to a failed vertex
