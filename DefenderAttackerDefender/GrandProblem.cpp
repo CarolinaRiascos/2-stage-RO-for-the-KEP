@@ -202,7 +202,13 @@ void Problem::MainCycleFinder(){
         for (int i = 0; i < ListC.size(); i++){
             ListCycles.push_back(ListC[i]);
             for (int y = 0; y < ListC[i].get_c().size(); y++){
-                CycleNode[ListC[i].get_c()[y]].push_back(ListCycles.size() - 1);
+                CycleNode[ListC[i].get_c()[y]].push_back(int(ListCycles.size()) - 1);
+                if (y < ListC[i].get_c().size() - 1){
+                    CycleArcs[make_pair(ListC[i].get_c()[y], ListC[i].get_c()[y + 1])].push_back(int(ListCycles.size()) - 1);
+                }
+                else{
+                    CycleArcs[make_pair(ListC[i].get_c()[y], ListC[i].get_c()[0])].push_back(int(ListCycles.size()) - 1);
+                }
             }
         }
         //if (ListCycles.size() == ThisMany) terminate = true;
@@ -352,10 +358,7 @@ IloBool Problem::IsxinStack (IloInt test, vector<int>& xinTrial){
     return false;
 }
 
-////////////////Daniel //////////////////////////////
-typedef IloArray<IloNumVarArray> NumVar2D; // enables us to define a 2-D decision variable
-typedef IloArray<NumVar2D> NumVar3D; // enables us to define a 3-D decision variable
-typedef IloArray<NumVar3D> NumVar4D; // enables us to define a 4-D decision variable
+
 
 //Creación de variables
 NumVar4D Create4DBin (IloEnv& env, IloNumArray2 Adja, int L, int U, string name){
@@ -367,7 +370,7 @@ NumVar4D Create4DBin (IloEnv& env, IloNumArray2 Adja, int L, int U, string name)
             for (int l = 0; l < L; l++) {
                 Aux[i][j][l] = IloNumVarArray(env, U, 0, 1, ILOINT);
                 for (int u = 0 ; u < U; u++) {
-                    string auxName = name + "[" + to_string(i + 1) + "][" + to_string(int(Adja[i][j])) + "][" + to_string(l) + "][" + to_string(u) + ']';
+                    string auxName = name + "_" + to_string(i) + "_" + to_string(int(Adja[i][j] - 1)) + "_" + to_string(l) + "_" + to_string(u);
                     Aux[i][j][l][u].setName(auxName.c_str());
                 }
             }
@@ -375,24 +378,20 @@ NumVar4D Create4DBin (IloEnv& env, IloNumArray2 Adja, int L, int U, string name)
     }
     return Aux;
 }
-void SetUB4DBin (IloEnv& env, NumVar4D& vars, vector<int>& distNDD, int P, int L, int U){
+void SetUB4DBin (IloEnv& env, NumVar4D& vars, vector<int>& distNDD, int P, int L, int u){
     for (int i = 0; i < vars.getSize(); i++) {
         if (i < P){//Only patient-donor pairs
             for (int j = 0; j < vars[i].getSize(); j++) {
                 for (int l = 0; l < L; l++) {
-                    for (int u = 0; u < U; u++) {
-                        if (distNDD[i] + 1 > L || l == 0){//
-                            vars[i][j][l][u].setUB(0);
-                        }
+                    if (distNDD[i] + 1 > L || l == 0){//
+                        vars[i][j][l][u].setUB(0);
                     }
                 }
             }
         } else {
             for (int j = 0; j < vars[i].getSize(); j++) {
                 for (int l = 1; l < L; l++) {//Arc (i,j) where i is an altruist, can only be at position 0 of a chain
-                    for (int u = 0; u < U; u++) {
-                        vars[i][j][l][u].setUB(0);
-                    }
+                    vars[i][j][l][u].setUB(0);
                 }
             }
         }
@@ -405,7 +404,7 @@ NumVar3D Create3DBin (IloEnv& env, IloNumArray2 Adja, int L, string name){
         for (int j = 0; j < Adja[i].getSize(); j++) {
             Aux[i][j] = IloNumVarArray(env, L, 0, 1, ILOINT);
             for (int l = 0; l < L; l++) {
-                string auxName = name + "[" + to_string(i + 1) + "][" + to_string(int(Adja[i][j])) + "][" + to_string(l) + ']';
+                string auxName = name + "_" + to_string(i) + "_" + to_string(int(Adja[i][j] - 1)) + "_" + to_string(l);
                 Aux[i][j][l].setName(auxName.c_str());
             }
         }
@@ -437,7 +436,7 @@ NumVar2D Create2DBin (IloEnv& env, int I, int J, string name){
     for (int i = 0; i < I; i++) {
         Aux[i] = IloNumVarArray(env, J, 0, 1, ILOINT);
         for (int j = 0; j < J; j++) {
-            string auxName = name + "[" + to_string(i) + "][" + to_string(j) + ']';
+            string auxName = name + "_" + to_string(i) + "_" + to_string(j);
             Aux[i][j].setName(auxName.c_str());
         }
     }
@@ -452,76 +451,94 @@ IloNumVarArray Create1DBin (IloEnv& env, int I, string name){
     return Aux;
 }
 
-//Creación parámetros
-vector<vector<int>> CreateU_uj(int maxFaiule, int Umax, int Nodos){
-    vector<vector<int>> v;
-    uniform_int_distribution<int> distri(0, Nodos - 1);
-    for (int u = 0; u < Umax; u++) {
-        v.push_back(vector<int>(Nodos, 0)); // 0 no falla, 1 falla
-        int cuantos = 0;
-        while (cuantos < maxFaiule){
-            int cual = distri(gen);
-            v[u][cual] = 0; // falla
-            cuantos++;
+//Parameters creation
+void CreateU_uj(int maxFailureV, int Nodes, int maxFailureA, vector<map<pair<int,int>, bool>>&scenarios, IloNumArray2 AdjaList){
+    scenarios.push_back(map<pair<int,int>, bool>());
+    uniform_int_distribution<int> distri(0, Nodes - 1);
+    vector<int>sceV;
+    int cuantos = 0;
+    if (maxFailureV > 0){
+        while (cuantos < maxFailureV){
+            int cual = Nodes + rand()%Nodes; // Artificial scenario
+            //int cual = distri(gen);
+            bool isin = false;
+            for (int i = 0; i < sceV.size(); i++){
+                if (sceV[i] == cual) isin = true;
+            }
+            if (isin == false){
+                scenarios.back()[make_pair(-1,cual)] = true;
+                cuantos++;
+            }
         }
     }
-    return v;
+
+    cuantos = 0;
+    if (maxFailureA > 0){
+        while (cuantos < maxFailureA){
+            int cual = distri(gen);
+            bool isin = false;
+            for (int i = 0; i < sceV.size(); i++){
+                if (sceV[i] == cual) isin = true;
+            }
+            if (isin == false){
+                //uniform_int_distribution<int> distri2(0, int(AdjaList[cual].getSize() -1));
+                int cual2 = rand()%AdjaList[cual].getSize();
+                //int cual2 = distri2(gen);
+                scenarios.back()[make_pair(cual, AdjaList[cual][cual2] - 1)] = true;
+                cuantos++;
+            }
+        }
+    }
 }
 
 //Creación de restricciones
-IloRangeArray CreateCons7b(IloEnv& env, IloNumVar& Z, NumVar2D& Y_ju, int U, int Pairs, string name){
+IloRangeArray CreateCons7b(IloEnv& env, IloNumVar& Z, NumVar2D& Y_ju, int Ulast, int Pairs, string name){
     IloRangeArray Cons(env);
-    for (int u = 0; u < U; u++){    // para todo U
+    IloExpr expr (env, 0);
+    expr += Z;
+    for (int j = 0; j < Pairs; j++){
+        expr -= Y_ju[j][Ulast];
+    }
+    string name2 = name + '[' + to_string(Ulast) + ']';
+    Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
+    return Cons;
+}
+IloRangeArray CreateCons7c(IloEnv& env, NumVar2D& Y_ju, IloNumVarArray& X_c, NumVar3D& E_ijl, int Ulast, int Pairs, map<int,vector<int>> CycleNode, map<int,vector<pair<int,int>>> PredMap, string name){
+    IloRangeArray Cons(env);
+    for (int j = 0; j < Pairs; j++) {   // para tood j
         IloExpr expr (env, 0);
-        expr += Z;
-        for (int j = 0; j < Pairs; j++){
-            expr -= Y_ju[j][u];
+        expr+= Y_ju[j][Ulast];
+        for (int c = 0; c < CycleNode[j].size(); c++) { // - suma C_kj
+            expr-= X_c[CycleNode[j][c]];  // pongo el c correspondiente de CycleNode de un j
         }
-        string name2 = name + '[' + to_string(u) + ']';
+        for (int i = 0; i < PredMap[j].size(); i++) {
+            int i2 = PredMap[j][i].first;
+            int j2 = PredMap[j][i].second;
+            expr-= IloSum(E_ijl[i2][j2]); // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
+        }
+        string name2 = name + '_' + to_string(Ulast) + '_' + to_string(j);
         Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
     }
     return Cons;
 }
-IloRangeArray CreateCons7c(IloEnv& env, NumVar2D& Y_ju, IloNumVarArray& X_c, NumVar3D& E_ijl, int U, int Pairs, map<int,vector<int>> CycleNode, map<int,vector<pair<int,int>>> PredMap, string name){
+IloRangeArray CreateCon7d(IloEnv& env, NumVar2D& Y_ju, NumVar2D& X_cu, NumVar4D& E_ijlu, int Ulast, int Pairs, map<int,vector<int>> CycleNode, int Lmax, map<int,vector<pair<int,int>>> PredMap, string name){
     IloRangeArray Cons(env);
-    for (int u = 0; u < U; u++) {   //para todo u
-        for (int j = 0; j < Pairs; j++) {   // para tood j
-            IloExpr expr (env, 0);
-            expr+= Y_ju[j][u];
-            for (int c = 0; c < CycleNode[j].size(); c++) { // - suma C_kj
-                expr-= X_c[CycleNode[j][c]];  // pongo el c correspondiente de CycleNode de un j
-            }
-            for (int i = 0; i < PredMap[j].size(); i++) {
+    for (int j = 0; j < Pairs; j++) { // para todo j
+        IloExpr expr (env, 0);
+        expr+= Y_ju[j][Ulast];
+        for (int c = 0; c < CycleNode[j].size(); c++) { // - suma C_kj
+            expr-= X_cu[CycleNode[j][c]][Ulast];  // pongo el c correspondiente de CycleNode de un j
+        }
+        for (int i = 0; i < PredMap[j].size(); i++) {
+            for (int l = 0; l < Lmax; l++){
                 int i2 = PredMap[j][i].first;
                 int j2 = PredMap[j][i].second;
-                expr-= IloSum(E_ijl[i2][j2]); // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
+                expr-= E_ijlu[i2][j2][l][Ulast]; // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
             }
-            string name2 = name + '[' + to_string(u) + ']' + '[' + to_string(j + 1) + ']';
-            Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
         }
-    }
-    return Cons;
-}
-IloRangeArray CreateCon7d(IloEnv& env, NumVar2D& Y_ju, NumVar2D& X_cu, NumVar4D& E_ijlu, int U, int Pairs, map<int,vector<int>> CycleNode, int Lmax, map<int,vector<pair<int,int>>> PredMap, string name){
-    IloRangeArray Cons(env);
-    for (int u = 0; u < U; u++) { // para todo u
-        for (int j = 0; j < Pairs; j++) { // para todo j
-            IloExpr expr (env, 0);
-            expr+= Y_ju[j][u];
-            for (int c = 0; c < CycleNode[j].size(); c++) { // - suma C_kj
-                expr-= X_cu[CycleNode[j][c]][u];  // pongo el c correspondiente de CycleNode de un j
-            }
-            for (int i = 0; i < PredMap[j].size(); i++) {
-                for (int l = 0; l < Lmax; l++){
-                    int i2 = PredMap[j][i].first;
-                    int j2 = PredMap[j][i].second;
-                    expr-= E_ijlu[i2][j2][l][u]; // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
-                }
-            }
-            string name2 = name + '[' + to_string(u) + ']' + '[' + to_string(j + 1) + ']';
-            Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
-            expr.end();
-        }
+        string name2 = name + '[' + to_string(Ulast) + ']' + '[' + to_string(j) + ']';
+        Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
+        expr.end();
     }
     return Cons;
 }
@@ -537,7 +554,7 @@ IloRangeArray CreateCon7e(IloEnv& env, IloNumVarArray& X_c, NumVar3D& E_ijl, int
             int j2 = PredMap[j][i].second;
             expr+= IloSum(E_ijl[i2][j2]);
         }
-        string name2 = name + '[' + to_string(j + 1) + ']';
+        string name2 = name + '[' + to_string(j) + ']';
         Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
         expr.end();
     }
@@ -550,45 +567,68 @@ IloRangeArray CreateCon7f(IloEnv& env, NumVar3D& E_ijl, int P, IloNumArray2 Adja
         for (int i = 0; i < Adja[j].getSize(); i++) {
             expr+= E_ijl[j][i][0];
         }
-        string name2 = name + '[' + to_string(j + 1) + ']';
+        string name2 = name + '[' + to_string(j) + ']';
         Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
         expr.end();
     }
     return Cons;
 }
-IloRangeArray CreateCon7g(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<vector<int>> U_uj, int Umax, int Pairs, map<int,vector<int>> CycleNode, map<int, vector<pair<int,int>>> PredMap, int Lmax, string name){
+IloRangeArray CreateCon7g(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<map<pair<int,int>, bool>>&scenarios, int Ulast, int Pairs, map<int,vector<int>> CycleNode, map<int, vector<pair<int,int>>> PredMap, int Lmax, string name){
     IloRangeArray Cons(env);
-    for (int u = 0; u < Umax; u++) { // para todo u
-        for (int j = 0; j < Pairs; j++) { // para todo j
-            IloExpr expr (env, 0);
-            expr+= U_uj[u][j];
+    for (int j = 0; j < Pairs; j++) { // para todo j
+        IloExpr expr (env, 0);
+        auto it = scenarios[Ulast].find(make_pair(-1, j));
+        if (it != scenarios[Ulast].end()){
             for (int c = 0; c < CycleNode[j].size(); c++) {
-                expr+= X_cu[CycleNode[j][c]][u];
+                X_cu[CycleNode[j][c]][Ulast].setUB(0);
             }
             for (int l = 0; l < Lmax; l++) {
                 for (int i = 0; i < PredMap[j].size(); i++) {
                     int i2 = PredMap[j][i].first;
                     int j2 = PredMap[j][i].second;
-                    expr+= E_ijlu[i2][j2][l][u]; // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
+                    //cout << E_ijlu[i2][j2][l][Ulast].getName();
+                    E_ijlu[i2][j2][l][Ulast].setUB(0); // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
                 }
             }
-            string name2 = name + '[' + to_string(u) + ']' + '[' + to_string(j + 1) + ']';
+        }
+        else{
+            for (int c = 0; c < CycleNode[j].size(); c++) {
+                expr+= X_cu[CycleNode[j][c]][Ulast];
+            }
+            for (int l = 0; l < Lmax; l++) {
+                for (int i = 0; i < PredMap[j].size(); i++) {
+                    int i2 = PredMap[j][i].first;
+                    int j2 = PredMap[j][i].second;
+                    expr+= E_ijlu[i2][j2][l][Ulast]; // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
+                }
+            }
+            string name2 = name + '[' + to_string(Ulast) + ']' + '[' + to_string(j) + ']';
+            Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
+        }
+        
+    }
+    return Cons;
+}
+IloRangeArray CreateCon7h(IloEnv& env, NumVar4D& E_ijlu, vector<map<pair<int,int>, bool>>&scenarios, int Ulast, int P, IloNumArray2 Adja, string name){
+    IloRangeArray Cons(env);
+
+    for (int j = P; j < Adja.getSize(); j++) { // para todo j
+        IloExpr expr (env, 0);
+        auto it = scenarios[Ulast].find(make_pair(-1, j));
+        if (it != scenarios[Ulast].end()){
+            for (int i = 0; i < Adja[j].getSize(); i++) {
+                E_ijlu[j][i][0][Ulast].setUB(0);
+            }
+        }
+        else{
+            for (int i = 0; i < Adja[j].getSize(); i++) {
+                expr+= E_ijlu[j][i][0][Ulast];
+            }
+            string name2 = name + '[' + to_string(Ulast) + ']' + '[' + to_string(j) + ']';
             Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
         }
     }
     return Cons;
-}
-void CreateCon7h(IloEnv& env, NumVar4D& E_ijlu, vector<vector<int>> U_uj, int Umax, int P, IloNumArray2 Adja, string name){
-    IloRangeArray Cons(env);
-    for (int u = 0; u < Umax; u++) { // para todo u
-        for (int j = P; j < Adja.getSize(); j++) { // para todo j
-            if (U_uj[u][j] == 1){
-                for (int i = 0; i < Adja[j].getSize(); i++) {
-                    E_ijlu[j][i][0][u].setUB(0);
-                }
-            }
-        }
-    }
 }
 IloRangeArray CreateCon7i(IloEnv& env, NumVar3D& E_ijl, int Pairs, int Lmax, map<int, vector<pair<int,int>>> PredMap, IloNumArray2 Adja, string name){
     IloRangeArray Cons(env);
@@ -604,36 +644,56 @@ IloRangeArray CreateCon7i(IloEnv& env, NumVar3D& E_ijl, int Pairs, int Lmax, map
                 expr+= E_ijl[j][i][l];
             }
             //cout << expr << endl;
-            string name2 = name + '[' + to_string(j + 1) + ']' + '[' + to_string(l) + ']';
+            string name2 = name + '[' + to_string(j) + ']' + '[' + to_string(l) + ']';
             Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
         }
     }
     return Cons;
 }
-IloRangeArray CreateCon7j(IloEnv& env, NumVar4D& E_ijlu, int Umax, int Pairs, int Lmax, map<int, vector<pair<int,int>>> PredMap, IloNumArray2 Adja, string name){
+IloRangeArray CreateCon7j(IloEnv& env, NumVar4D& E_ijlu, int Ulast, int Pairs, int Lmax, map<int, vector<pair<int,int>>> PredMap, IloNumArray2 Adja, string name){
     IloRangeArray Cons(env);
-    for (int u = 0; u < Umax; u++) { // para todo u
-        for (int j = 0; j < Pairs; j++) { // para todo j
-            for (int l = 1; l < Lmax; l++) { // para todo l
-                IloExpr expr (env, 0);
-                for (int i = 0; i < PredMap[j].size(); i++) {
-                    int i2 = PredMap[j][i].first;
-                    int j2 = PredMap[j][i].second;
-                    expr-= E_ijlu[i2][j2][l - 1][u];
-                }
-                for (int i = 0; i < Adja[j].getSize(); i++) {
-                    expr+= E_ijlu[j][i][l][u];
-                }
-                //cout << expr << endl;
-                string name2 = name + '[' + to_string(u) + ']' + '[' + to_string(j) + ']' + '[' + to_string(l) + ']';
-                Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
+
+    for (int j = 0; j < Pairs; j++) { // para todo j
+        for (int l = 1; l < Lmax; l++) { // para todo l
+            IloExpr expr (env, 0);
+            for (int i = 0; i < PredMap[j].size(); i++) {
+                int i2 = PredMap[j][i].first;
+                int j2 = PredMap[j][i].second;
+                expr-= E_ijlu[i2][j2][l - 1][Ulast];
             }
+            for (int i = 0; i < Adja[j].getSize(); i++) {
+                expr+= E_ijlu[j][i][l][Ulast];
+            }
+            //cout << expr << endl;
+            string name2 = name + '_' + to_string(Ulast) + '_' + to_string(j) + '_' + to_string(l);
+            Cons.add(IloRange(env, -IloInfinity, expr, 0, name2.c_str()));
         }
     }
     return Cons;
 }
+void CreateCon7k(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<map<pair<int,int>, bool>>&scenarios, int Ulast, IloNumArray2 AdjaList, map<pair<int,int>,vector<int>> CycleArcs, map<int, vector<pair<int,int>>> PredMap, int Lmax, string name){
+    
+    
+    for (auto it = scenarios[Ulast].begin(); it != scenarios[Ulast].end(); it++) { // para todo j
+        if (it->first.first != -1){
+            for (int c = 0; c < CycleArcs[it->first].size(); c++) {
+                X_cu[CycleArcs[it->first][c]][Ulast].setUB(0);
+            }
+            // para todo j
+            for (int j = 0; j < AdjaList[it->first.first].getSize(); j++) {
+                if (AdjaList[it->first.first][j] == it->first.second + 1){
+                    for (int l = 0; l < Lmax; l++) {
+                        E_ijlu[it->first.first][j][l][Ulast].setUB(0);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+}
 //Retrieve cycles and chains
-vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumArray3 ysol, int Pairs, int ChainLength){
+vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumArray4 ysol, int Pairs, int ChainLength, int maxU){
     vector<vector<int>>vChains;
     int l;
     
@@ -644,7 +704,7 @@ vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumAr
         vChains.push_back(vector<int>());
         vChains.back().push_back(i);
         for (int j = 0; j < ysol[i].getSize(); j++){
-            if (ysol[i][j][l] > 0.9){
+            if (ysol[i][j][l][maxU] > 0.9){
                 vChains.back().push_back(AdjacencyList[i][j] - 1);
                 //Complete chain
                 i = AdjacencyList[i][j] - 1;
@@ -670,7 +730,7 @@ vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumAr
 void Problem::ROBUST_KEP(){
     //Dijkstra chains;
     vector<int> dist;
-    vector<int> distNDD(AdjacencyList.getSize(), INT_MAX);
+    distNDD = vector<int>(AdjacencyList.getSize(), INT_MAX);
     for (int i = int(Pairs); i < AdjacencyList.getSize(); i++){//Distance from altruists
         dist = dijkstra(AdjacencyList, i);
         for(int j = 0; j < dist.size(); j++){
@@ -679,10 +739,10 @@ void Problem::ROBUST_KEP(){
     }
     
     //Create model
-    IloModel RobustMod(env);
+    RobustMod = IloModel (env);
     
     //solver
-    IloCplex cplexRobust(RobustMod);
+    cplexRobust = IloCplex(RobustMod);
     cplexRobust.setParam(IloCplex::Param::TimeLimit, 250);
     cplexRobust.setParam(IloCplex::Param::Threads, 1);
     cplexRobust.setOut(env.getNullStream());
@@ -694,78 +754,84 @@ void Problem::ROBUST_KEP(){
     
     // Z
     string auxName = "Z";
-    IloNumVar Z(env, 0, IloInfinity, ILOFLOAT, auxName.c_str()); // pero no hay dominio en pdf
+    Z = IloNumVar(env, 0, IloInfinity, ILOFLOAT, auxName.c_str()); // pero no hay dominio en pdf
     
     // Num escenarios y U_uj
     int Umax = 1;
-    vector<vector<int>> U_uj = CreateU_uj(int(MaxVertexFailures), Umax, int(Nodes));
+    CreateU_uj(int(MaxVertexFailures), int(Nodes), int(MaxArcFailures), scenarios, AdjacencyList);
     
     ////////////Variables///////////
     // Y_ju
-    NumVar2D Y_ju = Create2DBin(env, int(Pairs), Umax, "Y_ju");
+    Y_ju = Create2DBin(env, int(Pairs), Umax, "Y_ju");
     
     // X_c
-    IloNumVarArray X_c = Create1DBin (env, int(ListCycles.size()), "X_c");
+    X_c = Create1DBin (env, int(ListCycles.size()), "X_c");
     
     // X_cu
-    NumVar2D X_cu = Create2DBin(env, int(ListCycles.size()), Umax, "X_cu");
+    X_cu = Create2DBin(env, int(ListCycles.size()), Umax, "X_cu");
     
     // E_ijl
-    NumVar3D E_ijl = Create3DBin(env, AdjacencyList, int(ChainLength), "E_ijl");
+    E_ijl = Create3DBin(env, AdjacencyList, int(ChainLength), "E_ijl");
     
     //Set UB on "E_ijl"
     SetUB3DBin (env, E_ijl, distNDD, int(Pairs), int(ChainLength));
     
     // E_ijlu
-    NumVar4D E_ijlu = Create4DBin(env, AdjacencyList, int(ChainLength), Umax, "E_ijl");
+    E_ijlu = Create4DBin(env, AdjacencyList, int(ChainLength), Umax, "E_ijlu");
     
-    SetUB4DBin(env, E_ijlu, distNDD, int(Pairs), int(ChainLength), Umax);
+    SetUB4DBin(env, E_ijlu, distNDD, int(Pairs), int(ChainLength), 0);
     
-    ////////////Restricciones///////////
+    ////////////Restrictions///////////
     //Constraint (7b)
     IloRangeArray cons7b(env);
-    cons7b = CreateCons7b(env, Z, Y_ju, Umax, int(Pairs), "7b");
+    cons7b = CreateCons7b(env, Z, Y_ju, 0, int(Pairs), "_7b");
     RobustMod.add(cons7b);
     
-    //Constrai (7c)
+    //Constraint (7c)
     IloRangeArray cons7c (env);
-    cons7c = CreateCons7c(env, Y_ju, X_c, E_ijl, Umax, int(Pairs), CycleNode, PredMap, "7c");
+    cons7c = CreateCons7c(env, Y_ju, X_c, E_ijl, 0, int(Pairs), CycleNode, PredMap, "7c");
     RobustMod.add(cons7c);
     
-    //Constrai (7d)
+    //Constraint (7d)
     IloRangeArray cons7d (env);
-    cons7d = CreateCon7d(env, Y_ju, X_cu, E_ijlu, Umax, int(Pairs), CycleNode, int(ChainLength), PredMap, "7d");
+    cons7d = CreateCon7d(env, Y_ju, X_cu, E_ijlu, 0, int(Pairs), CycleNode, int(ChainLength), PredMap, "7d");
     RobustMod.add(cons7d);
     
-    //Constrai (7e)
+    //Constraint (7e)
     IloRangeArray cons7e (env);
     cons7e = CreateCon7e(env, X_c, E_ijl, int(Pairs), CycleNode, PredMap, "7e");
     RobustMod.add(cons7e);
     
-    //Constrai (7f)
+    //Constraint (7f)
     IloRangeArray cons7f (env);
     cons7f = CreateCon7f(env, E_ijl, int(Pairs), AdjacencyList, "7f");
     RobustMod.add(cons7f);
     
-    //Constrai (7g)
+    //Constraint (7g)
     IloRangeArray cons7g (env);
-    cons7g = CreateCon7g(env, X_cu, E_ijlu, U_uj, Umax, int(Pairs), CycleNode, PredMap, int(ChainLength), "7g");
+    cons7g = CreateCon7g(env, X_cu, E_ijlu, scenarios, 0, int(Pairs), CycleNode, PredMap, int(ChainLength), "7g");
     RobustMod.add(cons7g);
     
     //Constraint (7h)
-    CreateCon7h(env, E_ijlu, U_uj, Umax, int(Pairs), AdjacencyList, "7h");//Set UB to 0 when U_uj = 1
+    IloRangeArray cons7h (env);
+    cons7h = CreateCon7h(env, E_ijlu, scenarios, 0, int(Pairs), AdjacencyList, "7h");//Set UB to 0 when U_uj = 1
+    RobustMod.add(cons7h);
     
-    //Constrai (7i)
+    //Constraint (7i)
     IloRangeArray cons7i (env);
     cons7i = CreateCon7i(env, E_ijl, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7i");
     RobustMod.add(cons7i);
     
-    //Constrai (7j)
+    //Constraint (7j)
     IloRangeArray cons7j (env);
-    cons7j = CreateCon7j(env, E_ijlu, Umax, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7j");
+    cons7j = CreateCon7j(env, E_ijlu, 0, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7j");
     RobustMod.add(cons7j);
     
-    
+//    //Constraint (7k)
+//    IloRangeArray cons7k (env);
+//    CreateCon7k(env, X_cu, E_ijlu, scenarios, 0, AdjacencyList, CycleArcs, PredMap, int(ChainLength), "7k");
+//    RobustMod.add(cons7k);
+
     //Objective function
     auxName = "ZFRuMax";
     IloObjective exprObj = IloObjective(env, Z, IloObjective::Maximize, auxName.c_str());
@@ -773,43 +839,63 @@ void Problem::ROBUST_KEP(){
     
     //cplexRobust.exportModel("RO_Model.lp");
     cplexRobust.solve();
+    Ite1stStage++;
     //cout << "Status " << cplexRobust.getStatus() << endl;
     //cout << "Objetive: " << cplexRobust.getObjValue();
     
     
     //Retrieve solution
+    FPMIP_Obj = cplexRobust.getObjValue();
     vector<IndexGrandSubSol>SolFirstStage;
-    IloNumArray xsol(env, ListCycles.size());
-    cplexRobust.getValues(xsol,X_c);
-    //cout << endl << "Cycles: " << endl;
+    cout << "Selected vertices: " << endl;
+    int maxU = 0;
+    for (int k = 0; k < scenarios.size(); k++){
+        int count = 0;
+        for (int j = 0; j < Pairs; j++){
+            int n = cplexRobust.getValue(Y_ju[j][k]);
+            if (n > 0.9){
+                cout << j << "\t";
+                count++;
+            }
+        }
+        if (count == FPMIP_Obj) {
+            maxU = k;
+            break;
+        }
+    }
+//    cout << endl << "Cycles: " << endl;
+    IloNumArray2 xsol(env, ListCycles.size());
     for (int i = 0; i < xsol.getSize(); i++){
-        if (xsol[i] > 0.9){
+        xsol[i] = IloNumArray (env, scenarios.size());
+        cplexRobust.getValues(xsol[i],X_cu[i]);
+        if (xsol[i][maxU] > 0.9){
             SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
-            //cout << endl;
 //            for (int j = 0; j < ListCycles[i].get_c().size(); j++){
-//                cout << ListCycles[i].get_c()[j] + 1 << '\t';
+//                cout << ListCycles[i].get_c()[j] << '\t';
 //            }
+            cout << endl;
         }
     }
     
-    //cout << endl << "Chains: " << endl;
-    IloNumArray3 esol(env, AdjacencyList.getSize());
+//    cout << endl << "Chains: " << endl;
+    IloNumArray4 esol(env, AdjacencyList.getSize());
     for (int i = 0; i < esol.getSize(); i++){
-        esol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
+        esol[i] = IloNumArray3 (env, AdjacencyList[i].getSize());
         for (int j = 0; j < esol[i].getSize(); j++){
-            esol[i][j] = IloNumArray(env, ChainLength);
-            cplexRobust.getValues(esol[i][j],E_ijl[i][j]);
-//            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
-//                if (esol[i][j][k] > 0.9){
-//                    cout << E_ijl[i][j][k].getName() << endl;
+            esol[i][j] = IloNumArray2(env, ChainLength);
+            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
+                esol[i][j][k] = IloNumArray (env, scenarios.size());
+                cplexRobust.getValues(esol[i][j][k],E_ijlu[i][j][k]);
+//                if (esol[i][j][k][maxU] > 0.9){
+//                    cout << E_ijlu[i][j][k][maxU].getName() << endl;
 //                }
-//            }
+            }
         }
     }
-    cout << endl;
+    
     
     vector<vector<int>>vChains;
-    vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
+    vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength, maxU);
     
     for (int i = 0; i < vChains.size(); i++){
         SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));

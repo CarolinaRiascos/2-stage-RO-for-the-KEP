@@ -37,7 +37,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     
     //Create arc variables
     mapArcs.clear();
-    arc = IloNumVarArray2(env,AdjacencyList.getSize());
+    arc = NumVar2D(env,AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
         arc[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, 1, ILOINT);
         for (int j = 0; j < AdjacencyList[i].getSize(); j++){
@@ -107,25 +107,54 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     RecoTotalWCovering.push_back(w);
     sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
     
-    GetAtLeastOneFails(tcysol, tchsol, ListSelVertices);
+    GetAtLeastOneFails(tcysol, tchsol);
     
     //cplexGrandSubP.exportModel("GrandSubP.lp");
-    cplexGrandSubP.solve();
-    if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
-        cout << "S.O.S. This should not happen." << endl;
-    }
-    else{
+    //HeuristicsStart2ndPH(Cycles2ndTo3rd, Chains2ndTo3rd,ListSelVertices);
+    Ite2ndS = 0;
+    bool runH = Heuristcs2ndPH();
+    if (runH == true){
+        //Build solution
         vertex_sol = IloNumArray(env, Nodes);
-        cplexGrandSubP.getValues(vertex_sol,vertex);
-        
+        for (int j = 0; j < scenarioHeuristics.size(); j++){
+            if (scenarioHeuristics[j].first == - 1){
+                vertex_sol[scenarioHeuristics[j].second] = 1;
+            }
+        }
         arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
         for (int f = 0; f < arc_sol.getSize(); f++){
             arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
-            cplexGrandSubP.getValues(arc_sol[f],arc[f]);
         }
-
+        for (int j = 0; j < scenarioHeuristics.size(); j++){
+            if (scenarioHeuristics[j].first != - 1){
+                for (int i = 0; i < AdjacencyList[scenarioHeuristics[j].first].getSize(); i++){
+                    if (AdjacencyList[scenarioHeuristics[j].first][i] == scenarioHeuristics[j].second + 1){
+                        arc_sol[scenarioHeuristics[j].first][i] = 1;
+                        break;
+                    }
+                }
+            }
+        }
         THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
+    }else{
+        cplexGrandSubP.solve();
+        if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
+            cout << "S.O.S. This should not happen." << endl;
+        }
+        else{
+            vertex_sol = IloNumArray(env, Nodes);
+            cplexGrandSubP.getValues(vertex_sol,vertex);
+            
+            arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
+            for (int f = 0; f < arc_sol.getSize(); f++){
+                arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+                cplexGrandSubP.getValues(arc_sol[f],arc[f]);
+            }
+
+            THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
+        }
     }
+
 
 }
 void Problem::selOnce(map<int,vector<int>>CycleNodeSPH, map<int,vector<int>>ChainNodeSPH){
@@ -630,8 +659,10 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles, ve
     for (int i = 0; i < Chains.size(); i++){
         for (int j = 0; j < Chains[i].Vnodes.size(); j++){
             ChainNodeTPH[Chains[i].Vnodes[j].vertex].push_back(i);
+            NodeCyChTPH[Chains[i].Vnodes[j].vertex].push_back(i);
             if (j <= Chains[i].Vnodes.size() - 2){
                 ArcsinChainsTHP[make_pair(Chains[i].Vnodes[j].vertex, Chains[i].Vnodes[j + 1].vertex)].push_back(i);
+                ArcsinChCyTHP[make_pair(Chains[i].Vnodes[j].vertex, Chains[i].Vnodes[j + 1].vertex)].push_back(i);
             }
         }
     }
@@ -640,11 +671,14 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles, ve
     for (int i = 0; i < Cycles.size(); i++){
         for (int j = 0; j < Cycles[i].get_c().size(); j++){
             CycleNodeTPH[Cycles[i].get_c()[j]].push_back(i);
+            NodeCyChTPH[Cycles[i].get_c()[j]].push_back(i);
             if (j <= Cycles[i].get_c().size() - 2){
                 ArcsinCyclesTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[j + 1])].push_back(i);
+                ArcsinChCyTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[j + 1])].push_back(i);
             }
             else{
                 ArcsinCyclesTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[0])].push_back(i);
+                ArcsinChCyTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[0])].push_back(i);
             }
         }
     }

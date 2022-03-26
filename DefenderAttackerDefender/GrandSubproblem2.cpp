@@ -39,7 +39,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     
     //Create arc variables
     mapArcs.clear();
-    arc = IloNumVarArray2(env,AdjacencyList.getSize());
+    arc = NumVar2D(env,AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
         arc[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, 1, ILOINT);
         for (int j = 0; j < AdjacencyList[i].getSize(); j++){

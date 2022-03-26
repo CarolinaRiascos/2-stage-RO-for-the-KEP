@@ -628,14 +628,14 @@ IloRangeArray Problem::Const1n(){
     return ExcludingRoles;
 }
 
-IloNumVarArray3 Problem::CreateVar3Idx(IloInt maxindx, const char* prefix, vector<int> distNDD){
+NumVar3D Problem::CreateVar3Idx(IloInt maxindx, const char* prefix, vector<int> distNDD){
     int upto = 0;
     if (prefix == "x"){
         upto = Pairs;
     }else{upto = AdjacencyList.getSize();}
-    IloNumVarArray3 var(env, upto);
+    NumVar3D var(env, upto);
     for (int i = 0; i < upto; i++){
-        var[i] = IloNumVarArray2 (env, AdjacencyList[i].getSize());
+        var[i] = NumVar2D (env, AdjacencyList[i].getSize());
         for (int j = 0; j < var[i].getSize(); j++){
             if (i < Pairs){
                 var[i][j] = IloNumVarArray(env, maxindx, 0, 1, ILOINT);
@@ -683,11 +683,11 @@ bool inFVS (vector<int> v, int vertex){
     }
     return false;
 }
-IloNumVarArray3 Problem::CreateVar3Role(vector<int>fvs, IloNumArray2 g){
-    IloNumVarArray3 var(env, fvs.size());
+NumVar3D Problem::CreateVar3Role(vector<int>fvs, IloNumArray2 g){
+    NumVar3D var(env, fvs.size());
     
     for (int i = 0; i < var.getSize(); i++){
-        var[i] = IloNumVarArray2 (env, AdjacencyList[fvs[i]].getSize());
+        var[i] = NumVar2D (env, AdjacencyList[fvs[i]].getSize());
         for (int j = 0; j < var[i].getSize(); j++){
             var[i][j] = IloNumVarArray(env, fvs.size(), 0, 1, ILOINT);
             for (int k = 0; k < var[i][j].getSize(); k++){
@@ -698,12 +698,12 @@ IloNumVarArray3 Problem::CreateVar3Role(vector<int>fvs, IloNumArray2 g){
     return var;
     
 }
-IloNumVarArray3 Problem::CreateVar3ARole(vector<int>fvs, IloNumArray2 g){
-    IloNumVarArray3 var(env, AdjacencyList.getSize());
+NumVar3D Problem::CreateVar3ARole(vector<int>fvs, IloNumArray2 g){
+    NumVar3D var(env, AdjacencyList.getSize());
     
     for (int i = 0; i < var.getSize(); i++){
         if (inFVS(fvs, i) == false){
-            var[i] = IloNumVarArray2 (env, AdjacencyList[i].getSize());
+            var[i] = NumVar2D (env, AdjacencyList[i].getSize());
             for (int j = 0; j < var[i].getSize(); j++){
                 var[i][j] = IloNumVarArray(env, fvs.size(), 0, 1, ILOINT);
                 for (int k = 0; k < var[i][j].getSize(); k++){
@@ -715,8 +715,8 @@ IloNumVarArray3 Problem::CreateVar3ARole(vector<int>fvs, IloNumArray2 g){
     return var;
     
 }
-IloNumVarArray2 Problem::CreateVarRole(vector<int>fvs){
-    IloNumVarArray2 var(env, fvs.size());
+NumVar2D Problem::CreateVarRole(vector<int>fvs){
+    NumVar2D var(env, fvs.size());
     for (int i = 0; i < var.getSize(); i++){
         var[i] = IloNumVarArray(env, fvs.size(), 0, 1, ILOINT);
         for (int j = 0; j < var[i].getSize(); j++){
@@ -735,8 +735,8 @@ IloNumVarArray2 Problem::CreateVarRole(vector<int>fvs){
 //
 //    return var;
 //}
-IloNumVarArray2 Problem::CreateVarArc2(const char* prefix, int upperbound){
-    IloNumVarArray2 var(env, Pairs);
+NumVar2D Problem::CreateVarArc2(const char* prefix, int upperbound){
+    NumVar2D var(env, Pairs);
     for (int i = 0; i < var.getSize(); i++){
         var[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, upperbound, ILOINT);
         for (int j = 0; j < var[i].getSize(); j++){

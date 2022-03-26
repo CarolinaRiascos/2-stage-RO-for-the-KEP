@@ -17,8 +17,11 @@
 
 ILOSTLBEGIN
 
-typedef IloArray<IloNumVarArray> IloNumVarArray2;
-typedef IloArray<IloNumVarArray2>  IloNumVarArray3;
+typedef IloArray<IloNumVarArray> NumVar2D; // enables us to define a 2-D decision variable
+typedef IloArray<NumVar2D> NumVar3D; // enables us to define a 3-D decision variable
+typedef IloArray<NumVar3D> NumVar4D; // enables us to define a 4-D decision variable
+//typedef IloArray<IloNumVarArray> IloNumVarArray2;
+//typedef IloArray<IloNumVarArray2>  IloNumVarArray3;
 
 class Cycles{
 private:
@@ -77,6 +80,15 @@ public:
             if (weightconsts[i] > max) max = weightconsts[i];
         }
         return max;
+    ;}
+    double get_avew(){
+        double sum = 0;
+        double ave = 0;
+        for (int i = 0; i < weightconsts.size(); i++){
+            sum += weightconsts[i];
+        }
+        ave = sum/weightconsts.size();
+        return ave;
     ;}
     
 };
@@ -152,10 +164,22 @@ public:
     string WhereItisRun;
     map<pair<int,int>,double>Weights;
     map<int,vector<int>>CycleNode;
+    map<pair<int,int>,vector<int>>CycleArcs;
     vector<vector<int>>PredList;
     map<int, vector<pair<int,int>>>PredMap;
     vector<Cycles> ListCycles;
     
+    //GrandProblem
+    NumVar2D Y_ju;
+    NumVar2D X_cu;
+    NumVar3D E_ijl;
+    NumVar4D E_ijlu;
+    IloNumVar Z;
+    IloNumVarArray X_c;
+    IloModel RobustMod;
+    IloCplex cplexRobust;
+    vector<int> distNDD;
+    int Ite1stStage = 0;
     
     //Functions
     Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun);
@@ -164,20 +188,20 @@ public:
     //M-PICEF
     void M_PICEF();
     IloCplex cplexmPICEF;
-    IloNumVarArray3 cyarc;
-    IloNumVarArray3 charc;
-    IloNumVarArray3 vrole;
-    IloNumVarArray3 arole;
-    IloNumVarArray2 arcori;
-    IloNumVarArray2 aux;
+    NumVar3D cyarc;
+    NumVar3D charc;
+    NumVar3D vrole;
+    NumVar3D arole;
+    NumVar2D arcori;
+    NumVar2D aux;
     vector<int>fvs;
     
     void ModifyAdjacencyList(vector<int>v);
-    IloNumVarArray3 CreateVar3Idx(IloInt maxindx, const char* prefix, vector<int> dist);// AdjacencyList, K or L
-    IloNumVarArray3 CreateVar3Role(vector<int>fvs, IloNumArray2 g);
-    IloNumVarArray2 CreateVarRole(vector<int>fvs); //Feedback Vertex Set
-    IloNumVarArray3 CreateVar3ARole(vector<int>fvs, IloNumArray2 g);
-    IloNumVarArray2 CreateVarArc2(const char* prefix, int upperbound); //AdjacencyList
+    NumVar3D CreateVar3Idx(IloInt maxindx, const char* prefix, vector<int> dist);// AdjacencyList, K or L
+    NumVar3D CreateVar3Role(vector<int>fvs, IloNumArray2 g);
+    NumVar2D CreateVarRole(vector<int>fvs); //Feedback Vertex Set
+    NumVar3D CreateVar3ARole(vector<int>fvs, IloNumArray2 g);
+    NumVar2D CreateVarArc2(const char* prefix, int upperbound); //AdjacencyList
     
     IloRangeArray Const1a();
     IloRangeArray Const1b();
@@ -234,12 +258,15 @@ public:
     map<int,vector<int>>ChainNodeSPH;
     map<int,vector<int>>CycleNodeTPH;
     map<int,vector<int>>ChainNodeTPH;
+    map<int,vector<int>>NodeCyChTPH;
     
     
     //Constraint and Column Generation Grand Problem
     vector<int> GrandSubOptSol; //cycles and chains
     vector<int> GrandSubOptScenario; //Interdected cycles and chains
     void AddNewColsConsGP();
+    //Grand Problem
+    vector<map<pair<int,int>, bool>>scenarios;
     
     //Grand SubProblem
     IloModel GrandSubProb;
@@ -255,7 +282,7 @@ public:
     IloNum SPMIP_Obj = 0;
     IloNumVarArray cyvar;
     IloNumVarArray chvar;
-    IloNumVarArray2 arc;
+    NumVar2D arc;
     IloNumVarArray vertex;
     IloNumVarArray selvertex;
     IloRangeArray TheOneCC;
@@ -280,6 +307,7 @@ public:
     vector<vChain> VertexinSolChain;
     map<pair<int,int>, vector<int>> ArcsinCyclesTHP;
     map<pair<int,int>, vector<int>> ArcsinChainsTHP;
+    map<pair<int,int>, vector<int>> ArcsinChCyTHP;
     map<pair<int,int>, bool> FailedArcs;
     map<int, bool> FailedVertices;
     map<pair<int,int>, bool> OptFailedArcs;
@@ -368,17 +396,18 @@ public:
     void GetNewIloRangeCH3rd(int tOnecysol3rd, vector<Chain>&Chains2ndStage);
     void GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArcs, map<int, bool> FailedVertices);
     void GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices);
-    void GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage);
+    void GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol);
     void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
     bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage);
     int Update_RHS_Covering(int row);
     bool Heuristcs2ndPH();
+    void HeuristicsStart2ndPH(map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, vector<int>&ListSelVex);
     bool ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar);
     
     //SVIs
-    bool UnMVtxdueToVtx(map<int, bool>& FailedVertices, vector<int>vinFirstStage);
+    bool UnMVtxdueToVtx(vector<int>& FailedVertices, vector<int>vinFirstStage, int origin);
     IloNumArray2 BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int>vinFirstStage);
     IloNumArray2 BuildAdjaListVtxChains(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage);
     
