@@ -693,7 +693,7 @@ void CreateCon7k(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<map<pair<
     
 }
 //Retrieve cycles and chains
-vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumArray4 ysol, int Pairs, int ChainLength, int maxU){
+vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumArray3 ysol, int Pairs, int ChainLength){
     vector<vector<int>>vChains;
     int l;
     
@@ -704,7 +704,7 @@ vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumAr
         vChains.push_back(vector<int>());
         vChains.back().push_back(i);
         for (int j = 0; j < ysol[i].getSize(); j++){
-            if (ysol[i][j][l][maxU] > 0.9){
+            if (ysol[i][j][l] > 0.9){
                 vChains.back().push_back(AdjacencyList[i][j] - 1);
                 //Complete chain
                 i = AdjacencyList[i][j] - 1;
@@ -878,24 +878,25 @@ void Problem::ROBUST_KEP(){
     }
     
 //    cout << endl << "Chains: " << endl;
-    IloNumArray4 esol(env, AdjacencyList.getSize());
+    IloNumArray3 esol(env, AdjacencyList.getSize());
     for (int i = 0; i < esol.getSize(); i++){
-        esol[i] = IloNumArray3 (env, AdjacencyList[i].getSize());
+        esol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
         for (int j = 0; j < esol[i].getSize(); j++){
-            esol[i][j] = IloNumArray2(env, ChainLength);
-            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
-                esol[i][j][k] = IloNumArray (env, scenarios.size());
-                cplexRobust.getValues(esol[i][j][k],E_ijlu[i][j][k]);
-//                if (esol[i][j][k][maxU] > 0.9){
-//                    cout << E_ijlu[i][j][k][maxU].getName() << endl;
-//                }
-            }
+            esol[i][j] = IloNumArray(env, ChainLength);
+            cplexRobust.getValues(esol[i][j],E_ijl[i][j]);
+//            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
+//                esol[i][j][k] = IloNumArray (env, scenarios.size());
+//                cplexRobust.getValues(esol[i][j][k],E_ijlu[i][j][k]);
+////                if (esol[i][j][k][maxU] > 0.9){
+////                    cout << E_ijlu[i][j][k][maxU].getName() << endl;
+////                }
+//            }
         }
     }
     
     
     vector<vector<int>>vChains;
-    vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength, maxU);
+    vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
     
     for (int i = 0; i < vChains.size(); i++){
         SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));

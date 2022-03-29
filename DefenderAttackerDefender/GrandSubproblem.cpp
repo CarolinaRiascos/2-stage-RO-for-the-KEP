@@ -654,6 +654,12 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles, ve
     //Organize vector by AccumWeight and HowMany
     sort(Chains.begin(), Chains.end(), sortChains);
     sort(Cycles.begin(), Cycles.end(), sortCycles);
+    ChainNodeTPH.clear();
+    CycleNodeTPH.clear();
+    NodeCyChTPH.clear();
+    ArcsinChCyTHP.clear();
+    ArcsinChainsTHP.clear();
+    ArcsinCyclesTHP.clear();
     
 //    //Fill in ChainNodeTPH
     for (int i = 0; i < Chains.size(); i++){

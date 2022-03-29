@@ -34,6 +34,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     mTHPMIP.add(ObjTHP);
     
     Ite2ndS = 0;
+    LOWEST_TPMIP_Obj = INT_MAX;
     while(true){
         tEnd2ndS = (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
         if (tEnd2ndS > 1800){
@@ -208,46 +209,31 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     else{
         //////////////////Retrieve solution/////////////////////////
         FPMIP_Obj = cplexRobust.getObjValue();
+        vector<IndexGrandSubSol>SolFirstStage;
+        IloNumArray xsol(env, ListCycles.size());
+        cplexRobust.getValues(xsol,X_c);
+        for (int i = 0; i < xsol.getSize(); i++){
+            if (xsol[i] > 0.9){
+                SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
+            }
+        }
+        IloNumArray3 esol(env, AdjacencyList.getSize());
+        for (int i = 0; i < esol.getSize(); i++){
+            esol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
+            for (int j = 0; j < esol[i].getSize(); j++){
+                esol[i][j] = IloNumArray(env, ChainLength);
+                cplexRobust.getValues(esol[i][j],E_ijl[i][j]);
+                for (int k = 0; k < E_ijl[i][j].getSize(); k++){
+                    //if (esol[i][j][k] > 0.9) cout << E_ijl[i][j][k].getName() << "\t";
+                }
+            }
+        }
+        vector<vector<int>>vChains;
+        vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
+        for (int i = 0; i < vChains.size(); i++){
+            SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
+        }
         if (SPMIP_Obj < FPMIP_Obj){ //Send scenario to 1st. stage
-            int maxU = 0;
-            for (int k = 0; k < scenarios.size(); k++){
-                int count = 0;
-                for (int j = 0; j < Pairs; j++){
-                    int n = cplexRobust.getValue(Y_ju[j][k]);
-                    if (n > 0.9) count++;
-                }
-                if (count == FPMIP_Obj) {
-                    maxU = k;
-                    break;
-                }
-            }
-            //maxU = 1;
-            vector<IndexGrandSubSol>SolFirstStage;
-            IloNumArray2 xsol(env, ListCycles.size());
-            for (int i = 0; i < xsol.getSize(); i++){
-                xsol[i] = IloNumArray (env, scenarios.size());
-                cplexRobust.getValues(xsol[i],X_cu[i]);
-                if (xsol[i][maxU] > 0.9){
-                    SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
-                }
-            }
-            IloNumArray4 esol(env, AdjacencyList.getSize());
-            for (int i = 0; i < esol.getSize(); i++){
-                esol[i] = IloNumArray3 (env, AdjacencyList[i].getSize());
-                for (int j = 0; j < esol[i].getSize(); j++){
-                    esol[i][j] = IloNumArray2(env, ChainLength);
-                    for (int k = 0; k < E_ijl[i][j].getSize(); k++){
-                        esol[i][j][k] = IloNumArray (env, scenarios.size());
-                        cplexRobust.getValues(esol[i][j][k],E_ijlu[i][j][k]);
-                        //if (esol[i][j][k][maxU]) cout << E_ijlu[i][j][k][maxU].getName() << "\t";
-                    }
-                }
-            }
-            vector<vector<int>>vChains;
-            vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength, maxU);
-            for (int i = 0; i < vChains.size(); i++){
-                SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
-            }
             //Call 2nd. stage
             Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
             Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
@@ -259,8 +245,12 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             Cycles3rdTo2nd.clear();
             Chains2ndTo3rd.clear();
             Chains3rdTo2nd.clear();
+            RecoSolCovering.clear();
+            RecoTotalWCovering.clear();
             mTHPMIP.end();
             cplexmTHPMIP.end();
+            Ite2ndS = 0;
+            Ite1stStage++;
             if (THP_Method != "Literature"){
                 GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
             }
@@ -1003,12 +993,20 @@ bool Problem::Heuristcs2ndPH(){
             }
             //Check whether we should add element to scenario
             bool ans = true;
-            if (auxCov[ele].first.first == -1 && UsedVertices > 0){
-                vector<int> failed, vinFirstStage;
-                for (int i = 0; i < scenarioHeuristics.size();i++) failed.push_back(scenarioHeuristics[i].second);
-                ans = UnMVtxdueToVtx(failed, vinFirstStage, auxCov[ele].first.second);
+            if (UsedArcs + UsedVertices >= 1){
+                vector<int> failedVxt, vinFirstStage;
+                vector<pair<int,int>>failedArcs;
+                for (int i = 0; i < scenarioHeuristics.size();i++){
+                    if(scenarioHeuristics[i].first == -1){
+                        failedVxt.push_back(scenarioHeuristics[i].second);
+                    }
+                    else{
+                        failedArcs.push_back(scenarioHeuristics[i]);
+                    }
+                }
+                ans = UnMVtxdueToVtx(failedVxt, failedArcs, vinFirstStage, auxCov[ele].first);
             }
-            if (ans == true || auxCov[ele].first.first != -1){
+            if (ans == true){
                 // Add element to scenario
                 scenarioHeuristics.push_back(auxCov[ele].first);
                 //Seize the element
@@ -1126,22 +1124,34 @@ bool IsxinChain(int v, Chain c){
     }
     return false;
 }
-bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<int> vinFirstStage, int origin){
+bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs, vector<int> vinFirstStage, pair<int,int> origin){
     //Build Adjacency List
     IloNumArray2 AdjaList (env);
     //Check whether vertex it->first fails naturally due to another vertex failure
     //Create modified Adjacency List
-    AdjaList = BuildAdjaListVtxCycles(FailedVertices, vector<pair<int,int>>(), vinFirstStage);
+    AdjaList = BuildAdjaListVtxCycles(FailedVertices, FailedArcs, vinFirstStage,
+                                      origin);
     //Call SubCycleFinder
     vector<Cycles> ListC;
-    ListC = SubCycleFinder(env, AdjaList, origin);
+    if (origin.first != -1){
+        ListC = SubCycleFinder(env, AdjaList, origin.first);
+    }
+    else{
+        ListC = SubCycleFinder(env, AdjaList, origin.second);
+    }
     //If no cycle then:
     if (ListC.size() == 0){
         //Build AdjacencyList to find chains
-        AdjaList = BuildAdjaListVtxChains(FailedVertices, vector<pair<int,int>>(), vinFirstStage);
+        AdjaList = BuildAdjaListVtxChains(FailedVertices, FailedArcs, vinFirstStage, origin);
         
         //Check whether there's a feasible path from an NDD to vertex i
-        vector<int>ChainStarters; ChainStarters.push_back(origin);
+        vector<int>ChainStarters;
+//        if (origin.first != -1){
+//            ChainStarters.push_back(origin.first);
+//        }
+//        else{
+        ChainStarters.push_back(origin.second);
+//        }
         vector<vChain> VertexinSolChain;
         vector<int>Altruists;
         vector<int>Vertices;
@@ -1178,17 +1188,28 @@ bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<int> vinFirstSt
     }
             
 }
-IloNumArray2 Problem::BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage){
+IloNumArray2 Problem::BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage, pair<int,int>origin){
     IloNumArray2 AdjaList(env, AdjacencyList.getSize());
     
     if (RecoursePolicy == "Full"){
         for (int i = 0; i < AdjacencyList.getSize(); i++){
-            AdjaList[i] = AdjacencyList[i];
+            AdjaList[i] = IloNumArray(env);
+            if (i == origin.first){
+                AdjaList[i].add(origin.second + 1);
+            }
+            else{
+                AdjaList[i] = AdjacencyList[i];
+            }
         }
     }
     else if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
         for (int i = 0; i < vinFirstStage.size(); i++){
-            AdjaList[vinFirstStage[i]] = AdjacencyList[vinFirstStage[i]];
+            if (vinFirstStage[i] == origin.first){
+                AdjaList[vinFirstStage[i]].add(origin.second + 1);
+            }
+            else{
+                AdjaList[vinFirstStage[i]] = AdjacencyList[vinFirstStage[i]];
+            }
         }
     }
     
@@ -1198,11 +1219,11 @@ IloNumArray2 Problem::BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<p
     }
     if (delete_arc.size() > 0){
         for (int i = 0; i < delete_arc.size(); i++){
-            int val = AdjacencyList[delete_arc[i].first][delete_arc[i].second];
+            int val = delete_arc[i].second + 1;
             IloNumArray newrow (env);
             for (int j = 0; j < AdjaList[delete_arc[i].first].getSize(); j++){
                 if (AdjaList[delete_arc[i].first][j] != val){
-                    newrow.add(AdjaList[i]);
+                    newrow.add(AdjaList[delete_arc[i].first][j]);
                 }
             }
             //Replace new row into AdjaList
@@ -1218,16 +1239,21 @@ bool isArcTobeDeleted(vector<pair<int, int>> delete_arc, pair<int, int> arc){
     }
     return false;
 }
-IloNumArray2 Problem::BuildAdjaListVtxChains(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage){
+IloNumArray2 Problem::BuildAdjaListVtxChains(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage, pair<int,int> origin){
     IloNumArray2 AdjaList(env, AdjacencyList.getSize());
     
     if (RecoursePolicy == "Full"){
         for (int i = 0; i < PredMap.size(); i++){
             AdjaList[i] = IloNumArray(env);
-            if (IsxinStack(i, delete_vertex) == false){
-                for (int j = 0; j < PredMap[i].size(); j++){
-                    if (isArcTobeDeleted(delete_arc, make_pair(PredMap[i][j].first, i)) == false){
-                        AdjaList[i].add(PredMap[i][j].first + 1);
+            if ((i == origin.second) && (origin.first != -1)){
+                AdjaList[i].add(origin.first + 1);
+            }
+            else{
+                if (IsxinStack(i, delete_vertex) == false){
+                    for (int j = 0; j < PredMap[i].size(); j++){
+                        if (isArcTobeDeleted(delete_arc, make_pair(PredMap[i][j].first, i)) == false){
+                            AdjaList[i].add(PredMap[i][j].first + 1);
+                        }
                     }
                 }
             }
@@ -1235,11 +1261,17 @@ IloNumArray2 Problem::BuildAdjaListVtxChains(vector<int> delete_vertex, vector<p
     }
     else if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
         for (int i = 0; i < PredMap.size(); i++){
-            if (IsxinStack(i, delete_vertex) == false && IsxinStack (i, vinFirstStage) == true){
-                for (int j = 0; j < PredMap[i].size(); j++){
-                    int v = AdjacencyList[PredMap[i][j].first][PredMap[i][j].second];
-                    if (isArcTobeDeleted(delete_arc, make_pair(v,i)) == false && IsxinStack (v, vinFirstStage) == true){
-                        AdjaList[i].add(v);
+            AdjaList[i] = IloNumArray(env);
+            if ((i == origin.second) && (origin.first != -1)){
+                AdjaList[i].add(origin.first + 1);
+            }
+            else{
+                if (IsxinStack(i, delete_vertex) == false && IsxinStack (i, vinFirstStage) == true){
+                    for (int j = 0; j < PredMap[i].size(); j++){
+                        //int v = AdjacencyList[PredMap[i][j].first][PredMap[i][j].second];
+                        if (isArcTobeDeleted(delete_arc, make_pair(PredMap[i][j].first,i)) == false && IsxinStack (PredMap[i][j].first, vinFirstStage) == true){
+                            AdjaList[i].add(PredMap[i][j].first + 1);
+                        }
                     }
                 }
             }
