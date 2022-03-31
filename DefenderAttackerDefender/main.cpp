@@ -11,8 +11,8 @@
 
 
 int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
-    if (argc != 10){
-        cout <<"Not enough parameters. They must be 10." << endl;
+    if (argc != 11){
+        cout <<"Not enough parameters. They must be 11." << endl;
         return -1;
     }
     
@@ -31,7 +31,10 @@ int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
     string RecoursePolicy = argv[7];
     string THP_Method = argv[8];
     string WhereItisRun = argv[9];
-    Problem P(FolderName, FileName, CycleLength, ChainLength, RecoursePolicy, THP_Method, VertexBudget, ArcBudget, WhereItisRun);
+    str.clear(); str << argv[10];
+    IloNum TimeLimit; str >> TimeLimit;
+    Problem P(FolderName, FileName, CycleLength, ChainLength, RecoursePolicy, THP_Method, VertexBudget, ArcBudget, WhereItisRun, TimeLimit);
+    P.ProgramStart = clock();
     
     cout << "Start reading" << endl;
     //clock_t tStart = clock();

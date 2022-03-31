@@ -9,9 +9,10 @@
 #include "GrandSubproblem2.hpp"
 void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
     // Create model
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     GrandSubProb = IloModel(env);
     cplexGrandSubP = IloCplex(GrandSubProb);
-    cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, 1800);
+    cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
     cplexGrandSubP.setOut(env.getNullStream());
     AtLeastOneFails = IloRangeArray(env);
@@ -102,7 +103,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     }
     else{
         SPMIP_Obj = cplexGrandSubP.getValue(Beta);
-        env.out() << "Objective: " << SPMIP_Obj << endl;//cplexGrandSubP.getValue(Excess)
+        //env.out() << "Objective: " << SPMIP_Obj << endl;//cplexGrandSubP.getValue(Excess)
         
         //Retrieve solution
         IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
@@ -116,7 +117,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
 //        for (int i = 0; i < chvar_sol.getSize(); i++){
 //            if (chvar_sol[i] > 0.9) cout << chvar[i].getName() << endl;
 //        }
-        cout << "Beta: " << cplexGrandSubP.getValue(Beta) << endl;
+        //cout << "Beta: " << cplexGrandSubP.getValue(Beta) << endl;
         
         vertex_sol = IloNumArray(env, Nodes);
         cplexGrandSubP.getValues(vertex_sol,vertex);
@@ -245,13 +246,21 @@ void Problem::SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, 
     //Organize vector by AccumWeight and HowMany
     sort(Chains.begin(), Chains.end(), sortChains2);
     sort(Cycles.begin(), Cycles.end(), sortCycles2);
+    ChainNodeTPH.clear();
+    CycleNodeTPH.clear();
+    NodeCyChTPH.clear();
+    ArcsinChCyTHP.clear();
+    ArcsinChainsTHP.clear();
+    ArcsinCyclesTHP.clear();
     
     //Fill in ChainNodeTPH
     for (int i = 0; i < Chains.size(); i++){
         for (int j = 0; j < Chains[i].Vnodes.size(); j++){
             ChainNodeTPH[Chains[i].Vnodes[j].vertex].push_back(i);
+            NodeCyChTPH[Chains[i].Vnodes[j].vertex].push_back(i);
             if (j <= Chains[i].Vnodes.size() - 2){
                 ArcsinChainsTHP[make_pair(Chains[i].Vnodes[j].vertex, Chains[i].Vnodes[j + 1].vertex)].push_back(i);
+                ArcsinChCyTHP[make_pair(Chains[i].Vnodes[j].vertex, Chains[i].Vnodes[j + 1].vertex)].push_back(i);
             }
         }
     }
@@ -260,11 +269,14 @@ void Problem::SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, 
     for (int i = 0; i < Cycles.size(); i++){
         for (int j = 0; j < Cycles[i].get_c().size(); j++){
             CycleNodeTPH[Cycles[i].get_c()[j]].push_back(i);
+            NodeCyChTPH[Cycles[i].get_c()[j]].push_back(i);
             if (j <= Cycles[i].get_c().size() - 2){
                 ArcsinCyclesTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[j + 1])].push_back(i);
+                ArcsinChCyTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[j + 1])].push_back(i);
             }
             else{
                 ArcsinCyclesTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[0])].push_back(i);
+                ArcsinChCyTHP[make_pair(Cycles[i].get_c()[j], Cycles[i].get_c()[0])].push_back(i);
             }
         }
     }

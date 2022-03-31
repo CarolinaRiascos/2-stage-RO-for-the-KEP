@@ -8,14 +8,16 @@
 
 #include "GrandSubproblem.hpp"
 void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
+    tStartMP2ndPH = clock();
     // Create model
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     GrandSubProb = IloModel(env);
     cplexGrandSubP = IloCplex(GrandSubProb);
-    cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, 1800);
+    cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
     cplexGrandSubP.setOut(env.getNullStream());
     AtLeastOneFails = IloRangeArray(env);
-    tStart2ndS = clock();
+    
     
     SampleCols2ndStage(Chains2ndStage, Cycles2ndStage, SolFirstStage);
     //Get selected vertices
@@ -43,12 +45,20 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         for (int j = 0; j < AdjacencyList[i].getSize(); j++){
             mapArcs[make_pair(i, AdjacencyList[i][j] - 1)] = j;
             SetName2(arc[i][j], "arc", i + 1, AdjacencyList[i][j]);
+            auto it = ArcsinChCyTHP.find(make_pair(i, AdjacencyList[i][j] - 1));
+            if (it == ArcsinChCyTHP.end()){
+                arc[i][j].setUB(0);
+            }
         }
     }
     //Create vertex variables
     vertex = IloNumVarArray(env, Nodes, 0, 1, ILOINT);
     for (int i = 0; i < Nodes; i++){
         SetName1Index( vertex[i], "vertex",i + 1);
+        auto it = NodeCyChTPH.find(i);
+        if (it == NodeCyChTPH.end()){
+            vertex[i].setUB(0);
+        }
     }
     
     //CONSTRAINTS
@@ -135,6 +145,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
                 }
             }
         }
+        tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
         THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
     }else{
         cplexGrandSubP.solve();
@@ -150,7 +161,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
                 arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
                 cplexGrandSubP.getValues(arc_sol[f],arc[f]);
             }
-
+            tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
             THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
         }
     }
@@ -731,7 +742,6 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles, ve
             }
         }
     }
-    
 }
 vector<int>Problem::GetSelVertices(vector<IndexGrandSubSol>&SolFirstStage){
     vector<int>ListSelVertices;

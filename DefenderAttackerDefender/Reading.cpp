@@ -55,7 +55,7 @@ int Problem::Reading() {
     
     return 1;
 }
-void Problem::Print2ndStage(){
+void Problem::Print2ndStage(string status){
     //Print summary of results
     //"/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/Output/LagrangianBB/LagResults.txt"
     string OutputDire;
@@ -70,10 +70,10 @@ void Problem::Print2ndStage(){
         this->file.open(OutputDire, fstream::app);
     }else{
         file.open(OutputDire, fstream::out);
-        file << "Instance" << '\t' << "PDP" << '\t' << "NDD" << '\t' << "K" << '\t' << "L" << '\t' << "VertexBudget" << '\t' << "ArcBudget" << '\t' <<"Ite" << '\t' << "Time(s)" << '\t' << "Method" << '\t' << "Policy"<< '\t' << "tRecoProb" << '\t' << "SPMIP_Obj" << '\t' << "Status" << endl;
+        file << "Instance" << '\t' << "PDP" << '\t' << "NDD" << '\t' << "K" << '\t' << "L" << '\t' << "VertexBudget" << '\t' << "ArcBudget" << '\t' << "Method" << '\t' << "Policy" << '\t' << "status" << '\t' << "Ite1stS" << '\t' << "TotalTime1stS" << '\t' << "TotalIte2ndS" << '\t' << "TotalTime2ndS" << '\t' << "TotalTimeMP2ndS" << '\t' << "TotalTimeHeu" << '\t' << "TotalIteHeuTrue" <<  '\t' << "TotalTimeRecoCG" << '\t' << "TotalIteCGTrue" << '\t' << "TotalTimeRecoMIP" << '\t' << "RO_Objective" << endl;
     }
     
-    file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures <<'\t' << Ite2ndS << '\t' << tEnd2ndS << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << tTotalReco << '\t' << SPMIP_Obj << '\t' << status << endl;
+    file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << endl;
     
     file.close();
 }

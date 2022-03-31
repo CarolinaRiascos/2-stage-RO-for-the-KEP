@@ -144,6 +144,9 @@ public:
     IloInt NumArcs;
     IloInt CycleLength;//K
     IloInt ChainLength;//L
+    IloInt GlobalIte2ndStage = 0;
+    IloInt runCGtrue = 0;
+    IloInt runHeuristicstrue = 0;
     IloInt Ite2ndS = 0;
     IloInt Iteration = 0;
     IloRangeArray ActiveGrandSubSol;
@@ -151,13 +154,25 @@ public:
     IloNumArray2 WeightMatrix;
     IloNumArray2 AdjacencyList;//Successors
     IloNumArray PRAList;//Successors
+    IloNum TimeLimit;
     string FileName;
     fstream file;
+    clock_t ProgramStart;
+    clock_t tStart1stS;
     clock_t tStart2ndS;
     clock_t tStartReco;
-    double tTotalReco = 0;
-    double tEnd2ndS = 0;
-    string status;
+    clock_t tStartHeu;
+    clock_t tStartCG;
+    clock_t tStartRecoMIP;
+    clock_t tStartMP2ndPH;
+    double tTotalRecoCG = 0;
+    double tTotalRecoMIP = 0;
+    double tTotal1stS = 0;
+    double tTotal2ndS = 0;
+    double tTotalHeu = 0;
+    double tTotalCG = 0;
+    double tTotalMP2ndPH = 0;
+    double LeftTime = 0;
     string FolderName;
     string RecoursePolicy;
     string THP_Method;
@@ -182,7 +197,7 @@ public:
     int Ite1stStage = 0;
     
     //Functions
-    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun);
+    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun, IloNum _TimeLimit);
     int Reading();
    
     //M-PICEF
@@ -426,7 +441,7 @@ public:
     IloExpr exprVxtArcsCH;
     IloExpr exprBound;
     
-    void Print2ndStage();
+    void Print2ndStage(string status);
     
     void HeadingCF();
     void PrintCF();

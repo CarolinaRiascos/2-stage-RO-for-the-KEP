@@ -8,12 +8,15 @@
 
 #include "ThirdPhase.hpp"
 void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&vinFirstStage){
+    tStartRecoMIP = clock();
     //Get scenario
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     //Create model
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     mTHPMIP = IloModel (env);
     cplexmTHPMIP = IloCplex(mTHPMIP);
     cplexmTHPMIP.setParam(IloCplex::Param::Threads, 1);
+    cplexmTHPMIP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexmTHPMIP.setOut(env.getNullStream());
     
     //Create decision variables and set decision variables values according to the scenario
@@ -32,26 +35,26 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     string name = "Obj_THP";
     ObjTHP = IloObjective(env, obj, IloObjective::Maximize, name.c_str());
     mTHPMIP.add(ObjTHP);
-    
+    tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
     Ite2ndS = 0;
-    LOWEST_TPMIP_Obj = INT_MAX;
     while(true){
-        tEnd2ndS = (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-        if (tEnd2ndS > 1800){
-            status = "Incomplete";
+        LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+        if (LeftTime <= 0){
             break;
         }
         Ite2ndS++;
         //Solve formulation
-        //cplexmTHPMIP.exportModel("mTHPMIP.lp");
-        tStartReco = clock();
-        //Compute actual THP Objective
+        tStartCG = clock();
         ub_tchvar = GetUB_tchvar(FailedArcs, FailedVertices);
         ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
         bool runColGen = ColumnGeneration(ub_tcyvar, ub_tchvar);
+        tTotalRecoCG += (clock() - tStartCG)/double(CLOCKS_PER_SEC);
         if (runColGen == false){
+            tStartRecoMIP = clock();
+            LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+            cplexmTHPMIP.setParam(IloCplex::Param::TimeLimit, LeftTime);
             cplexmTHPMIP.solve();
-            tTotalReco += (clock() - tStartReco)/double(CLOCKS_PER_SEC);
+            tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
             if (cplexmTHPMIP.getStatus() == IloAlgorithm::Infeasible){
                 cout << "S.O.S. This should not happen." << endl;
             }
@@ -76,7 +79,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             }
         }
         else{
-            tTotalReco += (clock() - tStartReco)/double(CLOCKS_PER_SEC);
+            runCGtrue++;
             if (THP_Method == "Covering"){
                 if (ThisWork(tcysolColGen, tchsolColGen, vinFirstStage) == true) break;
             }else{//Literature's approach
@@ -85,8 +88,11 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
 
     }
-    if (tEnd2ndS <= 1800) status = "Complete";
-    Print2ndStage();
+    GlobalIte2ndStage += Ite2ndS;
+    if (LeftTime <= 0) {
+        Print2ndStage("OutTime");
+    }
+    
     
     //Check whether a new scenario was found
     //if (SPMIP_Obj < FPMIP_Obj){
@@ -101,6 +107,9 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     for (auto it = OptFailedVertices.begin(); it != OptFailedVertices.end(); it++){
         scenarios.back()[make_pair(-1, it->first)] = true;
     }
+
+    tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+    tStart1stS = clock();
     if (Ite1stStage == 1){
         //Update Con7g
         for (int j = 0; j < Pairs; j++) { // para todo j
@@ -202,11 +211,14 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     }
     
     //cplexRobust.exportModel("RO_Model.lp");
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexRobust.solve();
+    tTotal1stS += (clock() - tStart1stS)/double(CLOCKS_PER_SEC);
     if (cplexRobust.getStatus() == IloAlgorithm::Infeasible){
-        cout << "S.O.S. This should not happen." << endl;
+        cout << "This should not happen." << endl;
     }
-    else{
+    else if (cplexRobust.getStatus() == IloAlgorithm::Optimal){
         //////////////////Retrieve solution/////////////////////////
         FPMIP_Obj = cplexRobust.getObjValue();
         vector<IndexGrandSubSol>SolFirstStage;
@@ -235,6 +247,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
         if (SPMIP_Obj < FPMIP_Obj){ //Send scenario to 1st. stage
             //Call 2nd. stage
+            tStart2ndS = clock();
             Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
             Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
             GrandSubProb.end();
@@ -251,6 +264,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             cplexmTHPMIP.end();
             Ite2ndS = 0;
             Ite1stStage++;
+            LOWEST_TPMIP_Obj = INT_MAX;
             if (THP_Method != "Literature"){
                 GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
             }
@@ -260,11 +274,14 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
         else if (SPMIP_Obj == FPMIP_Obj){
             //Robust Solution found
-            cout << "Yaja!";
+            Print2ndStage("Optimal");
         }
         else{
             cout << endl << "This should never happen";
         }
+    }
+    else{
+        Print2ndStage("OutTime");
     }
         
     
@@ -296,12 +313,18 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
+    tStartHeu = clock();
     bool runH = Heuristcs2ndPH();
+    tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
     if (runH == false){
+        tStartMP2ndPH = clock();
+        LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+        cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
         cplexGrandSubP.solve();
+        tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
 
         if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
-            cout << "2nd. stage solved" << endl;
+            //cout << "2nd. stage solved" << endl;
             SPMIP_Obj = LOWEST_TPMIP_Obj;
             return true;
         }
@@ -317,6 +340,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
         }
     }
     else{
+        runHeuristicstrue++;
         //Build solution
         vertex_sol = IloNumArray(env, Nodes);
         for (int j = 0; j < scenarioHeuristics.size(); j++){
@@ -467,8 +491,12 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     exprVxtArcsCY.end();
     
     //Resolve 2ndPhase
-    //cplexGrandSubP.exportModel("GrandSubP2.lp");
+    tStartMP2ndPH = clock();
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexGrandSubP.solve();
+    tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
+    
     if (cplexGrandSubP.isPrimalFeasible() == false){
         cout << "IT SHOULD NEVER HAPPEN" << endl;
     }
@@ -478,7 +506,7 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
         if (SPMIP_Obj >= TPMIP_Obj){
             OptFailedArcs = FailedArcs;
             OptFailedVertices = FailedVertices;
-            return true;
+                return true;
         }
 
         IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
@@ -1287,10 +1315,11 @@ bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar)
     IloEnv env;
     IloModel ColGen(env);
     IloCplex Colcplex(ColGen);
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     Colcplex.setOut(env.getNullStream());
     Colcplex.setParam(IloCplex::RootAlg, 1);
     Colcplex.setParam(IloCplex::Param::Preprocessing::Presolve, 0);
-    Colcplex.setParam(IloCplex::Param::TimeLimit, 1800);
+    Colcplex.setParam(IloCplex::Param::TimeLimit, LeftTime);
     Colcplex.setParam(IloCplex::Param::Threads, 1);
     clock_t tStartMP = clock();
     tStartMP = clock();
@@ -1314,9 +1343,9 @@ bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar)
     //Objective
     Obj = IloAdd(ColGen, IloMaximize(env,-10000*y));
     for (int i = 0; i < pimany; i++){
-       string name = "c." + to_string(i);
-       const char* cName = name.c_str();
-       onecycle.add(IloRange(env, -IloInfinity, y,1, cName));
+        string name = "c." + to_string(i);
+        const char* cName = name.c_str();
+        onecycle.add(IloRange(env, -IloInfinity, y,1, cName));
     }
     ColGen.add(onecycle);
     
@@ -1463,17 +1492,17 @@ bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar)
         for (int i = 0; i < zsol.getSize(); i++){
             if (zsol[i] > 0.9){
                 auto it = cycles.find(i);
-                //cout << endl;
+//                cout << endl;
                 if (it!= cycles.end()){
                     tcysolColGen[cycles[i]] = 1;
 //                    for (int j = 0; j < Cycles2ndStage[cycles[i]].get_c().size();j++){
-//                        //cout << Cycles2ndStage[cycles[i]].get_c()[j] <<"\t";
+//                        cout << Cycles2ndStage[cycles[i]].get_c()[j] <<"\t";
 //                    }
                 }
                 else{
                     tchsolColGen[chains[i]] = 1;
 //                    for (int j = 0; j < Chains2ndStage[chains[i]].Vnodes.size();j++){
-//                        //cout << Chains2ndStage[chains[i]].Vnodes[j].vertex << "\t";
+//                        cout << Chains2ndStage[chains[i]].Vnodes[j].vertex << "\t";
 //                    }
                 }
             }

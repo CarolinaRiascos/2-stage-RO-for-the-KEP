@@ -475,16 +475,16 @@ void CreateU_uj(int maxFailureV, int Nodes, int maxFailureA, vector<map<pair<int
     cuantos = 0;
     if (maxFailureA > 0){
         while (cuantos < maxFailureA){
-            int cual = distri(gen);
+            int cual = Nodes + rand()%Nodes; // Artificial scenario
             bool isin = false;
             for (int i = 0; i < sceV.size(); i++){
                 if (sceV[i] == cual) isin = true;
             }
             if (isin == false){
                 //uniform_int_distribution<int> distri2(0, int(AdjaList[cual].getSize() -1));
-                int cual2 = rand()%AdjaList[cual].getSize();
+                int cual2 = Nodes + rand()%Nodes; // Artificial scenario
                 //int cual2 = distri2(gen);
-                scenarios.back()[make_pair(cual, AdjaList[cual][cual2] - 1)] = true;
+                scenarios.back()[make_pair(cual, cual2)] = true;
                 cuantos++;
             }
         }
@@ -728,6 +728,7 @@ vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumAr
 //////////////////////////////////////////////////
 
 void Problem::ROBUST_KEP(){
+    tStart1stS = clock();
     //Dijkstra chains;
     vector<int> dist;
     distNDD = vector<int>(AdjacencyList.getSize(), INT_MAX);
@@ -741,9 +742,10 @@ void Problem::ROBUST_KEP(){
     //Create model
     RobustMod = IloModel (env);
     
-    //solver
+    //Solver
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     cplexRobust = IloCplex(RobustMod);
-    cplexRobust.setParam(IloCplex::Param::TimeLimit, 250);
+    cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexRobust.setParam(IloCplex::Param::Threads, 1);
     cplexRobust.setOut(env.getNullStream());
     
@@ -847,14 +849,14 @@ void Problem::ROBUST_KEP(){
     //Retrieve solution
     FPMIP_Obj = cplexRobust.getObjValue();
     vector<IndexGrandSubSol>SolFirstStage;
-    cout << "Selected vertices: " << endl;
+    //cout << "Selected vertices: " << endl;
     int maxU = 0;
     for (int k = 0; k < scenarios.size(); k++){
         int count = 0;
         for (int j = 0; j < Pairs; j++){
             int n = cplexRobust.getValue(Y_ju[j][k]);
             if (n > 0.9){
-                cout << j << "\t";
+                //cout << j << "\t";
                 count++;
             }
         }
@@ -901,7 +903,7 @@ void Problem::ROBUST_KEP(){
     for (int i = 0; i < vChains.size(); i++){
         SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
     }
-    
+    tTotal1stS += (clock() - tStart1stS)/double(CLOCKS_PER_SEC);
 //    for (int i = 0; i < SolFirstStage.size(); i++){
 //        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
 //            cout << SolFirstStage[i].get_cc()[j] << '\t';
@@ -917,6 +919,7 @@ void Problem::ROBUST_KEP(){
 //    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{16,0,6}, 2));
     
     //Call 2nd. stage
+    tStart2ndS = clock();
     Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
     Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
     if (THP_Method != "Literature"){

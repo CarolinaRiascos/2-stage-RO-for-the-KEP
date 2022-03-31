@@ -7,7 +7,7 @@
 //
 
 #include "Class_Problem.hpp"
-Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun){
+Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun, IloNum _TimeLimit){
     FolderName = _FolderName;
     FileName = _FileName;
     CycleLength = _cycleLength;
@@ -17,4 +17,5 @@ Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloI
     MaxVertexFailures = _VertexBudget;
     MaxArcFailures = _ArcBudget;
     WhereItisRun = _WhereItisRun;
+    TimeLimit = _TimeLimit;
 }
