@@ -727,205 +727,207 @@ vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumAr
 //////////////////// Robust_KEP/////////////
 //////////////////////////////////////////////////
 
-void Problem::ROBUST_KEP(){
-    tStart1stS = clock();
-    //Dijkstra chains;
-    vector<int> dist;
-    distNDD = vector<int>(AdjacencyList.getSize(), INT_MAX);
-    for (int i = int(Pairs); i < AdjacencyList.getSize(); i++){//Distance from altruists
-        dist = dijkstra(AdjacencyList, i);
-        for(int j = 0; j < dist.size(); j++){
-            if (dist[j] < distNDD[j]) distNDD[j] = dist[j];//Find smallest distance from any altruist to a vertex
-        }
-    }
-    
-    //Create model
-    RobustMod = IloModel (env);
-    
-    //Solver
-    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
-    cplexRobust = IloCplex(RobustMod);
-    cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
-    cplexRobust.setParam(IloCplex::Param::Threads, 1);
-    cplexRobust.setOut(env.getNullStream());
-    
-    // Find cycles
-    MainCycleFinder();
-    
-    //Create variables
-    
-    // Z
-    string auxName = "Z";
-    Z = IloNumVar(env, 0, IloInfinity, ILOFLOAT, auxName.c_str()); // pero no hay dominio en pdf
-    
-    // Num escenarios y U_uj
-    int Umax = 1;
-    CreateU_uj(int(MaxVertexFailures), int(Nodes), int(MaxArcFailures), scenarios, AdjacencyList);
-    
-    ////////////Variables///////////
-    // Y_ju
-    Y_ju = Create2DBin(env, int(Pairs), Umax, "Y_ju");
-    
-    // X_c
-    X_c = Create1DBin (env, int(ListCycles.size()), "X_c");
-    
-    // X_cu
-    X_cu = Create2DBin(env, int(ListCycles.size()), Umax, "X_cu");
-    
-    // E_ijl
-    E_ijl = Create3DBin(env, AdjacencyList, int(ChainLength), "E_ijl");
-    
-    //Set UB on "E_ijl"
-    SetUB3DBin (env, E_ijl, distNDD, int(Pairs), int(ChainLength));
-    
-    // E_ijlu
-    E_ijlu = Create4DBin(env, AdjacencyList, int(ChainLength), Umax, "E_ijlu");
-    
-    SetUB4DBin(env, E_ijlu, distNDD, int(Pairs), int(ChainLength), 0);
-    
-    ////////////Restrictions///////////
-    //Constraint (7b)
-    IloRangeArray cons7b(env);
-    cons7b = CreateCons7b(env, Z, Y_ju, 0, int(Pairs), "_7b");
-    RobustMod.add(cons7b);
-    
-    //Constraint (7c)
-    IloRangeArray cons7c (env);
-    cons7c = CreateCons7c(env, Y_ju, X_c, E_ijl, 0, int(Pairs), CycleNode, PredMap, "7c");
-    RobustMod.add(cons7c);
-    
-    //Constraint (7d)
-    IloRangeArray cons7d (env);
-    cons7d = CreateCon7d(env, Y_ju, X_cu, E_ijlu, 0, int(Pairs), CycleNode, int(ChainLength), PredMap, "7d");
-    RobustMod.add(cons7d);
-    
-    //Constraint (7e)
-    IloRangeArray cons7e (env);
-    cons7e = CreateCon7e(env, X_c, E_ijl, int(Pairs), CycleNode, PredMap, "7e");
-    RobustMod.add(cons7e);
-    
-    //Constraint (7f)
-    IloRangeArray cons7f (env);
-    cons7f = CreateCon7f(env, E_ijl, int(Pairs), AdjacencyList, "7f");
-    RobustMod.add(cons7f);
-    
-    //Constraint (7g)
-    IloRangeArray cons7g (env);
-    cons7g = CreateCon7g(env, X_cu, E_ijlu, scenarios, 0, int(Pairs), CycleNode, PredMap, int(ChainLength), "7g");
-    RobustMod.add(cons7g);
-    
-    //Constraint (7h)
-    IloRangeArray cons7h (env);
-    cons7h = CreateCon7h(env, E_ijlu, scenarios, 0, int(Pairs), AdjacencyList, "7h");//Set UB to 0 when U_uj = 1
-    RobustMod.add(cons7h);
-    
-    //Constraint (7i)
-    IloRangeArray cons7i (env);
-    cons7i = CreateCon7i(env, E_ijl, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7i");
-    RobustMod.add(cons7i);
-    
-    //Constraint (7j)
-    IloRangeArray cons7j (env);
-    cons7j = CreateCon7j(env, E_ijlu, 0, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7j");
-    RobustMod.add(cons7j);
-    
-//    //Constraint (7k)
-//    IloRangeArray cons7k (env);
-//    CreateCon7k(env, X_cu, E_ijlu, scenarios, 0, AdjacencyList, CycleArcs, PredMap, int(ChainLength), "7k");
-//    RobustMod.add(cons7k);
-
-    //Objective function
-    auxName = "ZFRuMax";
-    IloObjective exprObj = IloObjective(env, Z, IloObjective::Maximize, auxName.c_str());
-    RobustMod.add(exprObj);
-    
-    //cplexRobust.exportModel("RO_Model.lp");
-    cplexRobust.solve();
-    Ite1stStage++;
-    //cout << "Status " << cplexRobust.getStatus() << endl;
-    //cout << "Objetive: " << cplexRobust.getObjValue();
-    
-    
-    //Retrieve solution
-    FPMIP_Obj = cplexRobust.getObjValue();
-    vector<IndexGrandSubSol>SolFirstStage;
-    //cout << "Selected vertices: " << endl;
-    int maxU = 0;
-    for (int k = 0; k < scenarios.size(); k++){
-        int count = 0;
-        for (int j = 0; j < Pairs; j++){
-            int n = cplexRobust.getValue(Y_ju[j][k]);
-            if (n > 0.9){
-                //cout << j << "\t";
-                count++;
+void Problem::ROBUST_KEP(bool EndProgram){
+    if (EndProgram == false){
+        tStart1stS = clock();
+        //Dijkstra chains;
+        vector<int> dist;
+        distNDD = vector<int>(AdjacencyList.getSize(), INT_MAX);
+        for (int i = int(Pairs); i < AdjacencyList.getSize(); i++){//Distance from altruists
+            dist = dijkstra(AdjacencyList, i);
+            for(int j = 0; j < dist.size(); j++){
+                if (dist[j] < distNDD[j]) distNDD[j] = dist[j];//Find smallest distance from any altruist to a vertex
             }
         }
-        if (count == FPMIP_Obj) {
-            maxU = k;
-            break;
+        
+        //Create model
+        RobustMod = IloModel (env);
+        
+        //Solver
+        LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+        cplexRobust = IloCplex(RobustMod);
+        cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
+        cplexRobust.setParam(IloCplex::Param::Threads, 1);
+        cplexRobust.setOut(env.getNullStream());
+        
+        // Find cycles
+        MainCycleFinder();
+        
+        //Create variables
+        
+        // Z
+        string auxName = "Z";
+        Z = IloNumVar(env, 0, IloInfinity, ILOFLOAT, auxName.c_str()); // pero no hay dominio en pdf
+        
+        // Num escenarios y U_uj
+        int Umax = 1;
+        CreateU_uj(int(MaxVertexFailures), int(Nodes), int(MaxArcFailures), scenarios, AdjacencyList);
+        
+        ////////////Variables///////////
+        // Y_ju
+        Y_ju = Create2DBin(env, int(Pairs), Umax, "Y_ju");
+        
+        // X_c
+        X_c = Create1DBin (env, int(ListCycles.size()), "X_c");
+        
+        // X_cu
+        X_cu = Create2DBin(env, int(ListCycles.size()), Umax, "X_cu");
+        
+        // E_ijl
+        E_ijl = Create3DBin(env, AdjacencyList, int(ChainLength), "E_ijl");
+        
+        //Set UB on "E_ijl"
+        SetUB3DBin (env, E_ijl, distNDD, int(Pairs), int(ChainLength));
+        
+        // E_ijlu
+        E_ijlu = Create4DBin(env, AdjacencyList, int(ChainLength), Umax, "E_ijlu");
+        
+        SetUB4DBin(env, E_ijlu, distNDD, int(Pairs), int(ChainLength), 0);
+        
+        ////////////Restrictions///////////
+        //Constraint (7b)
+        IloRangeArray cons7b(env);
+        cons7b = CreateCons7b(env, Z, Y_ju, 0, int(Pairs), "_7b");
+        RobustMod.add(cons7b);
+        
+        //Constraint (7c)
+        IloRangeArray cons7c (env);
+        cons7c = CreateCons7c(env, Y_ju, X_c, E_ijl, 0, int(Pairs), CycleNode, PredMap, "7c");
+        RobustMod.add(cons7c);
+        
+        //Constraint (7d)
+        IloRangeArray cons7d (env);
+        cons7d = CreateCon7d(env, Y_ju, X_cu, E_ijlu, 0, int(Pairs), CycleNode, int(ChainLength), PredMap, "7d");
+        RobustMod.add(cons7d);
+        
+        //Constraint (7e)
+        IloRangeArray cons7e (env);
+        cons7e = CreateCon7e(env, X_c, E_ijl, int(Pairs), CycleNode, PredMap, "7e");
+        RobustMod.add(cons7e);
+        
+        //Constraint (7f)
+        IloRangeArray cons7f (env);
+        cons7f = CreateCon7f(env, E_ijl, int(Pairs), AdjacencyList, "7f");
+        RobustMod.add(cons7f);
+        
+        //Constraint (7g)
+        IloRangeArray cons7g (env);
+        cons7g = CreateCon7g(env, X_cu, E_ijlu, scenarios, 0, int(Pairs), CycleNode, PredMap, int(ChainLength), "7g");
+        RobustMod.add(cons7g);
+        
+        //Constraint (7h)
+        IloRangeArray cons7h (env);
+        cons7h = CreateCon7h(env, E_ijlu, scenarios, 0, int(Pairs), AdjacencyList, "7h");//Set UB to 0 when U_uj = 1
+        RobustMod.add(cons7h);
+        
+        //Constraint (7i)
+        IloRangeArray cons7i (env);
+        cons7i = CreateCon7i(env, E_ijl, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7i");
+        RobustMod.add(cons7i);
+        
+        //Constraint (7j)
+        IloRangeArray cons7j (env);
+        cons7j = CreateCon7j(env, E_ijlu, 0, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7j");
+        RobustMod.add(cons7j);
+        
+    //    //Constraint (7k)
+    //    IloRangeArray cons7k (env);
+    //    CreateCon7k(env, X_cu, E_ijlu, scenarios, 0, AdjacencyList, CycleArcs, PredMap, int(ChainLength), "7k");
+    //    RobustMod.add(cons7k);
+
+        //Objective function
+        auxName = "ZFRuMax";
+        IloObjective exprObj = IloObjective(env, Z, IloObjective::Maximize, auxName.c_str());
+        RobustMod.add(exprObj);
+        
+        //cplexRobust.exportModel("RO_Model.lp");
+        cplexRobust.solve();
+        Ite1stStage++;
+        //cout << "Status " << cplexRobust.getStatus() << endl;
+        //cout << "Objetive: " << cplexRobust.getObjValue();
+        
+        
+        //Retrieve solution
+        FPMIP_Obj = cplexRobust.getObjValue();
+        vector<IndexGrandSubSol>SolFirstStage;
+        //cout << "Selected vertices: " << endl;
+        int maxU = 0;
+        for (int k = 0; k < scenarios.size(); k++){
+            int count = 0;
+            for (int j = 0; j < Pairs; j++){
+                int n = cplexRobust.getValue(Y_ju[j][k]);
+                if (n > 0.9){
+                    //cout << j << "\t";
+                    count++;
+                }
+            }
+            if (count == FPMIP_Obj) {
+                maxU = k;
+                break;
+            }
         }
-    }
-//    cout << endl << "Cycles: " << endl;
-    IloNumArray2 xsol(env, ListCycles.size());
-    for (int i = 0; i < xsol.getSize(); i++){
-        xsol[i] = IloNumArray (env, scenarios.size());
-        cplexRobust.getValues(xsol[i],X_cu[i]);
-        if (xsol[i][maxU] > 0.9){
-            SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
-//            for (int j = 0; j < ListCycles[i].get_c().size(); j++){
-//                cout << ListCycles[i].get_c()[j] << '\t';
-//            }
-            cout << endl;
+    //    cout << endl << "Cycles: " << endl;
+        IloNumArray2 xsol(env, ListCycles.size());
+        for (int i = 0; i < xsol.getSize(); i++){
+            xsol[i] = IloNumArray (env, scenarios.size());
+            cplexRobust.getValues(xsol[i],X_cu[i]);
+            if (xsol[i][maxU] > 0.9){
+                SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
+    //            for (int j = 0; j < ListCycles[i].get_c().size(); j++){
+    //                cout << ListCycles[i].get_c()[j] << '\t';
+    //            }
+                cout << endl;
+            }
         }
-    }
-    
-//    cout << endl << "Chains: " << endl;
-    IloNumArray3 esol(env, AdjacencyList.getSize());
-    for (int i = 0; i < esol.getSize(); i++){
-        esol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
-        for (int j = 0; j < esol[i].getSize(); j++){
-            esol[i][j] = IloNumArray(env, ChainLength);
-            cplexRobust.getValues(esol[i][j],E_ijl[i][j]);
-//            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
-//                esol[i][j][k] = IloNumArray (env, scenarios.size());
-//                cplexRobust.getValues(esol[i][j][k],E_ijlu[i][j][k]);
-////                if (esol[i][j][k][maxU] > 0.9){
-////                    cout << E_ijlu[i][j][k][maxU].getName() << endl;
-////                }
-//            }
+        
+    //    cout << endl << "Chains: " << endl;
+        IloNumArray3 esol(env, AdjacencyList.getSize());
+        for (int i = 0; i < esol.getSize(); i++){
+            esol[i] = IloNumArray2 (env, AdjacencyList[i].getSize());
+            for (int j = 0; j < esol[i].getSize(); j++){
+                esol[i][j] = IloNumArray(env, ChainLength);
+                cplexRobust.getValues(esol[i][j],E_ijl[i][j]);
+    //            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
+    //                esol[i][j][k] = IloNumArray (env, scenarios.size());
+    //                cplexRobust.getValues(esol[i][j][k],E_ijlu[i][j][k]);
+    ////                if (esol[i][j][k][maxU] > 0.9){
+    ////                    cout << E_ijlu[i][j][k][maxU].getName() << endl;
+    ////                }
+    //            }
+            }
         }
-    }
-    
-    
-    vector<vector<int>>vChains;
-    vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
-    
-    for (int i = 0; i < vChains.size(); i++){
-        SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
-    }
-    tTotal1stS += (clock() - tStart1stS)/double(CLOCKS_PER_SEC);
-//    for (int i = 0; i < SolFirstStage.size(); i++){
-//        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
-//            cout << SolFirstStage[i].get_cc()[j] << '\t';
-//            if (j == SolFirstStage[i].get_cc().size() - 1) cout << "weight: " << SolFirstStage[i].get_w() << endl;
-//        }
-//    }
-//
-//    SolFirstStage.clear();
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{2,14}, 2));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{3,11,15}, 3));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{4,12}, 2));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{5,9}, 2));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{16,0,6}, 2));
-    
-    //Call 2nd. stage
-    tStart2ndS = clock();
-    Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
-    Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
-    if (THP_Method != "Literature"){
-        GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
-    }
-    else{
-        GrandSubProbMaster2(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+        
+        
+        vector<vector<int>>vChains;
+        vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
+        
+        for (int i = 0; i < vChains.size(); i++){
+            SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
+        }
+        tTotal1stS += (clock() - tStart1stS)/double(CLOCKS_PER_SEC);
+    //    for (int i = 0; i < SolFirstStage.size(); i++){
+    //        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
+    //            cout << SolFirstStage[i].get_cc()[j] << '\t';
+    //            if (j == SolFirstStage[i].get_cc().size() - 1) cout << "weight: " << SolFirstStage[i].get_w() << endl;
+    //        }
+    //    }
+    //
+    //    SolFirstStage.clear();
+    //    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{2,14}, 2));
+    //    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{3,11,15}, 3));
+    //    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{4,12}, 2));
+    //    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{5,9}, 2));
+    //    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{16,0,6}, 2));
+        
+        //Call 2nd. stage
+        tStart2ndS = clock();
+        Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
+        Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
+        if (THP_Method != "Literature"){
+            GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+        }
+        else{
+            GrandSubProbMaster2(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+        }
     }
 }

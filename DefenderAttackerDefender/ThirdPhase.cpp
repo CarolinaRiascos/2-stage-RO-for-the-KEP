@@ -13,6 +13,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     //Create model
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    if (LeftTime < 0) Print2ndStage("TimeOut");
     mTHPMIP = IloModel (env);
     cplexmTHPMIP = IloCplex(mTHPMIP);
     cplexmTHPMIP.setParam(IloCplex::Param::Threads, 1);
@@ -52,6 +53,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         if (runColGen == false){
             tStartRecoMIP = clock();
             LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+            if (LeftTime < 0) break;
             cplexmTHPMIP.setParam(IloCplex::Param::TimeLimit, LeftTime);
             cplexmTHPMIP.solve();
             tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
@@ -90,7 +92,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     }
     GlobalIte2ndStage += Ite2ndS;
     if (LeftTime <= 0) {
-        Print2ndStage("OutTime");
+        Print2ndStage("TimeOut");
     }
     
     
@@ -212,6 +214,9 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     
     //cplexRobust.exportModel("RO_Model.lp");
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    if (LeftTime < 0){
+        Print2ndStage("TimeOut");
+    }
     cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexRobust.solve();
     tTotal1stS += (clock() - tStart1stS)/double(CLOCKS_PER_SEC);
@@ -281,7 +286,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
     }
     else{
-        Print2ndStage("OutTime");
+        Print2ndStage("TimeOut");
     }
         
     
@@ -319,6 +324,9 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     if (runH == false){
         tStartMP2ndPH = clock();
         LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+        if (LeftTime < 0){
+            Print2ndStage("TimeOut");
+        }
         cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
         cplexGrandSubP.solve();
         tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
@@ -493,6 +501,9 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     //Resolve 2ndPhase
     tStartMP2ndPH = clock();
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    if (LeftTime < 0){
+        Print2ndStage("TimeOut");
+    }
     cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexGrandSubP.solve();
     tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
@@ -949,7 +960,7 @@ bool Problem::Heuristcs2ndPH(){
     int UsedArcs = 0;
     int UsedVertices = 0, ele, ite = 0;
     vector<pair<int,int>>tabuList;
-    while(ite <= 5 && keepgoing == true){
+    while(ite <= 1 && keepgoing == true){
         scenarioHeuristics.clear();
         tabuList.clear();
         for (auto it = Elms2ndPhase.begin(); it != Elms2ndPhase.end(); it++) it->second.set_state(false);
@@ -966,8 +977,8 @@ bool Problem::Heuristcs2ndPH(){
                 double w = 0;
                 if (it->first.first == -1 && UsedVertices < MaxVertexFailures && Eleaux[it->first].get_state() == false){
                     //w = 0.5*(CycleNodeTPH[it->first.second].size() + ChainNodeTPH[it->first.second].size()) +  0.5*it->second.get_coversize();
-                    //w = it->second.get_coversize();
-                    w = 0.4*(PredMap[it->first.second].size() + AdjacencyList[it->first.second].getSize()) +  0.6*it->second.get_coversize(); //Total degree
+                    //w = it->second.get_coversize();0.05*(PredMap[it->first.second].size() + AdjacencyList[it->first.second].getSize()) +
+                    w = 0.05*(PredMap[it->first.second].size() + AdjacencyList[it->first.second].getSize()) + 0.95*it->second.get_coversize(); //Total degree
                     auxCov.push_back(make_pair(it->first, w));
                 }
                 if (it->first.first != -1 && UsedArcs < MaxArcFailures && Eleaux[it->first].get_state() == false){
@@ -1047,13 +1058,19 @@ bool Problem::Heuristcs2ndPH(){
                 }
                 //Cover constraints
                 for (int i = 0; i < Eleaux[auxCov[ele].first].get_coveredconsts().size(); i++){
-                    int e = Eleaux[auxCov[ele].first].get_coveredconsts()[i];
-                    Const2ndPhase[e].add_cover(auxCov[ele].first);
+                    Const2ndPhase[Eleaux[auxCov[ele].first].get_coveredconsts()[i]].add_cover(auxCov[ele].first);
                 }
             }
             else{
                 Eleaux[auxCov[ele].first].set_state(true);//true so that it is not selected
                 non2gether = true;
+//                IloExpr expr (env,0);
+//                expr += vertex[auxCov[ele].first.second];
+//                for (int i = 0; i < scenarioHeuristics.size(); i++){
+//                    expr+= vertex[scenarioHeuristics[i].second];
+//                }
+//                //GrandSubProb.add(IloRange(env, -IloInfinity, expr, scenarioHeuristics.size()));
+//                expr.end();
             }
             keepgoing = false;
             //Check whether there is an unsatisfied constraint
@@ -1075,7 +1092,7 @@ bool Problem::Heuristcs2ndPH(){
             }
         }
     }
-
+    
     return complete;
 }
 void Problem::HeuristicsStart2ndPH(map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, vector<int>&ListSelVex){
@@ -1316,6 +1333,9 @@ bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar)
     IloModel ColGen(env);
     IloCplex Colcplex(ColGen);
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    if (LeftTime < 0){
+        Print2ndStage("TimeOut");
+    }
     Colcplex.setOut(env.getNullStream());
     Colcplex.setParam(IloCplex::RootAlg, 1);
     Colcplex.setParam(IloCplex::Param::Preprocessing::Presolve, 0);

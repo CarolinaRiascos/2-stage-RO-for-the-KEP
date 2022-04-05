@@ -60,7 +60,7 @@ public:
 class coveringElements{
 private:
     bool taken;
-    vector<int> coveredconsts;
+    map<int,bool> coveredconsts;
     vector<int> weightconsts;
     map<int,int>nConsToCyCh;
 public:
@@ -68,12 +68,17 @@ public:
     int get_coversize(){return int(coveredconsts.size());}
     bool get_state(){return taken;}
     map<int,int> get_map(){return nConsToCyCh;}
-    vector<int> get_coveredconsts(){return coveredconsts;}
+    vector<int> get_coveredconsts(){
+        vector<int>v;
+        for (auto it = coveredconsts.begin(); it!= coveredconsts.end(); it++){
+            v.push_back(it->first);
+        }
+        return v;}
     void add_map(int a, int b){nConsToCyCh[a] = b;}
-    void add_const(int i){coveredconsts.push_back(i);}
+    void add_const(int i){coveredconsts[i] = true;}
     void add_weight(double i){weightconsts.push_back(i);}
     void set_state(bool s){taken = s;}
-    void set_coveredconsts(vector<int>v){coveredconsts = v;}
+    void set_coveredconsts(map<int,bool>v){coveredconsts = v;}
     double get_maxw(){
         double max = 0;
         for (int i = 0; i < weightconsts.size(); i++){
@@ -199,6 +204,7 @@ public:
     //Functions
     Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun, IloNum _TimeLimit);
     int Reading();
+    bool EndProgram = false;
    
     //M-PICEF
     void M_PICEF();
@@ -345,7 +351,7 @@ public:
     vector<Cycles> Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
     vector<int>GetSelVertices(vector<IndexGrandSubSol>&SolFirstStage);
-    
+    void PairwiseRevision();
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
@@ -428,7 +434,7 @@ public:
     
         
     //Literature method
-    void ROBUST_KEP();
+    void ROBUST_KEP(bool EndProgram);
     void GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     bool Literature(IloNumArray& tcysol, IloNumArray& tchsol);
     void SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);

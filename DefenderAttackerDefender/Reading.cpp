@@ -11,10 +11,10 @@
 int Problem::Reading() {
     string direDonde;
     if (WhereItisRun == "PC"){
-        direDonde = "../../../../../../0TestInstances/PrefLib/" + FolderName + "/";
+        direDonde = "../../../../../../0TestInstances/ROCarvalho2021/" + FolderName + "/";
     }
     else{
-        direDonde = "../../0TestInstances/PrefLib/" + FolderName + "/";
+        direDonde = "../../0TestInstances/ROCarvalho2021/" + FolderName + "/";
     }
     
     //
@@ -60,9 +60,9 @@ void Problem::Print2ndStage(string status){
     //"/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/Output/LagrangianBB/LagResults.txt"
     string OutputDire;
     if (WhereItisRun == "PC"){
-        OutputDire = "../../../../../../Output/ROResults/2ndStageRO.txt";
+        OutputDire = "../../../../../../Output/ROResults/TwoStageRO.txt";
     }else{
-        OutputDire = "../Output/2ndStageRO.txt";
+        OutputDire = "../Output/TwoStageRO.txt";
     }
     file.open(OutputDire, fstream::in);
     if (this->file) {
@@ -76,4 +76,6 @@ void Problem::Print2ndStage(string status){
     file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << endl;
     
     file.close();
+    EndProgram = true;
+    ROBUST_KEP(EndProgram);
 }

@@ -23,20 +23,6 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     //Get selected vertices
     vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
     
-//    //Create cycle variables
-//    cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
-//    for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
-//       SetName1Index(cyvar[i], "x", i + 1);
-//       //cout << r[i].getName() << endl;
-//    }
-//
-//    //Create chain variables
-//    chvar = IloNumVarArray(env, Chains2ndTo3rd.size(), 0, 1, ILOINT);
-//    for (int i = 0; i < Chains2ndTo3rd.size(); i++){
-//       SetName1Index(chvar[i], "y", i + 1);
-//       //cout << r[i].getName() << endl;
-//    }
-    
     //Create arc variables
     mapArcs.clear();
     arc = NumVar2D(env,AdjacencyList.getSize());
@@ -124,6 +110,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     Ite2ndS = 0;
     bool runH = Heuristcs2ndPH();
     if (runH == true){
+        runHeuristicstrue++;
         //Build solution
         vertex_sol = IloNumArray(env, Nodes);
         for (int j = 0; j < scenarioHeuristics.size(); j++){

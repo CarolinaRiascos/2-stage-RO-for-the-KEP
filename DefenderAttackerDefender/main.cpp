@@ -43,7 +43,7 @@ int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
         return -1;
     }
     
-    P.ROBUST_KEP();
+    P.ROBUST_KEP(false);
     cout << endl << "End" << endl;
     return 0;
 }
