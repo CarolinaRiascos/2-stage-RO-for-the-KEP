@@ -867,16 +867,11 @@ void Problem::ROBUST_KEP(bool EndProgram){
             }
         }
     //    cout << endl << "Cycles: " << endl;
-        IloNumArray2 xsol(env, ListCycles.size());
+        IloNumArray xsol(env, ListCycles.size());
+        cplexRobust.getValues(xsol,X_c);
         for (int i = 0; i < xsol.getSize(); i++){
-            xsol[i] = IloNumArray (env, scenarios.size());
-            cplexRobust.getValues(xsol[i],X_cu[i]);
-            if (xsol[i][maxU] > 0.9){
+            if (xsol[i] > 0.9){
                 SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
-    //            for (int j = 0; j < ListCycles[i].get_c().size(); j++){
-    //                cout << ListCycles[i].get_c()[j] << '\t';
-    //            }
-                cout << endl;
             }
         }
         

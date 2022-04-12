@@ -13,7 +13,11 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     //Create model
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
-    if (LeftTime < 0) Print2ndStage("TimeOut");
+    if (LeftTime < 0){
+        GlobalIte2ndStage += Ite2ndS;
+        tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+        Print2ndStage("TimeOut");
+    }
     mTHPMIP = IloModel (env);
     cplexmTHPMIP = IloCplex(mTHPMIP);
     cplexmTHPMIP.setParam(IloCplex::Param::Threads, 1);
@@ -91,6 +95,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
 
     }
     GlobalIte2ndStage += Ite2ndS;
+    tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
     if (LeftTime <= 0) {
         Print2ndStage("TimeOut");
     }
@@ -110,7 +115,6 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         scenarios.back()[make_pair(-1, it->first)] = true;
     }
 
-    tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
     tStart1stS = clock();
     if (Ite1stStage == 1){
         //Update Con7g
@@ -215,6 +219,8 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     //cplexRobust.exportModel("RO_Model.lp");
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     if (LeftTime < 0){
+        GlobalIte2ndStage += Ite2ndS;
+        tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
         Print2ndStage("TimeOut");
     }
     cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
@@ -294,6 +300,12 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
 }
 bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage){
     
+    if (SPMIP_Obj == TPMIP_Obj){
+        OptFailedArcs = FailedArcs;
+        OptFailedVertices = FailedVertices;
+        return true; //Upper and Lower bound match
+    }
+    
     if (TPMIP_Obj < LOWEST_TPMIP_Obj){
         LOWEST_TPMIP_Obj = TPMIP_Obj;
         OptFailedArcs = FailedArcs;
@@ -319,58 +331,102 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     tStartHeu = clock();
-    bool runH = Heuristcs2ndPH();
-    tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
-    if (runH == false){
-        tStartMP2ndPH = clock();
-        LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
-        if (LeftTime < 0){
-            Print2ndStage("TimeOut");
-        }
-        cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
-        cplexGrandSubP.solve();
-        tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
-
-        if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
-            //cout << "2nd. stage solved" << endl;
-            SPMIP_Obj = LOWEST_TPMIP_Obj;
-            return true;
-        }
-
-        //Get failing arcs and failing vertices
-        vertex_sol = IloNumArray(env, Nodes);
-        cplexGrandSubP.getValues(vertex_sol,vertex);
-        
-        arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
-        for (int f = 0; f < arc_sol.getSize(); f++){
-            arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
-            cplexGrandSubP.getValues(arc_sol[f],arc[f]);
-        }
-    }
-    else{
-        runHeuristicstrue++;
-        //Build solution
-        vertex_sol = IloNumArray(env, Nodes);
-        for (int j = 0; j < scenarioHeuristics.size(); j++){
-            if (scenarioHeuristics[j].first == - 1){
-                vertex_sol[scenarioHeuristics[j].second] = 1;
+    if (Ite2ndS%300 == 0){
+        //Return to optimality
+        Cycles2ndTo3rd.clear();
+        Chains2ndTo3rd.clear();
+        Cycles3rdTo2nd.clear();
+        Chains3rdTo2nd.clear();
+        KEPSols2ndStage.clear();
+        vector<KEPSol> KEPSol2ndStageUnique;
+        KEPSol2ndStageUnique.push_back(KEPSol());
+        int counter = -1;
+        for (int i = 0; i < Const2ndPhase.size(); i++){
+            KEPSols2ndStage.push_back(KEPSol());
+            for (int j = 0; j < Const2ndPhase[i].get_cycles3rd().size(); j++){
+                auto it = Cycles3rdTo2nd.find(Const2ndPhase[i].get_cycles3rd()[j]);
+                if (it == Cycles3rdTo2nd.end()){
+                    counter++;
+                    Cycles2ndTo3rd[counter] = Const2ndPhase[i].get_cycles3rd()[j];
+                    Cycles3rdTo2nd[Const2ndPhase[i].get_cycles3rd()[j]] = counter;
+                    KEPSol2ndStageUnique.back().cycles.push_back(counter);
+                }
+                KEPSols2ndStage.back().cycles.push_back(Cycles3rdTo2nd[Const2ndPhase[i].get_cycles3rd()[j]]);
             }
         }
-        arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
-        for (int f = 0; f < arc_sol.getSize(); f++){
-            arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+        counter = -1;
+        for (int i = 0; i < Const2ndPhase.size(); i++){
+            for (int j = 0; j < Const2ndPhase[i].get_chains3rd().size(); j++){
+                auto it = Chains3rdTo2nd.find(Const2ndPhase[i].get_chains3rd()[j]);
+                if (it == Chains3rdTo2nd.end()){
+                    counter++;
+                    Chains2ndTo3rd[counter] = Const2ndPhase[i].get_chains3rd()[j];
+                    Chains3rdTo2nd[Const2ndPhase[i].get_chains3rd()[j]] = counter;
+                    KEPSol2ndStageUnique.back().chains.push_back(counter);
+                }
+                KEPSols2ndStage[i].chains.push_back(Chains3rdTo2nd[Const2ndPhase[i].get_chains3rd()[j]]);
+            }
         }
-        for (int j = 0; j < scenarioHeuristics.size(); j++){
-            if (scenarioHeuristics[j].first != - 1){
-                for (int i = 0; i < AdjacencyList[scenarioHeuristics[j].first].getSize(); i++){
-                    if (AdjacencyList[scenarioHeuristics[j].first][i] == scenarioHeuristics[j].second + 1){
-                        arc_sol[scenarioHeuristics[j].first][i] = 1;
-                        break;
+        //Call GrandSubPromAux
+        GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique);
+
+    }else{
+        bool runH = Heuristcs2ndPH();
+        tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
+        if (runH == false){
+            tStartMP2ndPH = clock();
+            LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+            if (LeftTime < 0){
+                GlobalIte2ndStage += Ite2ndS;
+                tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+                Print2ndStage("TimeOut");
+            }
+            cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
+            cplexGrandSubP.solve();
+            tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
+
+            if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
+                //cout << "2nd. stage solved" << endl;
+                SPMIP_Obj = LOWEST_TPMIP_Obj;
+                return true;
+            }
+
+            //Get failing arcs and failing vertices
+            vertex_sol = IloNumArray(env, Nodes);
+            cplexGrandSubP.getValues(vertex_sol,vertex);
+            
+            arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
+            for (int f = 0; f < arc_sol.getSize(); f++){
+                arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+                cplexGrandSubP.getValues(arc_sol[f],arc[f]);
+            }
+        }
+        else{
+            runHeuristicstrue++;
+            //Build solution
+            vertex_sol = IloNumArray(env, Nodes);
+            for (int j = 0; j < scenarioHeuristics.size(); j++){
+                if (scenarioHeuristics[j].first == - 1){
+                    vertex_sol[scenarioHeuristics[j].second] = 1;
+                }
+            }
+            arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
+            for (int f = 0; f < arc_sol.getSize(); f++){
+                arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+            }
+            for (int j = 0; j < scenarioHeuristics.size(); j++){
+                if (scenarioHeuristics[j].first != - 1){
+                    for (int i = 0; i < AdjacencyList[scenarioHeuristics[j].first].getSize(); i++){
+                        if (AdjacencyList[scenarioHeuristics[j].first][i] == scenarioHeuristics[j].second + 1){
+                            arc_sol[scenarioHeuristics[j].first][i] = 1;
+                            break;
+                        }
                     }
                 }
             }
         }
     }
+
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     
     //Change variables' UB in 3rd phase
@@ -499,15 +555,8 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     exprVxtArcsCY.end();
     
     //Resolve 2ndPhase
-    tStartMP2ndPH = clock();
-    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
-    if (LeftTime < 0){
-        Print2ndStage("TimeOut");
-    }
-    cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
+    //cplexGrandSubP.exportModel("GrandSubP2.lp");
     cplexGrandSubP.solve();
-    tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
-    
     if (cplexGrandSubP.isPrimalFeasible() == false){
         cout << "IT SHOULD NEVER HAPPEN" << endl;
     }
@@ -517,7 +566,7 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
         if (SPMIP_Obj >= TPMIP_Obj){
             OptFailedArcs = FailedArcs;
             OptFailedVertices = FailedVertices;
-                return true;
+            return true;
         }
 
         IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
@@ -579,6 +628,165 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     }
     return false;
     
+}
+void Problem::GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniqueEx){
+    // Create model
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    IloModel GrandSubProbAux(env);
+    IloCplex cplexGrandAux(GrandSubProbAux);
+    cplexGrandAux.setParam(IloCplex::Param::TimeLimit, LeftTime);
+    cplexGrandAux.setParam(IloCplex::Param::Threads, 1);
+    cplexGrandAux.setOut(env.getNullStream());
+    
+    //Create cycle variables
+    cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
+    for (int i = 0; i < Cycles2ndTo3rd.size(); i++){
+       SetName1Index(cyvar[i], "x", i + 1);
+       //cout << r[i].getName() << endl;
+    }
+    
+    //Create chain variables
+    chvar = IloNumVarArray(env, Chains2ndTo3rd.size(), 0, 1, ILOINT);
+    for (int i = 0; i < Chains2ndTo3rd.size(); i++){
+       SetName1Index(chvar[i], "y", i + 1);
+       //cout << r[i].getName() << endl;
+    }
+    
+    //Create arc variables
+    mapArcs.clear();
+    NumVar2D Auxarc(env,AdjacencyList.getSize());
+    for (int i = 0; i < AdjacencyList.getSize(); i++){
+        Auxarc[i] = IloNumVarArray(env, AdjacencyList[i].getSize(), 0, 1, ILOINT);
+        for (int j = 0; j < AdjacencyList[i].getSize(); j++){
+            mapArcs[make_pair(i, AdjacencyList[i][j] - 1)] = j;
+            SetName2(arc[i][j], "arc", i + 1, AdjacencyList[i][j]);
+        }
+    }
+    
+    //Create vertex variables
+    IloNumVarArray Auxvertex(env, Nodes, 0, 1, ILOINT);
+    for (int i = 0; i < Nodes; i++){
+        SetName1Index( Auxvertex[i], "vertex",i + 1);
+    }
+    
+    //Create bounding variable
+    Beta = IloNumVar(env);
+    SetName1Index(Beta, "Beta", 0);
+    
+    //Create Bounding Constraint
+    vBoundConstraint = IloRangeArray(env);
+    for (int s = 0; s < KEPSols.size(); s++){
+        //Const11b
+        exprBound = IloExpr(env,0);
+        for (int i = 0; i < KEPSols[s].cycles.size(); i++){
+            int w = Cycles2ndStage[Cycles2ndTo3rd[KEPSols[s].cycles[i]]].get_Many();
+            exprBound+= w*cyvar[KEPSols[s].cycles[i]];
+        }
+        for (int i = 0; i < KEPSols[s].chains.size(); i++){
+            int w = Chains2ndStage[Chains2ndTo3rd[KEPSols[s].chains[i]]].AccumWeight;
+            exprBound+= w*chvar[KEPSols[s].chains[i]];
+        }
+        //cout << Beta.getName() << ">=" << exprBound << endl;
+        string name = "Const11b."  + to_string(vBoundConstraint.getSize());
+        const char* cName = name.c_str();
+        vBoundConstraint.add(IloRange(env, 0, Beta - exprBound , IloInfinity, cName));
+    }
+    GrandSubProbAux.add(vBoundConstraint);
+    exprBound.end();
+    
+    //Create Active Cols Constraint
+    vFailedMatches = IloRangeArray(env);
+    for (int i = 0; i < KEPUniqueEx.back().cycles.size(); i++){
+        exprVxtArcsCY = IloExpr (env, 0);
+        int u = KEPUniqueEx.back().cycles[i];
+        for (int j = 0; j < Cycles2ndStage[Cycles2ndTo3rd[u]].get_c().size(); j++){
+            exprVxtArcsCY += Auxvertex[Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[j]];
+            if (j <= Cycles2ndStage[Cycles2ndTo3rd[u]].get_c().size() - 2){
+                int v = mapArcs[make_pair(Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[j], Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[j + 1])];
+                exprVxtArcsCY += Auxarc[Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[j]][v];
+            }
+            else{
+                int v = mapArcs[make_pair(Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[j], Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[0])];
+                exprVxtArcsCY += Auxarc[Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[j]][v];
+            }
+        }
+        //cout << cyvar[u] + exprVxtArcsCY << ">=" << 1 << endl;
+        string name = "Const11c.CY"  + to_string(vFailedMatches.getSize());
+        const char* cName = name.c_str();
+        vFailedMatches.add(IloRange(env, 1, cyvar[u] + exprVxtArcsCY , IloInfinity, cName));
+    }
+    for (int i = 0; i < KEPUniqueEx.back().chains.size(); i++){
+        exprVxtArcsCH = IloExpr (env, 0);
+        int u = KEPUniqueEx.back().chains[i];
+        for (int j = 0; j < Chains2ndStage[Chains2ndTo3rd[u]].Vnodes.size(); j++){
+            exprVxtArcsCH += Auxvertex[Chains2ndStage[Chains2ndTo3rd[u]].Vnodes[j].vertex];
+            if (j <= Chains2ndStage[Chains2ndTo3rd[u]].Vnodes.size() - 2){
+                int v = mapArcs[make_pair(Chains2ndStage[Chains2ndTo3rd[u]].Vnodes[j].vertex, Chains2ndStage[Chains2ndTo3rd[u]].Vnodes[j + 1].vertex)];
+                exprVxtArcsCH += Auxarc[Chains2ndStage[Chains2ndTo3rd[u]].Vnodes[j].vertex][v];
+            }
+        }
+        //cout << chvar[u] + exprVxtArcsCH << ">=" << 1 << endl;
+        string name = "Const11c.CH"  + to_string(vFailedMatches.getSize());
+        const char* cName = name.c_str();
+        vFailedMatches.add(IloRange(env, 1, chvar[u] + exprVxtArcsCH , IloInfinity, cName));
+//        GrandSubProb.add(vFailedMatches[vFailedMatches.getSize() - 1]);
+//        exprVxtArcsCH.end();
+    }
+    GrandSubProbAux.add(vFailedMatches);
+    exprVxtArcsCH.end();
+    exprVxtArcsCY.end();
+    
+    //Create arcs and vertex constraints
+    IloExpr sumVertices (env, 0);
+    for (int i = 0; i < Nodes; i++){
+        sumVertices+=  Auxvertex[i];
+    }
+    string name;
+    const char* cName;
+    name = "VtxSum";
+    cName = name.c_str();
+    GrandSubProbAux.add(IloRange(env, -IloInfinity, sumVertices, MaxVertexFailures, cName));
+    
+    IloExpr sumArcs (env, 0);
+    for (int i = 0; i < AdjacencyList.getSize(); i++){
+        for (int j = 0; j < AdjacencyList[i].getSize(); j++){
+            sumArcs+= Auxarc[i][j];
+        }
+    }
+    name = "ArcSum";
+    cName = name.c_str();
+    GrandSubProbAux.add(IloRange(env, -IloInfinity, sumArcs, MaxArcFailures, cName));
+    
+    //Add objective
+    name = "Obj_GrandSubP";
+    GrandSubProbAux.add(IloObjective(env, Beta, IloObjective::Minimize, name.c_str()));
+    
+    //cplexGrandSubP.exportModel("GrandSubP2.lp");
+    cplexGrandAux.solve();
+    if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
+        cout << "S.O.S. This should not happen." << endl;
+    }
+    else{
+        
+        SPMIP_Obj = cplexGrandAux.getValue(Beta);
+        
+        //Retrieve solution
+        IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
+        IloNumArray chvar_sol(env, Chains2ndTo3rd.size());
+        cplexGrandAux.getValues(cyvar_sol,cyvar);
+        cplexGrandAux.getValues(chvar_sol,chvar);
+        
+        vertex_sol = IloNumArray(env, Nodes);
+        cplexGrandAux.getValues(vertex_sol,Auxvertex);
+        
+        arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
+        for (int f = 0; f < arc_sol.getSize(); f++){
+            arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+            cplexGrandAux.getValues(arc_sol[f],Auxarc[f]);
+        }
+    }
+    GrandSubProbAux.end();
+    cplexGrandAux.end();
 }
 void Problem::GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArcs, map<int, bool> FailedVertices){
     IloExpr expr(env, 0);
@@ -709,7 +917,7 @@ void Problem::GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol){
             sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
         }
 
-        if (RecoTotalWCovering.back() > LOWEST_TPMIP_Obj){
+        if (RecoTotalWCovering.back() >= LOWEST_TPMIP_Obj){
             RHS = Update_RHS_Covering(int (RecoSolCovering.size() - 1));
         }
         //Add new constraint to Const2ndPhase
@@ -741,7 +949,7 @@ int Problem::Update_RHS_Covering(int row){
     int i = 0, RHS = 0, accum = 0;
         
     while (true){
-        if (RecoTotalWCovering[row] - RecoSolCovering[row][i] - accum > LOWEST_TPMIP_Obj){
+        if (RecoTotalWCovering[row] - RecoSolCovering[row][i] - accum >= LOWEST_TPMIP_Obj){
             accum+= RecoSolCovering[row][i];
             i++;
         }
@@ -1032,7 +1240,7 @@ bool Problem::Heuristcs2ndPH(){
             }
             //Check whether we should add element to scenario
             bool ans = true;
-            if (UsedArcs + UsedVertices >= 1){
+            if (UsedArcs + UsedVertices >= 1 && auxCov[ele].first.second < Pairs && (UsedArcs >= 1 || UsedVertices >= 2)){
                 vector<int> failedVxt, vinFirstStage;
                 vector<pair<int,int>>failedArcs;
                 for (int i = 0; i < scenarioHeuristics.size();i++){
@@ -1064,13 +1272,6 @@ bool Problem::Heuristcs2ndPH(){
             else{
                 Eleaux[auxCov[ele].first].set_state(true);//true so that it is not selected
                 non2gether = true;
-//                IloExpr expr (env,0);
-//                expr += vertex[auxCov[ele].first.second];
-//                for (int i = 0; i < scenarioHeuristics.size(); i++){
-//                    expr+= vertex[scenarioHeuristics[i].second];
-//                }
-//                //GrandSubProb.add(IloRange(env, -IloInfinity, expr, scenarioHeuristics.size()));
-//                expr.end();
             }
             keepgoing = false;
             //Check whether there is an unsatisfied constraint

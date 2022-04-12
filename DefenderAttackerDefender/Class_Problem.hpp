@@ -351,7 +351,8 @@ public:
     vector<Cycles> Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
     vector<int>GetSelVertices(vector<IndexGrandSubSol>&SolFirstStage);
-    void PairwiseRevision();
+    void PairwiseRevision(vector<int>&ListSelVertices);
+    void GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniqueEx);
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
@@ -442,7 +443,7 @@ public:
     IloRangeArray vBoundConstraint;
     IloRangeArray vFailedMatches;
     void Const11b(vector<KEPSol>&KEPSols2ndStage);
-    void Const11c(vector<KEPSol>&KEPSols2ndStage);
+    void Const11c(vector<KEPSol>&KEPSols2ndS);
     IloExpr exprVxtArcsCY;
     IloExpr exprVxtArcsCH;
     IloExpr exprBound;

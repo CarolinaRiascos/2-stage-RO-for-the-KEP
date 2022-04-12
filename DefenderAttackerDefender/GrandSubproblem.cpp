@@ -85,6 +85,9 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         out.end();
     }
     
+    //Pairwise revision
+    //PairwiseRevision(ListSelVertices);
+    
     //First Get at least one vertex/arc fails
     RecoSolCovering.push_back(vector<double>());
     IloNumArray tcysol(env, Cycles2ndStage.size());
@@ -154,6 +157,25 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
 
 
+}
+void Problem::PairwiseRevision(vector<int>&ListSelVertices){
+    if (RecoursePolicy == "Full"){
+        for (int i = 0; i < ListSelVertices.size(); i++){
+            for (int j = 0; j < ListSelVertices.size(); j++){
+                if (i != j){
+                    bool ans = false;
+                    vector<int>v;
+                    v.push_back(ListSelVertices[j]);
+                    vector<pair<int,int>>fv;
+                    ans = UnMVtxdueToVtx(v, fv, vector<int>(), make_pair(-1,ListSelVertices[i]));
+                    if (ans == false){
+                        //cout << vertex[ListSelVertices[i]].getName() << " + " << vertex[ListSelVertices[j]].getName() << endl;
+                        GrandSubProb.add(vertex[ListSelVertices[i]] + vertex[ListSelVertices[j]] <= 1);
+                    }
+                }
+            }
+        }
+    }
 }
 void Problem::selOnce(map<int,vector<int>>CycleNodeSPH, map<int,vector<int>>ChainNodeSPH){
     

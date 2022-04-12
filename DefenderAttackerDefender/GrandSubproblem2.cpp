@@ -68,6 +68,9 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     //Create Active Cols Constraint
     vFailedMatches = IloRangeArray(env);
     Const11c(KEPSols2ndStage);
+//    GrandSubProb.add(vFailedMatches);
+//    exprVxtArcsCH.end();
+//    exprVxtArcsCY.end();
     
     //Create arcs and vertex constraints
     IloExpr sumVertices (env, 0);
@@ -151,11 +154,11 @@ void Problem::Const11b(vector<KEPSol>&KEPSols2ndStage){
     vBoundConstraint.add(IloRange(env, 0, Beta - exprBound , IloInfinity, cName));
     
 }
-void Problem::Const11c(vector<KEPSol>&KEPSols2ndStage){
+void Problem::Const11c(vector<KEPSol>&KEPSols2ndS){
     
-    for (int i = 0; i < KEPSols2ndStage.back().cycles.size(); i++){
+    for (int i = 0; i < KEPSols2ndS.back().cycles.size(); i++){
         exprVxtArcsCY = IloExpr (env, 0);
-        int u = KEPSols2ndStage.back().cycles[i];
+        int u = KEPSols2ndS.back().cycles[i];
         for (int j = 0; j < Cycles2ndStage[Cycles2ndTo3rd[u]].get_c().size(); j++){
             exprVxtArcsCY += vertex[Cycles2ndStage[Cycles2ndTo3rd[u]].get_c()[j]];
             if (j <= Cycles2ndStage[Cycles2ndTo3rd[u]].get_c().size() - 2){
@@ -175,9 +178,9 @@ void Problem::Const11c(vector<KEPSol>&KEPSols2ndStage){
         exprVxtArcsCY.end();
     }
     
-    for (int i = 0; i < KEPSols2ndStage.back().chains.size(); i++){
+    for (int i = 0; i < KEPSols2ndS.back().chains.size(); i++){
         exprVxtArcsCH = IloExpr (env, 0);
-        int u = KEPSols2ndStage.back().chains[i];
+        int u = KEPSols2ndS.back().chains[i];
         for (int j = 0; j < Chains2ndStage[Chains2ndTo3rd[u]].Vnodes.size(); j++){
             exprVxtArcsCH += vertex[Chains2ndStage[Chains2ndTo3rd[u]].Vnodes[j].vertex];
             if (j <= Chains2ndStage[Chains2ndTo3rd[u]].Vnodes.size() - 2){
