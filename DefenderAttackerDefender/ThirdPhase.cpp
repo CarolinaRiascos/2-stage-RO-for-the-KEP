@@ -360,46 +360,46 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     tStartHeu = clock();
     
-//    if (Ite2ndS%50 == 0){
-//            //Return to optimality
-//            Cycles2ndTo3rd.clear();
-//            Chains2ndTo3rd.clear();
-//            Cycles3rdTo2nd.clear();
-//            Chains3rdTo2nd.clear();
-//            KEPSols2ndStage.clear();
-//            vector<KEPSol> KEPSol2ndStageUnique;
-//            KEPSol2ndStageUnique.push_back(KEPSol());
-//            int counter = -1;
-//            for (int i = 0; i < AllConst2ndPhase.size(); i++){
-//                KEPSols2ndStage.push_back(KEPSol());
-//                for (int j = 0; j < AllConst2ndPhase[i].get_cycles3rd().size(); j++){
-//                    auto it = Cycles3rdTo2nd.find(AllConst2ndPhase[i].get_cycles3rd()[j]);
-//                    if (it == Cycles3rdTo2nd.end()){
-//                        counter++;
-//                        Cycles2ndTo3rd[counter] = AllConst2ndPhase[i].get_cycles3rd()[j];
-//                        Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]] = counter;
-//                        KEPSol2ndStageUnique.back().cycles.push_back(counter);
-//                    }
-//                    KEPSols2ndStage.back().cycles.push_back(Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]]);
-//                }
-//            }
-//            counter = -1;
-//            for (int i = 0; i < AllConst2ndPhase.size(); i++){
-//                for (int j = 0; j < AllConst2ndPhase[i].get_chains3rd().size(); j++){
-//                    auto it = Chains3rdTo2nd.find(AllConst2ndPhase[i].get_chains3rd()[j]);
-//                    if (it == Chains3rdTo2nd.end()){
-//                        counter++;
-//                        Chains2ndTo3rd[counter] = AllConst2ndPhase[i].get_chains3rd()[j];
-//                        Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]] = counter;
-//                        KEPSol2ndStageUnique.back().chains.push_back(counter);
-//                    }
-//                    KEPSols2ndStage[i].chains.push_back(Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]]);
-//                }
-//            }
-//            //Call GrandSubPromAux
-//            GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique);
-//
-//        }else{
+    if (Ite2ndS%50 == 0 && Ite1stStage <=1 || Ite2ndS >= 200 && (Ite2ndS - 200)%10 == 0 && Ite1stStage >= 2){
+            //Return to optimality
+            Cycles2ndTo3rd.clear();
+            Chains2ndTo3rd.clear();
+            Cycles3rdTo2nd.clear();
+            Chains3rdTo2nd.clear();
+            KEPSols2ndStage.clear();
+            vector<KEPSol> KEPSol2ndStageUnique;
+            KEPSol2ndStageUnique.push_back(KEPSol());
+            int counter = -1;
+            for (int i = 0; i < AllConst2ndPhase.size(); i++){
+                KEPSols2ndStage.push_back(KEPSol());
+                for (int j = 0; j < AllConst2ndPhase[i].get_cycles3rd().size(); j++){
+                    auto it = Cycles3rdTo2nd.find(AllConst2ndPhase[i].get_cycles3rd()[j]);
+                    if (it == Cycles3rdTo2nd.end()){
+                        counter++;
+                        Cycles2ndTo3rd[counter] = AllConst2ndPhase[i].get_cycles3rd()[j];
+                        Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]] = counter;
+                        KEPSol2ndStageUnique.back().cycles.push_back(counter);
+                    }
+                    KEPSols2ndStage.back().cycles.push_back(Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]]);
+                }
+            }
+            counter = -1;
+            for (int i = 0; i < AllConst2ndPhase.size(); i++){
+                for (int j = 0; j < AllConst2ndPhase[i].get_chains3rd().size(); j++){
+                    auto it = Chains3rdTo2nd.find(AllConst2ndPhase[i].get_chains3rd()[j]);
+                    if (it == Chains3rdTo2nd.end()){
+                        counter++;
+                        Chains2ndTo3rd[counter] = AllConst2ndPhase[i].get_chains3rd()[j];
+                        Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]] = counter;
+                        KEPSol2ndStageUnique.back().chains.push_back(counter);
+                    }
+                    KEPSols2ndStage[i].chains.push_back(Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]]);
+                }
+            }
+            //Call GrandSubPromAux
+            GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique);
+
+        }else{
             bool runH = Heuristcs2ndPH();
             tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
             if (runH == false){
@@ -454,7 +454,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
                     }
                 }
             }
-        //}
+        }
     
 
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
