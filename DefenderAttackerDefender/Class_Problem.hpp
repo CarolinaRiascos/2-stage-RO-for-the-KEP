@@ -436,7 +436,7 @@ public:
     
         
     //Literature method
-    void ROBUST_KEP(bool EndProgram);
+    void ROBUST_KEP();
     void GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     bool Literature(IloNumArray& tcysol, IloNumArray& tchsol);
     void SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);

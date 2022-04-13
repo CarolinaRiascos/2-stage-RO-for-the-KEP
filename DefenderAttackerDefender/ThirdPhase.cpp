@@ -272,6 +272,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             Chains3rdTo2nd.clear();
             RecoSolCovering.clear();
             RecoTotalWCovering.clear();
+            SPMIP_Obj = 0;
             mTHPMIP.end();
             cplexmTHPMIP.end();
             Ite2ndS = 0;
@@ -359,101 +360,102 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     tStartHeu = clock();
     
-    if (Ite2ndS%50 == 0 && Ite1stStage <=1 || Ite2ndS >= 200 && (Ite2ndS - 200)%10 == 0 && Ite1stStage >= 2){
-        //Return to optimality
-        Cycles2ndTo3rd.clear();
-        Chains2ndTo3rd.clear();
-        Cycles3rdTo2nd.clear();
-        Chains3rdTo2nd.clear();
-        KEPSols2ndStage.clear();
-        vector<KEPSol> KEPSol2ndStageUnique;
-        KEPSol2ndStageUnique.push_back(KEPSol());
-        int counter = -1;
-        for (int i = 0; i < AllConst2ndPhase.size(); i++){
-            KEPSols2ndStage.push_back(KEPSol());
-            for (int j = 0; j < AllConst2ndPhase[i].get_cycles3rd().size(); j++){
-                auto it = Cycles3rdTo2nd.find(AllConst2ndPhase[i].get_cycles3rd()[j]);
-                if (it == Cycles3rdTo2nd.end()){
-                    counter++;
-                    Cycles2ndTo3rd[counter] = AllConst2ndPhase[i].get_cycles3rd()[j];
-                    Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]] = counter;
-                    KEPSol2ndStageUnique.back().cycles.push_back(counter);
+//    if (Ite2ndS%50 == 0){
+//            //Return to optimality
+//            Cycles2ndTo3rd.clear();
+//            Chains2ndTo3rd.clear();
+//            Cycles3rdTo2nd.clear();
+//            Chains3rdTo2nd.clear();
+//            KEPSols2ndStage.clear();
+//            vector<KEPSol> KEPSol2ndStageUnique;
+//            KEPSol2ndStageUnique.push_back(KEPSol());
+//            int counter = -1;
+//            for (int i = 0; i < AllConst2ndPhase.size(); i++){
+//                KEPSols2ndStage.push_back(KEPSol());
+//                for (int j = 0; j < AllConst2ndPhase[i].get_cycles3rd().size(); j++){
+//                    auto it = Cycles3rdTo2nd.find(AllConst2ndPhase[i].get_cycles3rd()[j]);
+//                    if (it == Cycles3rdTo2nd.end()){
+//                        counter++;
+//                        Cycles2ndTo3rd[counter] = AllConst2ndPhase[i].get_cycles3rd()[j];
+//                        Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]] = counter;
+//                        KEPSol2ndStageUnique.back().cycles.push_back(counter);
+//                    }
+//                    KEPSols2ndStage.back().cycles.push_back(Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]]);
+//                }
+//            }
+//            counter = -1;
+//            for (int i = 0; i < AllConst2ndPhase.size(); i++){
+//                for (int j = 0; j < AllConst2ndPhase[i].get_chains3rd().size(); j++){
+//                    auto it = Chains3rdTo2nd.find(AllConst2ndPhase[i].get_chains3rd()[j]);
+//                    if (it == Chains3rdTo2nd.end()){
+//                        counter++;
+//                        Chains2ndTo3rd[counter] = AllConst2ndPhase[i].get_chains3rd()[j];
+//                        Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]] = counter;
+//                        KEPSol2ndStageUnique.back().chains.push_back(counter);
+//                    }
+//                    KEPSols2ndStage[i].chains.push_back(Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]]);
+//                }
+//            }
+//            //Call GrandSubPromAux
+//            GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique);
+//
+//        }else{
+            bool runH = Heuristcs2ndPH();
+            tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
+            if (runH == false){
+                tStartMP2ndPH = clock();
+                LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+                if (LeftTime < 0){
+                    GlobalIte2ndStage += Ite2ndS;
+                    tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+                    Print2ndStage("TimeOut");
                 }
-                KEPSols2ndStage.back().cycles.push_back(Cycles3rdTo2nd[AllConst2ndPhase[i].get_cycles3rd()[j]]);
-            }
-        }
-        counter = -1;
-        for (int i = 0; i < AllConst2ndPhase.size(); i++){
-            for (int j = 0; j < AllConst2ndPhase[i].get_chains3rd().size(); j++){
-                auto it = Chains3rdTo2nd.find(AllConst2ndPhase[i].get_chains3rd()[j]);
-                if (it == Chains3rdTo2nd.end()){
-                    counter++;
-                    Chains2ndTo3rd[counter] = AllConst2ndPhase[i].get_chains3rd()[j];
-                    Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]] = counter;
-                    KEPSol2ndStageUnique.back().chains.push_back(counter);
+                cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
+                cplexGrandSubP.solve();
+                tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
+
+                if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
+                    //cout << "2nd. stage solved" << endl;
+                    SPMIP_Obj = LOWEST_TPMIP_Obj;
+                    return true;
                 }
-                KEPSols2ndStage[i].chains.push_back(Chains3rdTo2nd[AllConst2ndPhase[i].get_chains3rd()[j]]);
-            }
-        }
-        //Call GrandSubPromAux
-        GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique);
 
-    }else{
-        bool runH = Heuristcs2ndPH();
-        tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
-        if (runH == false){
-            tStartMP2ndPH = clock();
-            LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
-            if (LeftTime < 0){
-                GlobalIte2ndStage += Ite2ndS;
-                tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-                Print2ndStage("TimeOut");
-            }
-            cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
-            cplexGrandSubP.solve();
-            tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
-
-            if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
-                //cout << "2nd. stage solved" << endl;
-                SPMIP_Obj = LOWEST_TPMIP_Obj;
-                return true;
-            }
-
-            //Get failing arcs and failing vertices
-            vertex_sol = IloNumArray(env, Nodes);
-            cplexGrandSubP.getValues(vertex_sol,vertex);
-            
-            arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
-            for (int f = 0; f < arc_sol.getSize(); f++){
-                arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
-                cplexGrandSubP.getValues(arc_sol[f],arc[f]);
-            }
-        }
-        else{
-            runHeuristicstrue++;
-            //Build solution
-            vertex_sol = IloNumArray(env, Nodes);
-            for (int j = 0; j < scenarioHeuristics.size(); j++){
-                if (scenarioHeuristics[j].first == - 1){
-                    vertex_sol[scenarioHeuristics[j].second] = 1;
+                //Get failing arcs and failing vertices
+                vertex_sol = IloNumArray(env, Nodes);
+                cplexGrandSubP.getValues(vertex_sol,vertex);
+                
+                arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
+                for (int f = 0; f < arc_sol.getSize(); f++){
+                    arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+                    cplexGrandSubP.getValues(arc_sol[f],arc[f]);
                 }
             }
-            arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
-            for (int f = 0; f < arc_sol.getSize(); f++){
-                arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
-            }
-            for (int j = 0; j < scenarioHeuristics.size(); j++){
-                if (scenarioHeuristics[j].first != - 1){
-                    for (int i = 0; i < AdjacencyList[scenarioHeuristics[j].first].getSize(); i++){
-                        if (AdjacencyList[scenarioHeuristics[j].first][i] == scenarioHeuristics[j].second + 1){
-                            arc_sol[scenarioHeuristics[j].first][i] = 1;
-                            break;
+            else{
+                runHeuristicstrue++;
+                //Build solution
+                vertex_sol = IloNumArray(env, Nodes);
+                for (int j = 0; j < scenarioHeuristics.size(); j++){
+                    if (scenarioHeuristics[j].first == - 1){
+                        vertex_sol[scenarioHeuristics[j].second] = 1;
+                    }
+                }
+                arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
+                for (int f = 0; f < arc_sol.getSize(); f++){
+                    arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+                }
+                for (int j = 0; j < scenarioHeuristics.size(); j++){
+                    if (scenarioHeuristics[j].first != - 1){
+                        for (int i = 0; i < AdjacencyList[scenarioHeuristics[j].first].getSize(); i++){
+                            if (AdjacencyList[scenarioHeuristics[j].first][i] == scenarioHeuristics[j].second + 1){
+                                arc_sol[scenarioHeuristics[j].first][i] = 1;
+                                break;
+                            }
                         }
                     }
                 }
             }
-        }
-    }
+        //}
+    
 
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     
@@ -855,19 +857,25 @@ void Problem::GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArc
 }
 void Problem::GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol){
 
-        IloExpr expr(env);
-        Cycles3rdSol.clear();
-        Chains3rdSol.clear();
-        vector<int>cycles;
-        vector<int>chains;
-        vector<int>Allcycles;
-        vector<int>Allchains;
-        for (int i = 0; i < tcysol.getSize(); i++){
-            map<int,bool>::iterator find0 = ub_tcyvar.find(i);
-            if (tcysol[i] > 0.9){
-                Allcycles.push_back(i);
-            }
-            if (tcysol[i] > 0.9 && find0 == ub_tcyvar.end()){
+int counter = 0;
+while(counter <= 2){
+    counter++;
+    IloExpr expr(env);
+    Cycles3rdSol.clear();
+    Chains3rdSol.clear();
+    vector<int>cycles;
+    vector<int>chains;
+    vector<int>Allcycles;
+    vector<int>Allchains;
+    for (int i = 0; i < tcysol.getSize(); i++){
+        map<int,bool>::iterator find0 = ub_tcyvar.find(i);
+        if (tcysol[i] > 0.9 && counter == 1){
+            Allcycles.push_back(i);
+        }
+        if (tcysol[i] > 0.9){
+            bool skip = false;
+            if (counter >= 2 && find0 != ub_tcyvar.end()) skip = true;
+            if (skip == false){
                 cycles.push_back(i);
                 Cycles3rdSol.push_back(Cycles2ndStage[i]);
                 for (int j = 0; j < Cycles2ndStage[i].get_c().size(); j++){
@@ -905,12 +913,16 @@ void Problem::GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol){
                 }
             }
         }
-        for (int i = 0; i < tchsol.getSize(); i++){
-            map<int,bool>::iterator find0 = ub_tchvar.find(i);
-            if (tchsol[i] > 0.9){
-                Allchains.push_back(i);
-            }
-            if (tchsol[i] > 0.9 && find0 == ub_tchvar.end()){
+    }
+    for (int i = 0; i < tchsol.getSize(); i++){
+        map<int,bool>::iterator find0 = ub_tchvar.find(i);
+        if (tchsol[i] > 0.9 && counter == 1){
+            Allchains.push_back(i);
+        }
+        if (tchsol[i] > 0.9){
+            bool skip = false;
+            if (counter >= 2 && find0 != ub_tchvar.end()) skip = true;
+            if (skip == false){
                 chains.push_back(i);
                 Chains3rdSol.push_back(Chains2ndStage[i]);
                 for (int j = 0; j < Chains2ndStage[i].Vnodes.size(); j++){
@@ -937,43 +949,48 @@ void Problem::GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol){
                 }
             }
         }
-        if (Cycles3rdSol.size() > 0 || Chains3rdSol.size() > 0){
-            int RHS = 1;
-            if (Ite2ndS >= 1){
-                //Sort Cycles3rdSol and Chains3rdSol
-                RecoSolCovering.push_back(vector<double>());
-                double TotalW = 0;
-                for (int i = 0; i < Cycles3rdSol.size(); i++){
-                    RecoSolCovering.back().push_back(Cycles3rdSol[i].get_Many());
-                    TotalW+= Cycles3rdSol[i].get_Many();
-                }
-                for (int i = 0; i < Chains3rdSol.size(); i++){
-                    RecoSolCovering.back().push_back(Chains3rdSol[i].AccumWeight);
-                    TotalW+= Chains3rdSol[i].AccumWeight;
-                }
-                RecoTotalWCovering.push_back(TotalW);
-                sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
-                
+    }
+    if (Cycles3rdSol.size() > 0 || Chains3rdSol.size() > 0){
+        int RHS = 1;
+        if (Ite2ndS >= 1){
+            //Sort Cycles3rdSol and Chains3rdSol
+            RecoSolCovering.push_back(vector<double>());
+            double TotalW = 0;
+            for (int i = 0; i < Cycles3rdSol.size(); i++){
+                RecoSolCovering.back().push_back(Cycles3rdSol[i].get_Many());
+                TotalW+= Cycles3rdSol[i].get_Many();
             }
-
-            if (RecoTotalWCovering.back() >= LOWEST_TPMIP_Obj){
-                RHS = Update_RHS_Covering(int (RecoSolCovering.size() - 1));
+            for (int i = 0; i < Chains3rdSol.size(); i++){
+                RecoSolCovering.back().push_back(Chains3rdSol[i].AccumWeight);
+                TotalW+= Chains3rdSol[i].AccumWeight;
             }
-            //Add new constraint to Const2ndPhase
-            Const2ndPhase.push_back(coverConst(cycles, chains));
-            Const2ndPhase.back().set_RHS(RHS);
-            AllConst2ndPhase.push_back(coverConst(Allcycles, Allchains));
+            RecoTotalWCovering.push_back(TotalW);
+            sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
             
-            string name = "AtLeastOneFails_" + to_string(AtLeastOneFails.getSize() + 1);
-            const char* cName = name.c_str();
-            //cout << expr << endl;
-            AtLeastOneFails.add(IloRange(env, RHS, expr, IloInfinity, cName));
-            GrandSubProb.add(AtLeastOneFails[AtLeastOneFails.getSize() - 1]);
-            expr.end();
         }
-    
 
+        if (RecoTotalWCovering.back() >= LOWEST_TPMIP_Obj){
+            RHS = Update_RHS_Covering(int (RecoSolCovering.size() - 1));
+        }
+        //Add new constraint to Const2ndPhase
+        Const2ndPhase.push_back(coverConst(cycles, chains));
+        Const2ndPhase.back().set_RHS(RHS);
+        if(counter == 1) AllConst2ndPhase.push_back(coverConst(Allcycles, Allchains));
+        
+        string name = "AtLeastOneFails_" + to_string(AtLeastOneFails.getSize() + 1);
+        const char* cName = name.c_str();
+        //cout << expr << endl;
+        AtLeastOneFails.add(IloRange(env, RHS, expr, IloInfinity, cName));
+        GrandSubProb.add(AtLeastOneFails[AtLeastOneFails.getSize() - 1]);
+        expr.end();
+        counter++;
+        if (Ite2ndS == 0) break;
+    }
 }
+        
+    
+}
+
 bool sortdouble(double& c1, double& c2){
     return (c1 > c2);
 }
