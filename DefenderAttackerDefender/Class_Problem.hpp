@@ -361,6 +361,7 @@ public:
     
     //Third Phase
     vector<coverConst>Const2ndPhase;
+    vector<coverConst>AllConst2ndPhase;
     map<pair<int,int>, coveringElements>Elms2ndPhase;
     vector<pair<int,int>>scenarioHeuristics;
     IloObjective ObjTHP;
