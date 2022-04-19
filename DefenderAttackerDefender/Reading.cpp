@@ -70,10 +70,10 @@ void Problem::Print2ndStage(string status){
         this->file.open(OutputDire, fstream::app);
     }else{
         file.open(OutputDire, fstream::out);
-        file << "Instance" << '\t' << "PDP" << '\t' << "NDD" << '\t' << "K" << '\t' << "L" << '\t' << "VertexBudget" << '\t' << "ArcBudget" << '\t' << "Method" << '\t' << "Policy" << '\t' << "status" << '\t' << "Ite1stS" << '\t' << "TotalTime1stS" << '\t' << "TotalIte2ndS" << '\t' << "TotalTime2ndS" << '\t' << "TotalTimeMP2ndS" << '\t' << "TotalTimeHeu" << '\t' << "TotalIteHeuTrue" <<  '\t' << "TotalTimeRecoCG" << '\t' << "TotalIteCGTrue" << '\t' << "TotalTimeRecoMIP" << '\t' << "RO_Objective" << endl;
+        file << "Instance" << '\t' << "PDP" << '\t' << "NDD" << '\t' << "K" << '\t' << "L" << '\t' << "VertexBudget" << '\t' << "ArcBudget" << '\t' << "Method" << '\t' << "Policy" << '\t' << "status" << '\t' << "Ite1stS" << '\t' << "TotalTime1stS" << '\t' << "TotalIte2ndS" << '\t' << "TotalTime2ndS" << '\t' << "TotalTimeMP2ndS" << '\t' << "TotalTimeHeu" << '\t' << "TotalIteHeuTrue" <<  '\t' << "TotalTimeRecoCG" << '\t' << "TotalIteCGTrue" << '\t' << "TotalTimeRecoMIP" << '\t' << "RO_Objective" << '\t' << "TotalIteOptP" << '\t' << "TotalIteOptPIte1stis1" << '\t' << "TotalTimeOptP" << '\t' << "nOutInfeas" << '\t' << "nOutBound" << endl;
     }
     
-    file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << endl;
+    file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << '\t' << IteOptP << '\t' << IteOptPIte1stis1 << '\t' << tTotalOptP << '\t' << OutforInfeas << '\t' << OutforBound << endl;
     
     file.close();
     exit(0);

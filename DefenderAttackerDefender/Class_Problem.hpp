@@ -153,7 +153,11 @@ public:
     IloInt runCGtrue = 0;
     IloInt runHeuristicstrue = 0;
     IloInt Ite2ndS = 0;
+    IloInt IteOptP = 0;
+    IloInt IteOptPIte1stis1 = 0;
     IloInt Iteration = 0;
+    IloInt OutforInfeas = 0;
+    IloInt OutforBound = 0;
     IloRangeArray ActiveGrandSubSol;
     IloRangeArray BoundObjective;
     IloNumArray2 WeightMatrix;
@@ -175,6 +179,7 @@ public:
     double tTotal1stS = 0;
     double tTotal2ndS = 0;
     double tTotalHeu = 0;
+    double tTotalOptP = 0;
     double tTotalCG = 0;
     double tTotalMP2ndPH = 0;
     double LeftTime = 0;
