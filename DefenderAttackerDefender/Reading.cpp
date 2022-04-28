@@ -62,7 +62,7 @@ void Problem::Print2ndStage(string status){
     if (WhereItisRun == "PC"){
         OutputDire = "../../../../../../Output/ROResults/TwoStageRO.txt";
     }else{
-        OutputDire = "../Output/TwoStageRO.txt";
+        OutputDire = "../Output/TwoStageROv4.txt";
     }
     file.open(OutputDire, fstream::in);
     if (this->file) {

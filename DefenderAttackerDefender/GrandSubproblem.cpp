@@ -471,24 +471,12 @@ vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol
     VertexinSolChain = vector<vChain>();
     vector<Chain>RecoChains;
     if (policy == "Full"){
-        IloNumArray2 AdjaList(env, AdjacencyList.getSize());
-        for (int i = 0; i < AdjacencyList.getSize(); i++){
-            AdjaList[i] = IloNumArray(env, 0);
-            for (int j = 0; j < PredMap[i].size(); j++){
-                AdjaList[i].add(PredMap[i][j].first + 1);
-            }
-        }
-
-        vector<int>Altruists;
         vector<int>ChainStarters;
-        for (int i = 0; i < vinFirstStageSol.size(); i++){
-            if (vinFirstStageSol[i] < Pairs) ChainStarters.push_back(vinFirstStageSol[i]);
-        }
-        for (int i = Pairs; i < Nodes; i++) Altruists.push_back(i);
+        for (int i = Pairs; i < Nodes; i++) ChainStarters.push_back(i);
         //Call InitializeVertexinSolChain
-        InitializeVertexinSolChain(ListVertices, VertexinSolChain, AdjaList);
+        InitializeVertexinSolChain(ListVertices, VertexinSolChain, AdjacencyList);
         //Call Find Chains
-        RecoChains = FindChains(VertexinSolChain, Altruists, ChainStarters, false);
+        RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ChainStarters, false);
     }
     else if (policy == "Among"){
         //Call InitializeVertexinSolChain
