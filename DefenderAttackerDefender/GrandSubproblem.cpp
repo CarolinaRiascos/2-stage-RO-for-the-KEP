@@ -10,14 +10,13 @@
 void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
     tStartMP2ndPH = clock();
     // Create model
-    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     GrandSubProb = IloModel(env);
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     cplexGrandSubP = IloCplex(GrandSubProb);
     cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
     cplexGrandSubP.setOut(env.getNullStream());
     AtLeastOneFails = IloRangeArray(env);
-    
     
     SampleCols2ndStage(Chains2ndStage, Cycles2ndStage, SolFirstStage);
     //Get selected vertices
@@ -106,7 +105,13 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     RecoTotalWCovering.push_back(w);
     sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
     
-    GetAtLeastOneFails(tcysol, tchsol);
+    if (THP_Method == "Covering"){
+        GetAtLeastOneFails(tcysol, tchsol);
+    }
+    else{
+        GetAtLeastOneFailsTwo(tcysol, tchsol);
+    }
+    
     
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     //HeuristicsStart2ndPH(Cycles2ndTo3rd, Chains2ndTo3rd,ListSelVertices);
@@ -137,23 +142,26 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         }
         tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
         THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
-    }else{
-        cplexGrandSubP.solve();
-        if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
-            cout << "S.O.S. This should not happen." << endl;
-        }
-        else{
-            vertex_sol = IloNumArray(env, Nodes);
-            cplexGrandSubP.getValues(vertex_sol,vertex);
+    //}else{
+    //    cplexGrandSubP.solve();
+    //    if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
+    //        cout << "S.O.S. This should not happen." << endl;
+    //    }
+    //    else{
+    //        vertex_sol = IloNumArray(env, Nodes);
+    //        cplexGrandSubP.getValues(vertex_sol,vertex);
             
-            arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
-            for (int f = 0; f < arc_sol.getSize(); f++){
-                arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
-                cplexGrandSubP.getValues(arc_sol[f],arc[f]);
-            }
-            tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
-            THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
-        }
+    //        arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
+    //        for (int f = 0; f < arc_sol.getSize(); f++){
+    //            arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
+    //            cplexGrandSubP.getValues(arc_sol[f],arc[f]);
+    //        }
+    //        tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
+    //        THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
+    //    }
+    }
+    else{
+        Print2ndStage("WrongExit");
     }
 
 
@@ -430,6 +438,11 @@ vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
     vector<Cycles> NewList;
     for (int i = 0; i < ListVertices.size(); i++){
         int origin = ListVertices[i];
+        LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+        if (LeftTime < 0){
+            tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+            Print2ndStage("TimeOut");
+        }
         NewList = SubCycleFinder(env, AdjaList, origin);
         for (int k = 0; k < NewList.size(); k++){
             NewListCCs.push_back(NewList[k]);
@@ -538,6 +551,11 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
     for (itVinChain; itVinChain != VertexinSolChain.end(); itVinChain++){//By construction altruistic donors come first
         if (v2inFirstStageSol(ListVertices, itVinChain->vertex) == true){
             PPChains.push_back(Chain(*itVinChain));
+            LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+            if (LeftTime < 0){
+                tTotalFindingCyCh += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+                Print2ndStage("TimeOut");
+            }
             while(PPChains.back().Vnodes.size() >  0){//next neighbor
                 //Increase iterator
                 if (PPChains.back().Vnodes.back().FirstPass == true){

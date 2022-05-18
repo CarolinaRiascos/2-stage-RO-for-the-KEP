@@ -404,7 +404,7 @@ NumVar3D Create3DBin (IloEnv& env, IloNumArray2 Adja, int L, string name){
         for (int j = 0; j < Adja[i].getSize(); j++) {
             Aux[i][j] = IloNumVarArray(env, L, 0, 1, ILOINT);
             for (int l = 0; l < L; l++) {
-                string auxName = name + "_" + to_string(i) + "_" + to_string(int(Adja[i][j] - 1)) + "_" + to_string(l);
+                string auxName = name + "_" + to_string(i + 1) + "_" + to_string(int(Adja[i][j])) + "_" + to_string(l);
                 Aux[i][j][l].setName(auxName.c_str());
             }
         }
@@ -542,17 +542,17 @@ IloRangeArray CreateCon7d(IloEnv& env, NumVar2D& Y_ju, NumVar2D& X_cu, NumVar4D&
     }
     return Cons;
 }
-IloRangeArray CreateCon7e(IloEnv& env, IloNumVarArray& X_c, NumVar3D& E_ijl, int Pairs, map<int,vector<int>> CycleNode, map<int,vector<pair<int,int>>> PredMap, string name){
+IloRangeArray CreateCon7e(IloEnv& env, IloNumVarArray& var2D, NumVar3D& var3D, int Pairs, map<int,vector<int>> CycleN, map<int,vector<pair<int,int>>> PredMap, string name){
     IloRangeArray Cons(env);
     for (int j = 0; j < Pairs; j++) { // para todo j
         IloExpr expr (env, 0);
-        for (int c = 0; c < CycleNode[j].size(); c++) {
-            expr+= X_c[CycleNode[j][c]];
+        for (int c = 0; c < CycleN[j].size(); c++) {
+            expr+= var2D[CycleN[j][c]];
         }
         for (int i = 0; i < PredMap[j].size(); i++) {
             int i2 = PredMap[j][i].first;
             int j2 = PredMap[j][i].second;
-            expr+= IloSum(E_ijl[i2][j2]);
+            expr+= IloSum(var3D[i2][j2]);
         }
         string name2 = name + '[' + to_string(j) + ']';
         Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
@@ -915,13 +915,22 @@ void Problem::ROBUST_KEP(){
     
     //Call 2nd. stage
     tStart2ndS = clock();
-    Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
+    if (THP_Method != "PICEFBenders"){
+        Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
+    }
     Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
-    if (THP_Method != "Literature"){
+    tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
+    if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
         GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
     }
-    else{
+    else if (THP_Method == "Benders"){
         GrandSubProbMaster2(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+    }
+    else if (THP_Method == "BendersPICEF"){
+        GrandSubProbMasterPICEF(Cycles2ndStage, Chains2ndStage, SolFirstStage);
+    }
+    else{
+        cout << "Invalid Method";
     }
     
 }

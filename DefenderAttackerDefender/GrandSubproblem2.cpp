@@ -15,7 +15,6 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
     cplexGrandSubP.setOut(env.getNullStream());
-    AtLeastOneFails = IloRangeArray(env);
     tStart2ndS = clock();
     
     KEPSols2ndStage.clear();
@@ -97,7 +96,6 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     name = "Obj_GrandSubP";
     ObjGrandSubP = IloObjective(env, Beta, IloObjective::Minimize, name.c_str());
     GrandSubProb.add(ObjGrandSubP);
-    
     
     //cplexGrandSubP.exportModel("GrandSubP2.lp");
     cplexGrandSubP.solve();

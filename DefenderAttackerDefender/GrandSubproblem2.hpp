@@ -18,4 +18,5 @@ bool sortChains2(Chain& c1, Chain& c2);
 bool sortCycles2(Cycles& c1, Cycles& c2);
 bool CheckRepetition(vector<int>& v, map<int,bool>& map);
 bool CheckRepetition2(vector<vChain>& v, map<int,bool>& map);
+bool IsSameCycle2(vector<int> c1, vector<int> c2);
 #endif /* GrandSubproblem2_hpp */

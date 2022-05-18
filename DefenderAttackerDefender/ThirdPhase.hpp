@@ -15,9 +15,9 @@
 #include "GrandProblem.hpp"
 #include "M-PICEF.hpp"
 
+
 bool sortdouble(double& c1, double& c2);
 bool sortCovElms(pair< pair<int,int>, double>& c1, pair< pair<int,int>, double>& c2);
 bool sortduals(pair<int,double>& c1, pair<int,double>& c2);
 bool sortPairs(pair<int,int>& c1, pair<int,int>& c2);
-
 #endif /* ThirdPhase_hpp */

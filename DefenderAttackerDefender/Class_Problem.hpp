@@ -10,6 +10,7 @@
 #define Class_Problem_hpp
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 #include <ilcplex/ilocplex.h>
 #include <algorithm>
@@ -178,6 +179,7 @@ public:
     double tTotalRecoMIP = 0;
     double tTotal1stS = 0;
     double tTotal2ndS = 0;
+    double tTotalFindingCyCh = 0;
     double tTotalHeu = 0;
     double tTotalOptP = 0;
     double tTotalCG = 0;
@@ -186,6 +188,7 @@ public:
     string FolderName;
     string RecoursePolicy;
     string THP_Method;
+    string THP_Bound;
     string WhereItisRun;
     map<pair<int,int>,double>Weights;
     map<int,vector<int>>CycleNode;
@@ -207,7 +210,7 @@ public:
     int Ite1stStage = 0;
     
     //Functions
-    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun, IloNum _TimeLimit);
+    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, string _THP_Bound, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun, IloNum _TimeLimit);
     int Reading();
     bool EndProgram = false;
    
@@ -308,7 +311,10 @@ public:
     IloNum SPMIP_Obj = 0;
     IloNumVarArray cyvar;
     IloNumVarArray chvar;
+    NumVar4D E_sijl;
     NumVar2D arc;
+    NumVar2D yij;
+    NumVar3D Eijl;
     IloNumVarArray vertex;
     IloNumVarArray selvertex;
     IloRangeArray TheOneCC;
@@ -373,6 +379,7 @@ public:
     vector<Cycles>Cycles2ndStage;
     vector<Chain>Chains2ndStage;
     void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&ListSelVertices);
+    void BendersPICEF(vector<Cycles>&Cycles2ndStage, vector<int>&ListSelVertices);
     IloNum VI_I = 0;
     vector<vector<double>>RecoSolCovering;
     vector<double>RecoTotalWCovering;
@@ -425,6 +432,7 @@ public:
     void GetNewBetaCut(IloNum TPMIP_Obj, map<pair<int,int>, bool> FailedArcs, map<int, bool> FailedVertices);
     void GetNoGoodCut(map<pair<int,int>, bool>& FailedArcs, map<int, bool>& FailedVertices);
     void GetAtLeastOneFails(IloNumArray& tcysol, IloNumArray& tchsol);
+    void GetAtLeastOneFailsTwo(IloNumArray& tcysol, IloNumArray& tchsol);
     void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
@@ -441,15 +449,24 @@ public:
     
         
     //Literature method
+    vector<vector<IndexGrandSubSol>>Chains3rdStageP;
     void ROBUST_KEP();
     void GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
+    void GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     bool Literature(IloNumArray& tcysol, IloNumArray& tchsol);
     void SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
+    void SampleCols2ndStagePICEF(vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
     vector<KEPSol>KEPSols2ndStage;
     IloRangeArray vBoundConstraint;
     IloRangeArray vFailedMatches;
+    IloRangeArray vFailedArcZero;
+    IloRangeArray vFailedArcs;
     void Const11b(vector<KEPSol>&KEPSols2ndStage);
     void Const11c(vector<KEPSol>&KEPSols2ndS);
+    void Const13b(vector<KEPSol>&KEPSols2ndStage, vector<IndexGrandSubSol>&ChainsTPH, vector<int>&SelectedVertices);
+    void Const13c(vector<KEPSol>&KEPSols2ndStage);
+    void Const13d(vector<IndexGrandSubSol>&ChainsTPH, NumVar4D& E_sijl);
+    void Const13e(vector<IndexGrandSubSol>&ChainsTPH, NumVar4D& E_sijl);
     IloExpr exprVxtArcsCY;
     IloExpr exprVxtArcsCH;
     IloExpr exprBound;
