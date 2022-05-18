@@ -262,7 +262,7 @@ public:
     vector<vector<int>> distFVS_to_Pairs;
     vector<vector<int>> distPairs_to_FVS;
     map<pair<int,int>,vector<int>> ArcFvs;
-    
+
     ////////Cycle Formulation/////
     IloNum Gap;
     IloNum SolTime;
@@ -273,7 +273,6 @@ public:
     IloNumVarArray z;
     IloNumVar eta;
     void MainCycleFinder();
-    void KEP_CycleFormulation();
     vector<Cycles> SubCycleFinder (IloEnv env, IloNumArray2 AdjaList, IloInt origin);
     void SetName1Index(IloNumVar& var, const char* prefix, IloInt i);
     IloBool IsxinStack (IloInt test, vector<int>& xinTrial);
@@ -293,7 +292,6 @@ public:
     //Constraint and Column Generation Grand Problem
     vector<int> GrandSubOptSol; //cycles and chains
     vector<int> GrandSubOptScenario; //Interdected cycles and chains
-    void AddNewColsConsGP();
     //Grand Problem
     vector<map<pair<int,int>, bool>>scenarios;
     
@@ -350,6 +348,8 @@ public:
     map<int,int>Chains3rdTo2nd;
     map<int,vector<int>> CycleNodeGSP;
     
+    void SetName(IloNumVar& var, const char* prefix, IloInt i);
+    void SetName2(IloNumVar& var, const char* prefix, IloInt i, IloInt j);
     void GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     void GrandSubProbRoutine();
     vector<Cycles> BackRecoursePolicy(vector<int>&vinFirstStageSol);
@@ -368,7 +368,6 @@ public:
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
     void PrintSolSNP(IloNumArray vertex_sol, IloNumArray2 arc_sol);
-    void FillRobustSolTHP();
     
     //Third Phase
     vector<coverConst>Const2ndPhase;

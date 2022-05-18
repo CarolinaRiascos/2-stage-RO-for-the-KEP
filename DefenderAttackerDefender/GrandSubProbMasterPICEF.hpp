@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include "Class_Problem.hpp"
+#include "GrandSubproblem2.hpp"
+#include "GrandProblem.hpp"
 NumVar4D Create4DBinTHP(IloEnv& env, vector<IndexGrandSubSol>& ChainsTHP, int L, string name);
 bool wasSelected(vector<int>&v, int a);
 IloExpr GetObjTPH_PICEF(IloEnv& env, vector<Cycles>&Cycles2ndStage, vector<int>&SelectedVertices, IloNumVarArray& var1D, NumVar2D& var2D, NumVar3D& var3D, IloNumArray2& AdjaList, int Pairs, int L, map<int,bool>& ub_tcyvar);

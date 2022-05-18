@@ -7,23 +7,12 @@
 //
 
 #include "ThirdPhase.hpp"
-
 void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&vinFirstStage){
     tStartRecoMIP = clock();
     //Get scenario
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
     //Create model
-    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
-    if (LeftTime < 0){
-        GlobalIte2ndStage += Ite2ndS;
-        tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-        Print2ndStage("TimeOut");
-    }
     mTHPMIP = IloModel (env);
-    cplexmTHPMIP = IloCplex(mTHPMIP);
-    cplexmTHPMIP.setParam(IloCplex::Param::Threads, 1);
-    cplexmTHPMIP.setParam(IloCplex::Param::TimeLimit, LeftTime);
-    cplexmTHPMIP.setOut(env.getNullStream());
     
     //Create decision variables and set decision variables values according to the scenario
     tcyvar = Create_tcyvar("r", Cycles2ndStage);
@@ -42,6 +31,9 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     ObjTHP = IloObjective(env, obj, IloObjective::Maximize, name.c_str());
     mTHPMIP.add(ObjTHP);
     tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
+    cplexmTHPMIP = IloCplex(mTHPMIP);
+    cplexmTHPMIP.setParam(IloCplex::Param::Threads, 1);
+    cplexmTHPMIP.setOut(env.getNullStream());
     Ite2ndS = 0;
     while(true){
         LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
@@ -302,8 +294,6 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
     }
     else{
-        GlobalIte2ndStage += Ite2ndS;
-        tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
         Print2ndStage("TimeOut");
     }
         
@@ -389,10 +379,8 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     tStartHeu = clock();
-    int div = 1; if (IteOptP != 0) div = IteOptP;
-    double ratio = tTotalOptP/div;
-    if (Ite2ndS >= 5 && THP_Bound != "NoBound"){
-        ratio = tTotalOptP/IteOptP;
+    double ratio = tTotalOptP/Ite1stStage;
+    if (Ite2ndS >= 150 && THP_Bound != "NoBound"){
         //Return to optimality
         IteOptP++;
         if (Ite1stStage == 1) IteOptPIte1stis1++;
@@ -471,7 +459,6 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
                 tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
                 Print2ndStage("TimeOut");
             }
-            
         }
         else{
             runHeuristicstrue++;

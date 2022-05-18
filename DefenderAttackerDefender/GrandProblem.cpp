@@ -11,151 +11,7 @@
 random_device rd;
 mt19937 gen(rd());
 
-void Problem::KEP_CycleFormulation(){
-    //Create model
-        GrandProb = IloModel (env);
-        cplexGrandP = IloCplex(GrandProb);
-        cplexGrandP.setParam(IloCplex::Param::TimeLimit, 1800);
-        cplexGrandP.setParam(IloCplex::Param::Threads, 1);
-        IloNum time1 = cplexGrandP.getCplexTime();
 
-        //Find Cylces
-        MainCycleFinder();
-
-        //Create variables
-        z = IloNumVarArray(env, ListCycles.size(), 0, 1, ILOINT);
-        for (int i = 0; i < ListCycles.size(); i++){
-           SetName1Index(z[i], "z", i);
-           //cout << z[i].getName() << endl;
-        }
-        eta = IloNumVar(env);
-        SetName1Index(eta, "eta", 0);
-    
-//        for (int i = 0; i < ListCycles.size(); i++){
-//           SetName1Index(z[i], "z", i);
-//           //cout << z[i].getName() << endl;
-//        }
-
-        //Add constraints
-        for (int i = 0; i < Pairs; i++){
-           IloExpr cycle (env,0);
-           auto pos = CycleNode.find(i);
-           if (pos != CycleNode.end()){
-               for (int j = 0; j < CycleNode[i].size(); j++){
-                   cycle+= z[CycleNode[i][j]];
-               }
-           }
-           //Add constraint: node only in one cycle
-           GrandProb.add(cycle <= 1);
-           cycle.end();
-        }
-
-        //Objective value
-        IloExpr Obj(env, 0);
-        for (int j = 0; j < ListCycles.size(); j++){
-           Obj += ListCycles[j].get_w()*z[j];
-        }
-        GrandProb.add(eta <= Obj);
-        GrandProb.add(IloMaximize(env, eta));
-    
-        //Cutting plane
-        ActiveGrandSubSol = IloRangeArray(env);
-        BoundObjective = IloRangeArray(env) ;
-        IloBool NewScenario = true;
-    
-        while(NewScenario == true){
-            Iteration++;
-            cplexGrandP.solve();
-            IloNum time2 = cplexGrandP.getCplexTime();
-
-           if (cplexGrandP.getStatus() == IloAlgorithm::Infeasible) {
-               env.out() << "No solution" << endl;
-           }
-           else {
-               FPMIP_Obj = cplexGrandP.getObjValue();
-               BestObj = cplexGrandP.getBestObjValue();
-               Gap = cplexGrandP.getMIPRelativeGap();
-               NCycles = ListCycles.size();
-               SolTime = time2 - time1;
-               
-               env.out() << "Objective: " << FPMIP_Obj << endl;
-               
-               IloNumArray z_sol(env, ListCycles.size());
-               cplexGrandP.getValues(z_sol,z);
-               
-               GrandProbSol.clear();
-//               for (int f = 0; f < z_sol.getSize(); f++){
-//                   if (z_sol[f] > 0.9){
-//                       GrandProbSol.push_back(IndexGrandSubSol(ListCycles[f].get_c(), ListCycles[f].get_w()));
-//                       GrandProbSol.back().set_ite(1);
-//                   }
-//               }
-               //GrandSubProbMaster();
-               cout << "hi";
-           }
-        }
-    
-}
-void Problem::AddNewColsConsGP(){
-    //Find cycle index
-    vector<int> ref;
-    ref.push_back(1);
-    ref.push_back(37);
-    ref.push_back(35);
-    
-    auto pos = CycleNode.find(1);
-    int index = -1;
-    if (pos != CycleNode.end()){
-        for (int i = 0; i < CycleNode[1].size(); i++){
-            int count = 0;
-            for (int j = 0; j < ListCycles[CycleNode[1][i]].get_c().size(); j++){
-                for (int r = 0; r < ref.size(); r++){
-                    //cout << ListCycles[CycleNode[1][i]].get_c()[j] << "\t" << CycleNode[1][i] << endl;
-                    if (ListCycles[CycleNode[1][i]].get_c()[j] == ref[r]){
-                        count++;
-                        break;
-                    }
-                }
-                if (count == ref.size()){
-                    index = CycleNode[1][i];
-                    break;
-                }
-            }
-            if (count == ref.size()) break;
-        }
-    }
-
-    //Add new constraints
-    GrandSubOptSol.push_back(7);
-    if (GrandSubOptSol.size() > 0){
-        for (int i = 0; i < GrandSubOptSol.size(); i++){
-            string name = "RecourseSol_PlannedSol." + to_string(i) + "." + to_string(Iteration);
-            const char* cName = name.c_str();
-            ActiveGrandSubSol.add(IloRange(env, -IloInfinity, -z[index], 0, cName));
-        }
-        GrandProb.add(ActiveGrandSubSol);
-        //Add new columns
-        IloExpr newTotal (env,0);
-        for (int i = 0; i < GrandSubOptSol.size(); i++){
-            cgrandpsol = IloNumColumn (env);
-            cgrandpsol += ActiveGrandSubSol[i](1);
-            IloNumVar newcc(cgrandpsol);
-            SetName1Index(newcc, "x", i);
-            newTotal-= ListCycles[GrandSubOptSol[i]].get_w()*newcc;
-        }
-        newTotal+= eta;
-        string name = "BoundGrandP." + to_string(Iteration);
-        const char* cName = name.c_str();
-        BoundObjective.add(IloRange(env, newTotal, 0, cName));
-        cout << BoundObjective[0];
-        GrandProb.add(BoundObjective);
-    }
-    cplexGrandP.exportModel("GrandProb.lp");
-    cplexGrandP.solve();
-    FPMIP_Obj = cplexGrandP.getObjValue();
-    env.out() << "Objective: " << FPMIP_Obj << endl;
-    
-}
 void Problem::SetName1Index(IloNumVar& var, const char* prefix, IloInt i){
     string _prefix = prefix;
     string name = _prefix + "." + to_string(i);
@@ -560,12 +416,12 @@ IloRangeArray CreateCon7e(IloEnv& env, IloNumVarArray& var2D, NumVar3D& var3D, i
     }
     return Cons;
 }
-IloRangeArray CreateCon7f(IloEnv& env, NumVar3D& E_ijl, int P, IloNumArray2 Adja, string name){
+IloRangeArray CreateCon7f(IloEnv& env, NumVar3D& var3D, int P, IloNumArray2 Adja, string name){
     IloRangeArray Cons(env);
     for (int j = P; j < Adja.getSize(); j++) { // para todo j
         IloExpr expr (env, 0);
         for (int i = 0; i < Adja[j].getSize(); i++) {
-            expr+= E_ijl[j][i][0];
+            expr+= var3D[j][i][0];
         }
         string name2 = name + '[' + to_string(j) + ']';
         Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
@@ -630,7 +486,7 @@ IloRangeArray CreateCon7h(IloEnv& env, NumVar4D& E_ijlu, vector<map<pair<int,int
     }
     return Cons;
 }
-IloRangeArray CreateCon7i(IloEnv& env, NumVar3D& E_ijl, int Pairs, int Lmax, map<int, vector<pair<int,int>>> PredMap, IloNumArray2 Adja, string name){
+IloRangeArray CreateCon7i(IloEnv& env, NumVar3D& var3D, int Pairs, int Lmax, map<int, vector<pair<int,int>>> PredMap, IloNumArray2 Adja, string name){
     IloRangeArray Cons(env);
     for (int j = 0; j < Pairs; j++) { // para todo j
         for (int l = 1; l < Lmax; l++) { // para todo l, pero L \ {1}
@@ -638,10 +494,10 @@ IloRangeArray CreateCon7i(IloEnv& env, NumVar3D& E_ijl, int Pairs, int Lmax, map
             for (int i = 0; i < PredMap[j].size(); i++) {
                 int i2 = PredMap[j][i].first;
                 int j2 = PredMap[j][i].second;
-                expr-= E_ijl[i2][j2][l - 1]; // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
+                expr-= var3D[i2][j2][l - 1]; // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
             }
             for (int i = 0; i < Adja[j].getSize(); i++) {
-                expr+= E_ijl[j][i][l];
+                expr+= var3D[j][i][l];
             }
             //cout << expr << endl;
             string name2 = name + '[' + to_string(j) + ']' + '[' + to_string(l) + ']';
@@ -849,22 +705,7 @@ void Problem::ROBUST_KEP(){
     //Retrieve solution
     FPMIP_Obj = cplexRobust.getObjValue();
     vector<IndexGrandSubSol>SolFirstStage;
-    //cout << "Selected vertices: " << endl;
-    int maxU = 0;
-    for (int k = 0; k < scenarios.size(); k++){
-        int count = 0;
-        for (int j = 0; j < Pairs; j++){
-            int n = cplexRobust.getValue(Y_ju[j][k]);
-            if (n > 0.9){
-                //cout << j << "\t";
-                count++;
-            }
-        }
-        if (count == FPMIP_Obj) {
-            maxU = k;
-            break;
-        }
-    }
+
 //    cout << endl << "Cycles: " << endl;
     IloNumArray xsol(env, ListCycles.size());
     cplexRobust.getValues(xsol,X_c);
@@ -881,13 +722,6 @@ void Problem::ROBUST_KEP(){
         for (int j = 0; j < esol[i].getSize(); j++){
             esol[i][j] = IloNumArray(env, ChainLength);
             cplexRobust.getValues(esol[i][j],E_ijl[i][j]);
-//            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
-//                esol[i][j][k] = IloNumArray (env, scenarios.size());
-//                cplexRobust.getValues(esol[i][j][k],E_ijlu[i][j][k]);
-////                if (esol[i][j][k][maxU] > 0.9){
-////                    cout << E_ijlu[i][j][k][maxU].getName() << endl;
-////                }
-//            }
         }
     }
     
@@ -899,19 +733,7 @@ void Problem::ROBUST_KEP(){
         SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
     }
     tTotal1stS += (clock() - tStart1stS)/double(CLOCKS_PER_SEC);
-//    for (int i = 0; i < SolFirstStage.size(); i++){
-//        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
-//            cout << SolFirstStage[i].get_cc()[j] << '\t';
-//            if (j == SolFirstStage[i].get_cc().size() - 1) cout << "weight: " << SolFirstStage[i].get_w() << endl;
-//        }
-//    }
-//
-//    SolFirstStage.clear();
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{2,14}, 2));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{3,11,15}, 3));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{4,12}, 2));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{5,9}, 2));
-//    SolFirstStage.push_back(IndexGrandSubSol(vector<int>{16,0,6}, 2));
+
     
     //Call 2nd. stage
     tStart2ndS = clock();

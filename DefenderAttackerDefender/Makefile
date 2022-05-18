@@ -12,7 +12,7 @@ CPX_LIB = -L/opt/ibm/ILOG/CPLEX_Studio1210/concert/lib/x86-64_linux/static_pic/ 
 #Common.o: Common.h
 
 # Change the file names before .o below to the cpp file names you want to compile.
-myexe: main.o GrandSubproblem2.o ThirdPhase.o Dijkstra.o M-PICEF.o GrandProblem.o GrandSubproblem.o Reading.o Class_Problem.o
+myexe: main.o GrandSubproblem2.o ThirdPhase.o Dijkstra.o GrandSubProbMasterPICEF.o GrandProblem.o GrandSubproblem.o Reading.o Class_Problem.o
 	g++ -o 2StageROThisWork -DIL_STD $(CPX_LIB) -O3 $+ -lilocplex -lcplex -lconcert -lm -lpthread -ldl
 
 # Finally rename this file to "Makefile", put this file to the same folder of the cpp files. Change to the directory of this file, and type in `make` in the Terminal. After that you should get an executable named "myexe". In the Terminal type in `.\myexe` to run the executable.

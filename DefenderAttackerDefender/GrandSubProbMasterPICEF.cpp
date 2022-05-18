@@ -7,8 +7,7 @@
 //
 
 #include "GrandSubProbMasterPICEF.hpp"
-#include "GrandSubproblem2.hpp"
-#include "GrandProblem.hpp"
+
 
 void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
     // Create model
@@ -111,6 +110,7 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
     
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     cplexGrandSubP.solve();
+    tTotalMP2ndPH+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
     if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
         cout << "S.O.S. This should not happen." << endl;
     }
@@ -126,7 +126,9 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
             cplexGrandSubP.getValues(arc_sol[f],arc[f]);
         }
         
+        //Solve 2nd Stage
         BendersPICEF(Cycles2ndStage, ListSelVertices);
+        tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
         GlobalIte2ndStage += Ite2ndS;
         //Send scenario to first phase
         if (Ite1stStage == 1){
@@ -606,10 +608,12 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
         }
         cplexmTHPMIP.setParam(IloCplex::Param::TimeLimit, LeftTime);
         cplexmTHPMIP.solve();
+        tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
         if (cplexmTHPMIP.getStatus() == IloAlgorithm::Infeasible){
             cout << "S.O.S. This should not happen." << endl;
         }
         else if (cplexmTHPMIP.getStatus() == IloAlgorithm::Optimal){
+            tStartRecoMIP = clock();
             TPMIP_Obj = cplexmTHPMIP.getObjValue();
             double Actual_TPHObj = 0;
             IloNumArray xsol(env, Cycles2ndStage.size());
@@ -677,6 +681,8 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
             }
             
             TPMIP_Obj = Actual_TPHObj;
+            tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
+            tStartMP2ndPH = clock();
             
             if (TPMIP_Obj == SPMIP_Obj){
                 OptFailedArcs = FailedArcs;
@@ -738,10 +744,12 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
                 }
                 cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
                 cplexGrandSubP.solve();
+                tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
                 if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
                     cout << "S.O.S. This should not happen." << endl;
                 }
                 else if (cplexGrandSubP.getStatus() == IloAlgorithm::Optimal){
+                    tStartMP2ndPH = clock();
                     //cout << cplexGrandSubP.getStatus();
                     SPMIP_Obj = cplexGrandSubP.getValue(Beta);
                     vertex_sol = IloNumArray(env, Nodes);
@@ -754,6 +762,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
                     }
                     //Update scenario
                     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
+                    tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
                     //Repeat
                 }
                 else{
@@ -765,6 +774,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
             else{
                 cout << "S.O.S";
             }
+            tStartRecoMIP = clock();
             //Update TPH objective coefficients
             ub_tcyvar.clear(); // <cycle number, 0 or 1>
             ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);

@@ -20,3 +20,15 @@ Problem::Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloI
     WhereItisRun = _WhereItisRun;
     TimeLimit = _TimeLimit;
 }
+void Problem::SetName(IloNumVar& var, const char* prefix, IloInt i){
+    string _prefix = prefix;
+    string name = _prefix + "." + to_string(i);
+    const char* varName = name.c_str();
+    var.setName(varName);
+}
+void Problem::SetName2(IloNumVar& var, const char* prefix, IloInt i, IloInt j){
+    string _prefix = prefix;
+    string name = _prefix + "." + to_string(i) + "." + to_string(j);
+    const char* varName = name.c_str();
+    var.setName(varName);
+}

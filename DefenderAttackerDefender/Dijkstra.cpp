@@ -86,6 +86,12 @@ bool fsptSet(vector<bool> vector, int v){
 
     return 0;
 }
+int posinFVS(vector<int>fvs, int lookfor){
+    for (int i = 0; i < fvs.size(); i++){
+        if (lookfor == fvs[i]) return i;
+    }
+    return -1;
+}
 void Problem::distCycles(IloNumArray2 graph){
     vector<int>dist(AdjacencyList.getSize(), INT_MAX);
     distFor = vector<int>(Pairs, 2*Pairs);

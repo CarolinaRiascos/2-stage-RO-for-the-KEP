@@ -11,12 +11,8 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     tStartMP2ndPH = clock();
     // Create model
     GrandSubProb = IloModel(env);
-    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
-    cplexGrandSubP = IloCplex(GrandSubProb);
-    cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
-    cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
-    cplexGrandSubP.setOut(env.getNullStream());
     AtLeastOneFails = IloRangeArray(env);
+    
     
     SampleCols2ndStage(Chains2ndStage, Cycles2ndStage, SolFirstStage);
     //Get selected vertices
@@ -112,9 +108,13 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         GetAtLeastOneFailsTwo(tcysol, tchsol);
     }
     
-    
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     //HeuristicsStart2ndPH(Cycles2ndTo3rd, Chains2ndTo3rd,ListSelVertices);
+    LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
+    cplexGrandSubP = IloCplex(GrandSubProb);
+    //cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
+    cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
+    cplexGrandSubP.setOut(env.getNullStream());
     Ite2ndS = 0;
     bool runH = Heuristcs2ndPH();
     if (runH == true){
@@ -150,7 +150,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     //    else{
     //        vertex_sol = IloNumArray(env, Nodes);
     //        cplexGrandSubP.getValues(vertex_sol,vertex);
-            
+    //
     //        arc_sol = IloNumArray2 (env, AdjacencyList.getSize());
     //        for (int f = 0; f < arc_sol.getSize(); f++){
     //            arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
@@ -163,7 +163,6 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     else{
         Print2ndStage("WrongExit");
     }
-
 
 }
 void Problem::PairwiseRevision(vector<int>&ListSelVertices){
@@ -254,11 +253,6 @@ void Problem::IfNoFailuresCH(map<int,int>& Chains2ndTo3rd, int i){
     GrandSubProb.add(IfNoFailures_CH[IfNoFailures_CH.getSize() - 1]);
     ExprArcs.end();
     ExprVtx.end();
-}
-void Problem::FillRobustSolTHP(){
-    for(int i = 0; i < GrandProbSol.size(); i++){
-        //RobustSolTHP.push_back(Cycles(GrandProbSol[i].get_cc(), GrandProbSol[i].get_w()));
-    }
 }
 void Problem::PrintSolSNP(IloNumArray vertex_sol, IloNumArray2 arc_sol){
     cout << "Iteration: " << RepSolCounter << endl;
