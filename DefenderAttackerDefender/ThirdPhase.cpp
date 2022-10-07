@@ -1396,115 +1396,95 @@ bool NeededElement(vector<int>&uncoveredc, coveringElements& Ele){
     return false;
 }
 bool Problem::Heuristcs2ndPH(){
-    bool another = false, keepgoing = true, complete = false, non2gether = false;
+    bool another = false, keepgoing = true, complete = false;
     int UsedArcs = 0;
-    int UsedVertices = 0, ele, ite = 0;
-    vector<pair<int,int>>tabuList;
-    while(ite <= 1 && keepgoing == true){
-        scenarioHeuristics.clear();
-        tabuList.clear();
-        for (auto it = Elms2ndPhase.begin(); it != Elms2ndPhase.end(); it++) it->second.set_state(false);
-        for (int i = 0; i < Const2ndPhase.size(); i++){
-            Const2ndPhase[i].deleteEls();
-        }
-        map<pair<int,int>, coveringElements>Eleaux = Elms2ndPhase;
-        UsedArcs = 0;
-        UsedVertices = 0;
-        ite++;
-        while (true){
-            vector<pair< pair<int,int>, double>>auxCov;
-            for (auto it = Eleaux.begin(); it != Eleaux.end(); it++){
-                double w = 0;
-                if (it->first.first == -1 && UsedVertices < MaxVertexFailures && Eleaux[it->first].get_state() == false){
-                    //w = 0.5*(CycleNodeTPH[it->first.second].size() + ChainNodeTPH[it->first.second].size()) +  0.5*it->second.get_coversize();
-                    //w = it->second.get_coversize();0.05*(PredMap[it->first.second].size() + AdjacencyList[it->first.second].getSize()) +
-                    //w = it->second.get_coversize(); //Total degree
-                    w = it->second.get_coversize();
-                    auxCov.push_back(make_pair(it->first, w));
-                }
-                if (it->first.first != -1 && UsedArcs < MaxArcFailures && Eleaux[it->first].get_state() == false){
-                    //w = it->second.get_maxw();
-                    w = 0.4*(ArcsinChCyTHP[it->first].size()/(Cycles2ndStage.size() + Chains2ndStage.size())) +  0.6*it->second.get_coversize(); //Number Arcs in cycles/chains 2ndStage
-                    auxCov.push_back(make_pair(it->first, w));
-                }
+    int UsedVertices = 0, ele;
+    scenarioHeuristics.clear();
+    for (auto it = Elms2ndPhase.begin(); it != Elms2ndPhase.end(); it++) it->second.set_state(false);
+    for (int i = 0; i < Const2ndPhase.size(); i++){
+        Const2ndPhase[i].deleteEls();
+    }
+    map<pair<int,int>, coveringElements>Eleaux = Elms2ndPhase;
+    while (true){
+        vector<pair< pair<int,int>, double>>auxCov;
+        for (auto it = Eleaux.begin(); it != Eleaux.end(); it++){
+            double w = 0;
+            if (it->first.first == -1 && UsedVertices < MaxVertexFailures && Eleaux[it->first].get_state() == false){
+                //w = 0.5*(CycleNodeTPH[it->first.second].size() + ChainNodeTPH[it->first.second].size()) +  0.5*it->second.get_coversize();
+                //w = it->second.get_coversize();0.05*(PredMap[it->first.second].size() + AdjacencyList[it->first.second].getSize()) +
+                //w = it->second.get_coversize(); //Total degree
+                w = it->second.get_coversize();
+                auxCov.push_back(make_pair(it->first, w));
             }
-            //If no Elements to pick from
-            if (auxCov.size() == 0){
+            if (it->first.first != -1 && UsedArcs < MaxArcFailures && Eleaux[it->first].get_state() == false){
+                //w = it->second.get_maxw();
+                w = 0.4*(ArcsinChCyTHP[it->first].size()/(Cycles2ndStage.size() + Chains2ndStage.size())) +  0.6*it->second.get_coversize(); //Number Arcs in cycles/chains 2ndStage
+                auxCov.push_back(make_pair(it->first, w));
+            }
+        }
+        //If no Elements to pick from
+        if (auxCov.size() == 0){
+            break;
+        }
+        //Sort elements
+        sort(auxCov.begin(), auxCov.end(), sortCovElms);
+        double search = auxCov[0].second;
+        int UpTo = auxCov.size();//In case all values are repeated equally
+        another = false;
+        //Choose among the most repeated ones
+        for (int i = 0; i < auxCov.size(); i++){
+            if (auxCov[i].second != search){
+                UpTo = i;
                 break;
             }
-            //Sort elements
-            sort(auxCov.begin(), auxCov.end(), sortCovElms);
-            while(true){
-                double search = auxCov[0].second;
-                int UpTo = auxCov.size();//In case all values are repeated equally
-                another = false;
-                //Choose among the most repeated ones
-                for (int i = 0; i < auxCov.size(); i++){
-                    if (auxCov[i].second != search){
-                        UpTo = i;
-                        break;
-                    }
-                }
-                ele = rand()%UpTo;
-                //Verify ele is not in tabuList
-                 if (auxCov[ele].first.first != -1){// It is an arc
-                    for (int i = 0; i < tabuList.size(); i++){
-                        if (auxCov[ele].first == tabuList[i]){
-                            another = true;
-                            //remove element from auxCov
-                            auxCov.erase(auxCov.begin() + ele);
-                            break;
-                        }
-                    }
-                }
-                if (another == false){
-                    //Update tabuList
-                    if (auxCov[ele].first.first == -1){
-                        for (int i = 0; i < PredMap[auxCov[ele].first.second].size(); i++){
-                            int val = PredMap[auxCov[ele].first.second][i].first;
-                            tabuList.push_back(make_pair(val, auxCov[ele].first.second));
-                        }
-                        for (int i = 0; i < AdjacencyList[auxCov[ele].first.second].getSize(); i++){
-                            tabuList.push_back(make_pair(auxCov[ele].first.second, AdjacencyList[auxCov[ele].first.second][i] - 1));
-                        }
-                    }
-                    break;
-                }
-            }
-            //Check whether we should add element to scenario
-            bool ans = true;
-            if (UsedArcs + UsedVertices >= 1 && auxCov[ele].first.second < Pairs && (UsedArcs >= 1 || UsedVertices >= 2)){
-                vector<int> failedVxt, vinFirstStage;
-                vector<pair<int,int>>failedArcs;
-                for (int i = 0; i < scenarioHeuristics.size();i++){
-                    if(scenarioHeuristics[i].first == -1){
-                        failedVxt.push_back(scenarioHeuristics[i].second);
-                    }
-                    else{
-                        failedArcs.push_back(scenarioHeuristics[i]);
-                    }
-                }
-                ans = UnMVtxdueToVtx(failedVxt, failedArcs, vinFirstStage, auxCov[ele].first);
-            }
-            if (ans == true){
-                // Add element to scenario
-                scenarioHeuristics.push_back(auxCov[ele].first);
-                //Seize the element
-                Eleaux[auxCov[ele].first].set_state(true);
-                if (auxCov[ele].first.first == -1){//It is a vertex
-                    UsedVertices++;
+        }
+        ele = rand()%UpTo;
+        //Check whether we should add element to scenario
+        bool ans = true;
+        if (UsedArcs + UsedVertices >= 1 && auxCov[ele].first.first < Pairs && auxCov[ele].first.second < Pairs && (UsedArcs >= 1 || UsedVertices >= 2)){
+            vector<int> failedVxt, vinFirstStage;
+            vector<pair<int,int>>failedArcs;
+            for (int i = 0; i < scenarioHeuristics.size();i++){
+                if(scenarioHeuristics[i].first == -1){
+                    failedVxt.push_back(scenarioHeuristics[i].second);
                 }
                 else{
-                    UsedArcs++;
-                }
-                //Cover constraints
-                for (int i = 0; i < Eleaux[auxCov[ele].first].get_coveredconsts().size(); i++){
-                    Const2ndPhase[Eleaux[auxCov[ele].first].get_coveredconsts()[i]].add_cover(auxCov[ele].first);
+                    failedArcs.push_back(scenarioHeuristics[i]);
                 }
             }
+            ans = UnMVtxdueToVtx(failedVxt, failedArcs, vinFirstStage, auxCov[ele].first);
+        }
+        if (ans == true){
+            // Add element to scenario
+            scenarioHeuristics.push_back(auxCov[ele].first);
+            //Seize the element
+            Eleaux[auxCov[ele].first].set_state(true);
+            if (auxCov[ele].first.first == -1){//It is a vertex
+                UsedVertices++;
+            }
             else{
-                Eleaux[auxCov[ele].first].set_state(true);//true so that it is not selected
-                non2gether = true;
+                UsedArcs++;
+            }
+            //Update tabuList
+            if (auxCov[ele].first.first == -1){
+                for (int i = 0; i < PredMap[auxCov[ele].first.second].size(); i++){
+                    int val = PredMap[auxCov[ele].first.second][i].first;
+                    auto it = Eleaux.find(make_pair(val, auxCov[ele].first.second));
+                    if (it != Eleaux.end()){
+                        Eleaux[it->first].set_state(true);
+                    }
+                }
+                for (int i = 0; i < AdjacencyList[auxCov[ele].first.second].getSize(); i++){
+                    int val = AdjacencyList[auxCov[ele].first.second][i] - 1;
+                    auto it = Eleaux.find(make_pair(auxCov[ele].first.second, val));
+                    if (it != Eleaux.end()){
+                        Eleaux[it->first].set_state(true);
+                    }
+                }
+            }
+            //Cover constraints
+            for (int i = 0; i < Eleaux[auxCov[ele].first].get_coveredconsts().size(); i++){
+                Const2ndPhase[Eleaux[auxCov[ele].first].get_coveredconsts()[i]].add_cover(auxCov[ele].first);
             }
             keepgoing = false;
             //Check whether there is an unsatisfied constraint
@@ -1513,16 +1493,19 @@ bool Problem::Heuristcs2ndPH(){
                     keepgoing = true;
                 }
             }
-            if (keepgoing == false) {
-                complete = true;
-                //Check weather we have used up the failure budget. If not, complete
-                if (UsedVertices == MaxVertexFailures && UsedArcs == MaxArcFailures){
-                    break;
-                }
-                else{
-                    if (auxCov.size() == 0) break;
-                    keepgoing = true;
-                }
+        }
+        else{
+            Eleaux[auxCov[ele].first].set_state(true);//true so that it is not selected
+        }
+        if (keepgoing == false) {
+            complete = true;
+            //Check weather we have used up the failure budget. If not, complete
+            if (UsedVertices == MaxVertexFailures && UsedArcs == MaxArcFailures){
+                break;
+            }
+            else{
+                if (auxCov.size() == 0) break;
+                keepgoing = true;
             }
         }
     }

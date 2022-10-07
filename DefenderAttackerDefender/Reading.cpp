@@ -62,7 +62,7 @@ void Problem::Print2ndStage(string status){
     if (WhereItisRun == "PC"){
         OutputDire = "../../../../../../Output/ROResults/TwoStageRO.txt";
     }else{
-        OutputDire = "../Output/TwoStageRO_BendersPICEF.txt";
+        OutputDire = "../Output/TwoStageRO_DC_Ite150_NewHeu.txt";
     }
     file.open(OutputDire, fstream::in);
     if (this->file) {

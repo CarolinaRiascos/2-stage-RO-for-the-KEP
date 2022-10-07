@@ -737,7 +737,7 @@ void Problem::ROBUST_KEP(){
     
     //Call 2nd. stage
     tStart2ndS = clock();
-    if (THP_Method != "PICEFBenders"){
+    if (THP_Method != "BendersPICEF"){
         Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
     }
     Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);

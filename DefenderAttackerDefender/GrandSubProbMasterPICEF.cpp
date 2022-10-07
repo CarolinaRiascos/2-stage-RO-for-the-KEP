@@ -641,7 +641,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
             }
             
             IloNumArray2 ysol(env, AdjacencyList.getSize());
-            //cout << "sol" << endl;
+            // cout << endl << "sol" << endl;
             for (int i = 0; i < ysol.getSize(); i++){
                 ysol[i] = IloNumArray (env, AdjacencyList[i].getSize());
                 cplexmTHPMIP.getValues(ysol[i], yij[i]);
@@ -673,8 +673,14 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
             for (int i = 0; i < vChains.size(); i++){
                 for (int j = 0; j < vChains[i].size() - 1; j++){
                     int v = mapArcs[make_pair(vChains[i][j], vChains[i][j + 1])];
-                    if (wasSelected(SelectedVertices, vChains[i][j + 1]) == true && yij[vChains[i][j]][v].getUB() != 0){
-                        Actual_TPHObj++;
+                    if (yij[vChains[i][j]][v].getUB() != 0){
+                        //cout << yij[vChains[i][j]][v].getUB() << " " << yij[vChains[i][j]][v].getName() << endl;
+                        if (wasSelected(SelectedVertices, vChains[i][j + 1]) == true){
+                            Actual_TPHObj++;
+                        }
+                    }
+                    else{
+                        break;
                     }
                 }
                 Chains3rdStageP.back().push_back(IndexGrandSubSol(vChains[i], 0));
@@ -684,7 +690,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
             tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
             tStartMP2ndPH = clock();
             
-            if (TPMIP_Obj == SPMIP_Obj){
+            if (TPMIP_Obj - SPMIP_Obj <= 0.0002){
                 OptFailedArcs = FailedArcs;
                 OptFailedVertices = FailedVertices;
                 break;
@@ -816,12 +822,14 @@ IloExpr GetObjTPH_PICEF(IloEnv& env, vector<Cycles>&Cycles2ndStage, vector<int>&
     for (int i = 0; i < AdjaList.getSize(); i++){
         for (int j = 0; j < AdjaList[i].getSize(); j++){
             if (i < Pairs){
-                if (wasSelected(SelectedVertices, i) == true){
+                if (wasSelected(SelectedVertices, AdjaList[i][j] - 1) == true){
                     expr+= AdjaList.getSize()*var2D[i][j];
                 }
             }
             else{
-                expr+= (AdjaList.getSize() + 1)*var2D[i][j];
+                if (wasSelected(SelectedVertices, AdjaList[i][j] - 1) == true){
+                    expr+= (AdjaList.getSize() + 1)*var2D[i][j];
+                }
             }
         }
     }
