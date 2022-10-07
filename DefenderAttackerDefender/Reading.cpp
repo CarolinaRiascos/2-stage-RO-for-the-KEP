@@ -58,11 +58,13 @@ int Problem::Reading() {
 void Problem::Print2ndStage(string status){
     //Print summary of results
     //"/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/Output/LagrangianBB/LagResults.txt"
+    cout << to_string(LeftTime) + ": Trying to print" << + " " + status << endl;
+    
     string OutputDire;
     if (WhereItisRun == "PC"){
         OutputDire = "../../../../../../Output/ROResults/TwoStageRO.txt";
     }else{
-        OutputDire = "../Output/TwoStageRO_DC_Ite150_NewHeu.txt";
+        OutputDire = "../Output/TwoStageRO_DC_Ite150_test_timeout.txt";
     }
     file.open(OutputDire, fstream::in);
     if (this->file) {
@@ -74,6 +76,8 @@ void Problem::Print2ndStage(string status){
     }
     
     file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << THP_Bound << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << '\t' << IteOptP << '\t' << IteOptPIte1stis1 << '\t' << tTotalOptP << '\t' << OutforInfeas << '\t' << OutforBound << '\t' << tTotalFindingCyCh << endl;
+    
+    cout << to_string(LeftTime) + ": Results printed" << endl;
     
     file.close();
     exit(0);

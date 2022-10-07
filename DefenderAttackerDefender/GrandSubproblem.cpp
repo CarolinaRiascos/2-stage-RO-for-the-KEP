@@ -12,7 +12,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     // Create model
     GrandSubProb = IloModel(env);
     AtLeastOneFails = IloRangeArray(env);
-    
+    cout << to_string(LeftTime) + ": 2nd. stage: MIP of MP building" << endl;
     
     SampleCols2ndStage(Chains2ndStage, Cycles2ndStage, SolFirstStage);
     //Get selected vertices
@@ -82,7 +82,8 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     
     //Pairwise revision
     //PairwiseRevision(ListSelVertices);
-    
+    cout << to_string(LeftTime) + ": 2nd. stage: MIP of MP built" << endl;
+    cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function starting" << endl;
     //First Get at least one vertex/arc fails
     RecoSolCovering.push_back(vector<double>());
     IloNumArray tcysol(env, Cycles2ndStage.size());
@@ -101,13 +102,14 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     RecoTotalWCovering.push_back(w);
     sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
     
+    
     if (THP_Method == "Covering"){
         GetAtLeastOneFails(tcysol, tchsol);
     }
     else{
         GetAtLeastOneFailsTwo(tcysol, tchsol);
     }
-    
+    cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function finished" << endl;
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     //HeuristicsStart2ndPH(Cycles2ndTo3rd, Chains2ndTo3rd,ListSelVertices);
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
@@ -116,10 +118,13 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
     cplexGrandSubP.setOut(env.getNullStream());
     Ite2ndS = 0;
+    cout << to_string(LeftTime) + ": 2nd. stage: About to run Heuristics before While" << endl;
     bool runH = Heuristcs2ndPH();
+    cout << to_string(LeftTime) + ": 2nd. stage: Heuristics done" << endl;
     if (runH == true){
         runHeuristicstrue++;
         //Build solution
+        cout << to_string(LeftTime) + ": 2nd. stage: Heuristics true, building solution" << endl;
         vertex_sol = IloNumArray(env, Nodes);
         for (int j = 0; j < scenarioHeuristics.size(); j++){
             if (scenarioHeuristics[j].first == - 1){
@@ -140,7 +145,9 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
                 }
             }
         }
+        cout << to_string(LeftTime) + ": 2nd. stage: Heuristics true, solution built" << endl;
         tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
+        cout << to_string(LeftTime) + ": 2nd. stage: Third phase started" << endl;
         THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
     //}else{
     //    cplexGrandSubP.solve();
@@ -161,6 +168,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     //    }
     }
     else{
+        cout << to_string(LeftTime) + ": 2nd. stage: Heuristics false, wrong exit" << endl;
         Print2ndStage("WrongExit");
     }
 

@@ -585,6 +585,8 @@ vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumAr
 
 void Problem::ROBUST_KEP(){
     tStart1stS = clock();
+    cout << to_string(LeftTime) + ": Starting 1st. stage formulation" << endl;
+    
     //Dijkstra chains;
     vector<int> dist;
     distNDD = vector<int>(AdjacencyList.getSize(), INT_MAX);
@@ -700,7 +702,7 @@ void Problem::ROBUST_KEP(){
     Ite1stStage++;
     //cout << "Status " << cplexRobust.getStatus() << endl;
     //cout << "Objetive: " << cplexRobust.getObjValue();
-    
+    cout << to_string(LeftTime) + ": 1st. stage formulation solved" << endl;
     
     //Retrieve solution
     FPMIP_Obj = cplexRobust.getObjValue();
@@ -737,10 +739,12 @@ void Problem::ROBUST_KEP(){
     
     //Call 2nd. stage
     tStart2ndS = clock();
+    cout << to_string(LeftTime) + ": 1st. stage getting cycles and chains" << endl;
     if (THP_Method != "BendersPICEF"){
         Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
     }
     Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
+    cout << to_string(LeftTime) + ": 1st. stage cycles and chains obtained" << endl;
     tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
     if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
         GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
