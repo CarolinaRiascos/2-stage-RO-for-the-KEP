@@ -16,7 +16,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     
     SampleCols2ndStage(Chains2ndStage, Cycles2ndStage, SolFirstStage);
     //Get selected vertices
-    vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
+    vector<int>ListSelVertices = GetSelPairs(SolFirstStage);
     
     //Create arc variables
     mapArcs.clear();
@@ -75,13 +75,11 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         for (int j = 0; j < PredMap[i].size(); j++){
             in+= arc[PredMap[i][j].first][PredMap[i][j].second];
         }
-        GrandSubProb.add(IloRange(env, -IloInfinity, in + out + 2*vertex[i], 2, cName));
+        GrandSubProb.add(IloRange(env, -IloInfinity, in + out + MaxArcFailures*vertex[i], MaxArcFailures, cName));
         in.end();
         out.end();
     }
     
-    //Pairwise revision
-    //PairwiseRevision(ListSelVertices);
     cout << to_string(LeftTime) + ": 2nd. stage: MIP of MP built" << endl;
     cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function starting" << endl;
     //First Get at least one vertex/arc fails
@@ -110,8 +108,6 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         GetAtLeastOneFailsTwo(tcysol, tchsol);
     }
     cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function finished" << endl;
-    //cplexGrandSubP.exportModel("GrandSubP.lp");
-    //HeuristicsStart2ndPH(Cycles2ndTo3rd, Chains2ndTo3rd,ListSelVertices);
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     cplexGrandSubP = IloCplex(GrandSubProb);
     //cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
@@ -119,7 +115,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     cplexGrandSubP.setOut(env.getNullStream());
     Ite2ndS = 0;
     cout << to_string(LeftTime) + ": 2nd. stage: About to run Heuristics before While" << endl;
-    bool runH = Heuristcs2ndPH();
+    bool runH = Heuristcs2ndPH(SolFirstStage);
     cout << to_string(LeftTime) + ": 2nd. stage: Heuristics done" << endl;
     if (runH == true){
         runHeuristicstrue++;
@@ -148,7 +144,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
         cout << to_string(LeftTime) + ": 2nd. stage: Heuristics true, solution built" << endl;
         tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
         cout << to_string(LeftTime) + ": 2nd. stage: Third phase started" << endl;
-        THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
+        THPMIP(Cycles2ndStage, Chains2ndStage, SolFirstStage);
     //}else{
     //    cplexGrandSubP.solve();
     //    if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
@@ -169,29 +165,11 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     else{
         cout << to_string(LeftTime) + ": 2nd. stage: Heuristics false, wrong exit" << endl;
-        Print2ndStage("WrongExit");
+        Print2ndStage("WrongExit", SolFirstStage);
     }
 
 }
-void Problem::PairwiseRevision(vector<int>&ListSelVertices){
-    if (RecoursePolicy == "Full"){
-        for (int i = 0; i < ListSelVertices.size(); i++){
-            for (int j = 0; j < ListSelVertices.size(); j++){
-                if (i != j){
-                    bool ans = false;
-                    vector<int>v;
-                    v.push_back(ListSelVertices[j]);
-                    vector<pair<int,int>>fv;
-                    ans = UnMVtxdueToVtx(v, fv, vector<int>(), make_pair(-1,ListSelVertices[i]));
-                    if (ans == false){
-                        //cout << vertex[ListSelVertices[i]].getName() << " + " << vertex[ListSelVertices[j]].getName() << endl;
-                        GrandSubProb.add(vertex[ListSelVertices[i]] + vertex[ListSelVertices[j]] <= 1);
-                    }
-                }
-            }
-        }
-    }
-}
+
 void Problem::selOnce(map<int,vector<int>>CycleNodeSPH, map<int,vector<int>>ChainNodeSPH){
     
     for (int i = 0; i < Nodes; i++){
@@ -303,92 +281,40 @@ int FindPosVector(vector<int> array, int value){
     }
     return pos;
 }
-vector<Cycles> Problem::Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy){
+vector<Cycles> Problem::Get2ndStageCycles (vector<IndexGrandSubSol>& SolFirstStage, string policy){
     //Create List of all vertices in 1st-stage sol: vinFirstStageSol
-    vector<int> vinFirstStageSol;
-    if (policy == "Among" || policy == "Full"){
-        for (int i = 0; i < GrandProbSol.size(); i++){
-            for (int j = 0; j < GrandProbSol[i].get_cc().size(); j++){
-                vinFirstStageSol.push_back(GrandProbSol[i].get_cc()[j]);
-            }
-        }
-    }
-    
-    //Create List of all candidate vertices: ListVertices
-    vector<int>ListVertices;
-    if (policy == "Among"){
-        ListVertices = vinFirstStageSol;
-    }
-    else if (policy == "Full"){
-        for (int i = 0; i < Pairs; i++){
-            ListVertices.push_back(i);
-        }
-    }
-    
+
     vector<Cycles>RecoCycles;
     if (policy == "Among"){
         //Call Find Cycles
-        RecoCycles = AmongPolicy(vinFirstStageSol);
+        RecoCycles = AmongPolicy(SolFirstStage);
     }
     else if (policy == "Full"){
         //Call Find Cycles
-        RecoCycles = AllPolicy(vinFirstStageSol);
+        RecoCycles = FullPolicy(SolFirstStage);
     }
     else{//BackArcs recourse
-        for (int i = 0; i < GrandProbSol.size(); i++){
-            //Call Find Cycles
-            vector<Cycles>auxCycles;
-            vector<int>aux = GrandProbSol[i].get_cc();
-            auxCycles = BackRecoursePolicy(aux);
-            for (int j = 0; j < auxCycles.size(); j++){
-                RecoCycles.push_back(auxCycles[j]);
-            }
-        }
+        cout << "Recourse policy NOT supported" << endl;
+        Print2ndStage("WrongRecourse", SolFirstStage);
     }
 
     
     return RecoCycles;
 }
-vector<Cycles> Problem::BackRecoursePolicy(vector<int>&ListVertices){
-    vector<Cycles> NewListCCs;
-    CycleNodeTPH.clear();
-    ArcsinCyclesTHP.clear();
-    
-        IloNumArray2 AdjaList (env, AdjacencyList.getSize());
 
-        for (int j = 0; j < AdjacencyList.getSize(); j++){
-            AdjaList[j] = IloNumArray(env);
-        }
-        for (int j = 0; j < ListVertices.size(); j++){
-            for (int l = 0; l < AdjacencyList[ListVertices[j]].getSize(); l++){
-                int neighbour = AdjacencyList[ListVertices[j]][l] - 1;
-                int pos = FindPosVector(ListVertices, neighbour);
-                if (pos != -1) {
-                    AdjaList[ListVertices[j]].add(neighbour + 1);
-                }
-            }
-        }
-        
-        //Find inner cycles
-        vector<Cycles> NewList;
-        for (int j = 0; j < ListVertices.size(); j++){
-            int origin = ListVertices[j];
-            NewList = SubCycleFinder(env, AdjaList, origin);
-            for (int k = 0; k < NewList.size(); k++){
-                NewListCCs.push_back(NewList[k]);
-                NewListCCs.back().set_Many(int(NewList[k].get_c().size()));
-            }
-            //Remove origin from AdjaList
-            AdjaList[origin].clear();
-        }
-        AdjaList.clear();
-    
-    return NewListCCs;
-}
-vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
+vector<Cycles> Problem::AmongPolicy(vector<IndexGrandSubSol>&SolFirstStage){
     vector<Cycles> NewListCCs;
     CycleNodeTPH.clear();
     ArcsinCyclesTHP.clear();
+    
+    vector<int> PairsFirstStageSol;
+    for (int i = 0; i < SolFirstStage.size(); i++){
+        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
+            if (SolFirstStage[i].get_cc()[j] < Pairs){
+                PairsFirstStageSol.push_back(SolFirstStage[i].get_cc()[j]);
+            }
+        }
+    }
     
     IloNumArray2 AdjaList (env, AdjacencyList.getSize());
     for (int i = 0; i < AdjacencyList.getSize(); i++){
@@ -397,20 +323,20 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
     
     
     //Fill in Adjacency List
-    for (int i = 0; i < ListVertices.size(); i++){
+    for (int i = 0; i < PairsFirstStageSol.size(); i++){
         //cout << endl << LookFor[i] << "\t" << ":";
-        for (int j = 0; j < AdjacencyList[ListVertices[i]].getSize(); j++){
-            int pos = FindPosVector(ListVertices, AdjacencyList[ListVertices[i]][j] - 1);
+        for (int j = 0; j < AdjacencyList[PairsFirstStageSol[i]].getSize(); j++){
+            int pos = FindPosVector(PairsFirstStageSol, AdjacencyList[PairsFirstStageSol[i]][j] - 1);
             if (pos != -1){
-                AdjaList[ListVertices[i]].add(AdjacencyList[ListVertices[i]][j]);
+                AdjaList[PairsFirstStageSol[i]].add(AdjacencyList[PairsFirstStageSol[i]][j]);
             }
         }
     }
     
     //Find among-cycles
     vector<Cycles> NewList;
-    for (int i = 0; i < ListVertices.size(); i++){
-        int origin = ListVertices[i];
+    for (int i = 0; i < PairsFirstStageSol.size(); i++){
+        int origin = PairsFirstStageSol[i];
         NewList = SubCycleFinder(env, AdjaList, origin);
         for (int k = 0; k < NewList.size(); k++){
             NewListCCs.push_back(NewList[k]);
@@ -422,10 +348,19 @@ vector<Cycles> Problem::AmongPolicy(vector<int>&ListVertices){
     
     return NewListCCs;
 }
-vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
+vector<Cycles> Problem::FullPolicy(vector<IndexGrandSubSol>&SolFirstStage){
     vector<Cycles> NewListCCs;
     CycleNodeTPH.clear();
     ArcsinCyclesTHP.clear();
+    vector<int>PairsFirstStageSol;
+    for (int i = 0; i < SolFirstStage.size(); i++){
+        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
+            if (SolFirstStage[i].get_cc()[j] < Pairs){
+                PairsFirstStageSol.push_back(SolFirstStage[i].get_cc()[j]);
+            }
+        }
+    }
+    
 
     //Make a copy of Adjacency List
     IloNumArray2 AdjaList(env,AdjacencyList.getSize());
@@ -438,19 +373,19 @@ vector<Cycles> Problem::AllPolicy(vector<int>&ListVertices){
     
     //Find all cycles
     vector<Cycles> NewList;
-    for (int i = 0; i < ListVertices.size(); i++){
-        int origin = ListVertices[i];
+    for (int i = 0; i < PairsFirstStageSol.size(); i++){
+        int origin = PairsFirstStageSol[i];
         LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
         if (LeftTime < 0){
             tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-            Print2ndStage("TimeOut");
+            Print2ndStage("TimeOut", SolFirstStage);
         }
         NewList = SubCycleFinder(env, AdjaList, origin);
         for (int k = 0; k < NewList.size(); k++){
             NewListCCs.push_back(NewList[k]);
             int counter = 0;
             for (int l = 0; l < NewList[k].get_c().size(); l++){
-                int pos = FindPosVector(ListVertices, NewList[k].get_c()[l]);
+                int pos = FindPosVector(PairsFirstStageSol, NewList[k].get_c()[l]);
                 if (pos != -1) counter++;
             }
             NewListCCs.back().set_Many(counter);
@@ -491,13 +426,13 @@ vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol
         //Call InitializeVertexinSolChain
         InitializeVertexinSolChain(ListVertices, VertexinSolChain, AdjacencyList);
         //Call Find Chains
-        RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ChainStarters, false);
+        RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ChainStarters, false, GrandProbSol);
     }
     else if (policy == "Among"){
         //Call InitializeVertexinSolChain
         InitializeVertexinSolChain(ListVertices, VertexinSolChain, AdjacencyList);
         //Call Find Chains
-        RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ListVertices, false);
+        RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ListVertices, false, GrandProbSol);
     }
     else{//BackArcs recourse
         for (int i = 0; i < GrandProbSol.size(); i++){
@@ -506,7 +441,7 @@ vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol
             InitializeVertexinSolChain(aux, VertexinSolChain, AdjacencyList);
             //Call Find Chains
             vector<Chain>auxChains;
-            auxChains = FindChains(VertexinSolChain, aux, aux, false);
+            auxChains = FindChains(VertexinSolChain, aux, aux, false, GrandProbSol);
             for (int j = 0; j < auxChains.size(); j++){
                 RecoChains.push_back(auxChains[j]);
             }
@@ -540,7 +475,7 @@ void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>
         }
     }
 }
-vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol, vector<int>& ListVertices, bool onlyOne){
+vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol, vector<int>& ListVertices, bool onlyOne, vector<IndexGrandSubSol>&SolFirstStage){
     vector<vector<int>>Chains;
     vector<int>null(0);
     int u,v;
@@ -556,7 +491,7 @@ vector<Chain> Problem::FindChains(vector<vChain>& VertexinSolChain, vector<int>&
             LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
             if (LeftTime < 0){
                 tTotalFindingCyCh += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-                Print2ndStage("TimeOut");
+                Print2ndStage("TimeOut", SolFirstStage);
             }
             while(PPChains.back().Vnodes.size() >  0){//next neighbor
                 //Increase iterator
@@ -772,7 +707,7 @@ void Problem::SampleCols2ndStage(vector<Chain>&Chains, vector<Cycles>&Cycles, ve
         }
     }
 }
-vector<int>Problem::GetSelVertices(vector<IndexGrandSubSol>&SolFirstStage){
+vector<int>Problem::GetSelPairs(vector<IndexGrandSubSol>&SolFirstStage){
     vector<int>ListSelVertices;
     for (int i = 0; i < SolFirstStage.size(); i++){
         for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){

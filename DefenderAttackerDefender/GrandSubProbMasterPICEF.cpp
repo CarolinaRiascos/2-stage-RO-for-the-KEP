@@ -9,7 +9,7 @@
 #include "GrandSubProbMasterPICEF.hpp"
 
 
-void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
+void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
     // Create model
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     GrandSubProb = IloModel(env);
@@ -22,7 +22,7 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
     SampleCols2ndStagePICEF(Cycles2ndStage, SolFirstStage);
     
     //Get selected vertices
-    vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
+    vector<int>ListSelVertices = GetSelPairs(SolFirstStage);
     
     //Create cycle variables
     cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
@@ -127,7 +127,7 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
         }
         
         //Solve 2nd Stage
-        BendersPICEF(Cycles2ndStage, ListSelVertices);
+        BendersPICEF(Cycles2ndStage, SolFirstStage);
         tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
         GlobalIte2ndStage += Ite2ndS;
         //Send scenario to first phase
@@ -248,7 +248,7 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
         if (LeftTime < 0){
             GlobalIte2ndStage += Ite2ndS;
             tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-            Print2ndStage("TimeOut");
+            Print2ndStage("TimeOut", SolFirstStage);
         }
         cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
         cplexRobust.solve();
@@ -259,12 +259,12 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
         else if (cplexRobust.getStatus() == IloAlgorithm::Optimal){
             //////////////////Retrieve solution/////////////////////////
             FPMIP_Obj = cplexRobust.getObjValue();
-            vector<IndexGrandSubSol>SolFirstStage;
+            vector<IndexGrandSubSol>SolFirstStageNew;
             IloNumArray xsol(env, ListCycles.size());
             cplexRobust.getValues(xsol,X_c);
             for (int i = 0; i < xsol.getSize(); i++){
                 if (xsol[i] > 0.9){
-                    SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
+                    SolFirstStageNew.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
                 }
             }
             IloNumArray3 esol(env, AdjacencyList.getSize());
@@ -281,12 +281,12 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
             vector<vector<int>>vChains;
             vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
             for (int i = 0; i < vChains.size(); i++){
-                SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
+                SolFirstStageNew.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
             }
             if (SPMIP_Obj < FPMIP_Obj){ //Send scenario to 1st. stage
                 //Call 2nd. stage
                 tStart2ndS = clock();
-                Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
+                Cycles2ndStage = Get2ndStageCycles (SolFirstStageNew, RecoursePolicy);
                 tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
                 GrandSubProb.end();
                 cplexGrandSubP.end();
@@ -297,11 +297,11 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
                 Ite2ndS = 0;
                 Ite1stStage++;
                 LOWEST_TPMIP_Obj = INT_MAX;
-                GrandSubProbMasterPICEF(Cycles2ndStage, Chains2ndStage, SolFirstStage);
+                GrandSubProbMasterPICEF(Cycles2ndStage, SolFirstStage);
             }
             else if (SPMIP_Obj == FPMIP_Obj){
                 //Robust Solution found
-                Print2ndStage("Optimal");
+                Print2ndStage("Optimal", SolFirstStageNew);
             }
             else{
                 cout << endl << "This should never happen";
@@ -310,7 +310,7 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chai
         else{
             GlobalIte2ndStage += Ite2ndS;
             tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-            Print2ndStage("TimeOut");
+            Print2ndStage("TimeOut", SolFirstStage);
         }
         
     }
@@ -528,16 +528,18 @@ void GetUB_yij(map<pair<int,int>, bool>&FailedArcs, map<int, bool>& FailedVertic
     }
 
 }
-void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& SelectedVertices){
+void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
     tStartRecoMIP = clock();
     //Get scenario
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
+    //Get selected vertices
+    vector<int>SelectedVertices = GetSelPairs(SolFirstStage);
     //Create model
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     if (LeftTime < 0){
         GlobalIte2ndStage += Ite2ndS;
         tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-        Print2ndStage("TimeOut");
+        Print2ndStage("TimeOut", SolFirstStage);
     }
     mTHPMIP = IloModel (env);
     cplexmTHPMIP = IloCplex(mTHPMIP);
@@ -604,7 +606,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
         if (LeftTime < 0){
             GlobalIte2ndStage += Ite2ndS;
             tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-            Print2ndStage("TimeOut");
+            Print2ndStage("TimeOut", SolFirstStage);
         }
         cplexmTHPMIP.setParam(IloCplex::Param::TimeLimit, LeftTime);
         cplexmTHPMIP.solve();
@@ -746,7 +748,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
                 if (LeftTime < 0){
                     GlobalIte2ndStage += Ite2ndS;
                     tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-                    Print2ndStage("TimeOut");
+                    Print2ndStage("TimeOut", SolFirstStage);
                 }
                 cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
                 cplexGrandSubP.solve();
@@ -774,7 +776,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
                 else{
                     GlobalIte2ndStage += Ite2ndS;
                     tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-                    Print2ndStage("TimeOut");
+                    Print2ndStage("TimeOut", SolFirstStage);
                 }
             }
             else{
@@ -801,7 +803,7 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<int>& Selected
         else{
             GlobalIte2ndStage += Ite2ndS;
             tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-            Print2ndStage("TimeOut");
+            Print2ndStage("TimeOut", SolFirstStage);
         }
     }
     

@@ -165,6 +165,7 @@ public:
     IloNumArray2 AdjacencyList;//Successors
     IloNumArray PRAList;//Successors
     IloNum TimeLimit;
+    string FilePath;
     string FileName;
     fstream file;
     clock_t ProgramStart;
@@ -185,11 +186,12 @@ public:
     double tTotalCG = 0;
     double tTotalMP2ndPH = 0;
     double LeftTime = 0;
+    int NumDominatedS = 0;
     string FolderName;
     string RecoursePolicy;
     string THP_Method;
     string THP_Bound;
-    string WhereItisRun;
+    string OutputPath;
     map<pair<int,int>,double>Weights;
     map<int,vector<int>>CycleNode;
     map<pair<int,int>,vector<int>>CycleArcs;
@@ -210,7 +212,7 @@ public:
     int Ite1stStage = 0;
     
     //Functions
-    Problem(string _FolderName, string _FileName, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, string _THP_Bound, IloInt _VertexBudget, IloInt _ArcBudget, string _WhereItisRun, IloNum _TimeLimit);
+    Problem(string _FilePath, IloInt _cycleLength, IloInt _chainLength, string _RecoursePolicy, string _THP_Method, string _THP_Bound, IloInt _VertexBudget, IloInt _ArcBudget, string _OutputPath, IloNum _TimeLimit);
     int Reading();
     bool EndProgram = false;
    
@@ -352,18 +354,17 @@ public:
     void SetName2(IloNumVar& var, const char* prefix, IloInt i, IloInt j);
     void GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     void GrandSubProbRoutine();
-    vector<Cycles> BackRecoursePolicy(vector<int>&vinFirstStageSol);
-    vector<Cycles> AmongPolicy(vector<int>&vinFirstStageSol);
-    vector<Cycles> AllPolicy(vector<int>&vinFirstStageSol);
+    vector<Cycles> BackRecoursePolicy(vector<int>&vinFirstStageSol, vector<IndexGrandSubSol>&SolFirstStage);
+    vector<Cycles> AmongPolicy(vector<IndexGrandSubSol>&SolFirstStage);
+    vector<Cycles> FullPolicy(vector<IndexGrandSubSol>&SolFirstStage);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain, IloNumArray2 AdjaList);
-    vector<Chain>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol, vector<int>& ListVertices, bool onlyOne);
+    vector<Chain>FindChains(vector<vChain>& VertexinSolChain, vector<int>& vinFirstStageSol, vector<int>& ListVertices, bool onlyOne, vector<IndexGrandSubSol>&SolFirstStage);
     vector<Chain> Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     vector<Cycles> Get2ndStageCycles (vector<IndexGrandSubSol>& GrandProbSol, string policy);
     void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
-    vector<int>GetSelVertices(vector<IndexGrandSubSol>&SolFirstStage);
-    void PairwiseRevision(vector<int>&ListSelVertices);
-    void GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniqueEx);
+    vector<int>GetSelPairs(vector<IndexGrandSubSol>&SolFirstStage);
+    void GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniqueEx,vector<IndexGrandSubSol>&SolFirstStage);
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
@@ -377,8 +378,8 @@ public:
     IloObjective ObjTHP;
     vector<Cycles>Cycles2ndStage;
     vector<Chain>Chains2ndStage;
-    void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&ListSelVertices);
-    void BendersPICEF(vector<Cycles>&Cycles2ndStage, vector<int>&ListSelVertices);
+    void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
+    void BendersPICEF(vector<Cycles>&Cycles2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     IloNum VI_I = 0;
     vector<vector<double>>RecoSolCovering;
     vector<double>RecoTotalWCovering;
@@ -435,14 +436,14 @@ public:
     void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
-    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage);
+    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGrandSubSol>&SolFirstStage);
     int Update_RHS_Covering(int row);
-    bool Heuristcs2ndPH();
+    bool Heuristcs2ndPH(vector<IndexGrandSubSol>&SolFirstStage);
     void HeuristicsStart2ndPH(map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, vector<int>&ListSelVex);
-    bool ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar);
+    bool ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar, vector<IndexGrandSubSol>&SolFirstStage);
     
     //SVIs
-    bool UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs,vector<int>vinFirstStage, pair<int,int> origin);
+    bool UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs,vector<int>vinFirstStage, pair<int,int> origin, vector<IndexGrandSubSol>&SolFirstStage);
     IloNumArray2 BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int>vinFirstStage,pair<int, int>origin);
     IloNumArray2 BuildAdjaListVtxChains(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage, pair<int,int> origin);
     
@@ -451,7 +452,7 @@ public:
     vector<vector<IndexGrandSubSol>>Chains3rdStageP;
     void ROBUST_KEP();
     void GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
-    void GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
+    void GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     bool Literature(IloNumArray& tcysol, IloNumArray& tchsol);
     void SampleCols2ndStage2(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
     void SampleCols2ndStagePICEF(vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
@@ -470,7 +471,7 @@ public:
     IloExpr exprVxtArcsCH;
     IloExpr exprBound;
     
-    void Print2ndStage(string status);
+    void Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStage);
     
     void HeadingCF();
     void PrintCF();

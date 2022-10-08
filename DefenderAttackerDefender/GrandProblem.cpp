@@ -187,22 +187,11 @@ IloNum Problem::PathWeight (vector<int>& Stack){
     IloNum weight = 0;
     //arc weights
     for (int l = 0; l < Stack.size(); l++){
-        if (l >= 1){
-            for (int i = 0; i < PredList[Stack[l]].size(); i++){
-                if (PredList[Stack[l]][i] == Stack[l - 1]){
-                    weight += Weights[make_pair(Stack[l - 1], Stack[l])];
-                    break;
-                }
-            }
+        if (l <= Stack.size() - 2){
+            weight += Weights[make_pair(Stack[l], Stack[l + 1])];
         }
         else{
-            for (int i = 0; i < PredList[Stack[l]].size(); i++){
-                if (PredList[Stack[l]][i] == Stack[Stack.size() - 1]){
-                    weight += Weights[make_pair(Stack[Stack.size() - 1], Stack[l])];
-                    //weight += PredList[Stack[l]][i].second;
-                    break;
-                }
-            }
+            weight += Weights[make_pair(Stack[Stack.size() - 1], Stack[0])];
         }
     }
     return weight;
@@ -753,7 +742,7 @@ void Problem::ROBUST_KEP(){
         GrandSubProbMaster2(Cycles2ndStage,Chains2ndStage,SolFirstStage);
     }
     else if (THP_Method == "BendersPICEF"){
-        GrandSubProbMasterPICEF(Cycles2ndStage, Chains2ndStage, SolFirstStage);
+        GrandSubProbMasterPICEF(Cycles2ndStage, SolFirstStage);
     }
     else{
         cout << "Invalid Method";

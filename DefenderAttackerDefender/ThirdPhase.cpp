@@ -7,8 +7,9 @@
 //
 
 #include "ThirdPhase.hpp"
-void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<int>&vinFirstStage){
+void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
     tStartRecoMIP = clock();
+    vector<int> vinFirstStage = GetSelPairs(SolFirstStage);
     cout << to_string(LeftTime) + ": Third stage: GetScenario starting" << endl;
     //Get scenario
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
@@ -51,7 +52,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
         cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds finished" << endl;
         cout << to_string(LeftTime) + ": 2nd. stage: Running CG" << endl;
-        bool runColGen = ColumnGeneration(ub_tcyvar, ub_tchvar);
+        bool runColGen = ColumnGeneration(ub_tcyvar, ub_tchvar, SolFirstStage);
         cout << to_string(LeftTime) + ": 2nd. stage: CG finished" << endl;
         tTotalRecoCG += (clock() - tStartCG)/double(CLOCKS_PER_SEC);
         if (runColGen == false){
@@ -77,7 +78,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
                 //Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
                 if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
                     cout << to_string(LeftTime) + ": 2nd. stage: starting ThisWork function" << endl;
-                    if (ThisWork(tcysol, tchsol, vinFirstStage) == true) break;
+                    if (ThisWork(tcysol, tchsol, SolFirstStage) == true) break;
                     cout << to_string(LeftTime) + ": 2nd. stage: ThisWork function finished" << endl;
                 }else{//Literature's approach
                     if (Literature(tcysol, tchsol) == true) break;
@@ -88,13 +89,13 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             }else{
                 GlobalIte2ndStage += Ite2ndS;
                 tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-                Print2ndStage("TimeOut");
+                Print2ndStage("TimeOut", SolFirstStage);
             }
         }
         else{
             runCGtrue++;
             if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
-                if (ThisWork(tcysolColGen, tchsolColGen, vinFirstStage) == true) break;
+                if (ThisWork(tcysolColGen, tchsolColGen, SolFirstStage) == true) break;
             }else{//Literature's approach
                 if (Literature(tcysolColGen, tchsolColGen) == true) break;
             }
@@ -104,7 +105,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     GlobalIte2ndStage += Ite2ndS;
     tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
     if (LeftTime <= 0) {
-        Print2ndStage("TimeOut");
+        Print2ndStage("TimeOut", SolFirstStage);
     }
     
     
@@ -231,7 +232,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     if (LeftTime < 0){
         GlobalIte2ndStage += Ite2ndS;
         tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-        Print2ndStage("TimeOut");
+        Print2ndStage("TimeOut", SolFirstStage);
     }
     cplexRobust.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexRobust.solve();
@@ -243,12 +244,12 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         cout << to_string(LeftTime) + ": THP: Retrieving first-stage solution" << endl;
         //////////////////Retrieve solution/////////////////////////
         FPMIP_Obj = cplexRobust.getObjValue();
-        vector<IndexGrandSubSol>SolFirstStage;
+        vector<IndexGrandSubSol>SolFirstStageNew;
         IloNumArray xsol(env, ListCycles.size());
         cplexRobust.getValues(xsol,X_c);
         for (int i = 0; i < xsol.getSize(); i++){
             if (xsol[i] > 0.9){
-                SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
+                SolFirstStageNew.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
             }
         }
         IloNumArray3 esol(env, AdjacencyList.getSize());
@@ -265,14 +266,14 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         vector<vector<int>>vChains;
         vChains = GetChainsFrom1stStageSol(AdjacencyList,esol, Pairs, ChainLength);
         for (int i = 0; i < vChains.size(); i++){
-            SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
+            SolFirstStageNew.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
         }
         if (SPMIP_Obj < FPMIP_Obj){ //Send scenario to 1st. stage
             //Call 2nd. stage
             tStart2ndS = clock();
             cout << to_string(LeftTime) + ": THP: Getting cycles and chains" << endl;
-            Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
-            Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
+            Chains2ndStage = Get2ndStageChains (SolFirstStageNew, RecoursePolicy);
+            Cycles2ndStage = Get2ndStageCycles (SolFirstStageNew, RecoursePolicy);
             cout << to_string(LeftTime) + ": THP: cycles and chains obtained" << endl;
             tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
             GrandSubProb.end();
@@ -289,29 +290,29 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             ub_tcyvar.clear();
             ub_tchvar.clear();
             SPMIP_Obj = 0;
-            mTHPMIP.end();
             cplexmTHPMIP.end();
+            mTHPMIP.end();
             Ite2ndS = 0;
             Ite1stStage++;
             LOWEST_TPMIP_Obj = INT_MAX;
             if (THP_Method != "Benders"){
-                GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+                GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStageNew);
             }
             else{
-                GrandSubProbMaster2(Cycles2ndStage,Chains2ndStage,SolFirstStage);
+                GrandSubProbMaster2(Cycles2ndStage,Chains2ndStage,SolFirstStageNew);
             }
         }
         else if (SPMIP_Obj == FPMIP_Obj){
             cout << to_string(LeftTime) + ": THP: Optimal robust solution found" << endl;
             //Robust Solution found
-            Print2ndStage("Optimal");
+            Print2ndStage("Optimal", SolFirstStageNew);
         }
         else{
             cout << endl << "This should never happen";
         }
     }
     else{
-        Print2ndStage("TimeOut");
+        Print2ndStage("TimeOut", SolFirstStage);
     }
         
     
@@ -330,7 +331,7 @@ vector<int> SelectConst2ndPh(vector<coverConst>&AllConst2ndPhase, vector<double>
     }
     return order;
 }
-bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vinFirstStage){
+bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGrandSubSol>&SolFirstStage){
         
     double Actual_THPObjective = 0;
     
@@ -397,7 +398,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     tStartHeu = clock();
-    if (Ite2ndS >= 2 && THP_Bound != "NoBound"){
+    if (Ite2ndS >= 150 && THP_Bound != "NoBound"){
         cout << to_string(LeftTime) + ": ThisWork: Building GrandSubProMastermAux" << endl;
         //Return to optimality
         IteOptP++;
@@ -437,13 +438,13 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
             }
         }
         //Call GrandSubPromAux
-        GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique);
+        GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique, SolFirstStage);
         cout << to_string(LeftTime) + ": ThisWork: GrandSubProMastermAux solved" << endl;
         tTotalOptP+= (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
 
     }else{
         cout << to_string(LeftTime) + ": ThisWork: About to run Heuristics" << endl;
-        bool runH = Heuristcs2ndPH();
+        bool runH = Heuristcs2ndPH(SolFirstStage);
         cout << to_string(LeftTime) + ": ThisWork: Heuristics done" << endl;
         tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
         if (runH == false){
@@ -452,7 +453,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
             if (LeftTime < 0){
                 GlobalIte2ndStage += Ite2ndS;
                 tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-                Print2ndStage("TimeOut");
+                Print2ndStage("TimeOut", SolFirstStage);
             }
             cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
             cplexGrandSubP.solve();
@@ -481,7 +482,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<int>&vin
             else{
                 GlobalIte2ndStage += Ite2ndS;
                 tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-                Print2ndStage("TimeOut");
+                Print2ndStage("TimeOut", SolFirstStage);
             }
         }
         else{
@@ -649,16 +650,17 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     else{
         SPMIP_Obj = cplexGrandSubP.getObjValue();
         SPMIP_Obj = round(SPMIP_Obj);
-        if (SPMIP_Obj >= TPMIP_Obj){
-            OptFailedArcs = FailedArcs;
-            OptFailedVertices = FailedVertices;
-            return true;
-        }
 
         IloNumArray cyvar_sol(env, Cycles2ndTo3rd.size());
         IloNumArray chvar_sol(env, Chains2ndTo3rd.size());
         cplexGrandSubP.getValues(cyvar_sol,cyvar);
         cplexGrandSubP.getValues(chvar_sol,chvar);
+        
+        if (SPMIP_Obj >= TPMIP_Obj){
+            OptFailedArcs = FailedArcs;
+            OptFailedVertices = FailedVertices;
+            return true;
+        }
         
 //        cout << "Sol. 2nd. Phase: " << endl;
 //        for (int i = 0; i < cyvar_sol.getSize(); i++){
@@ -715,13 +717,13 @@ bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
     return false;
     
 }
-void Problem::GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniqueEx){
+void Problem::GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniqueEx, vector<IndexGrandSubSol>&SolFirstStage){
     // Create model
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     if (LeftTime < 0){
         GlobalIte2ndStage += Ite2ndS;
         tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-        Print2ndStage("TimeOut");
+        Print2ndStage("TimeOut", SolFirstStage);
     }
     IloModel GrandSubProbAux(env);
     IloCplex cplexGrandAux(GrandSubProbAux);
@@ -879,7 +881,7 @@ void Problem::GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniq
     else{
         GlobalIte2ndStage += Ite2ndS;
         tTotal2ndS += (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
-        Print2ndStage("TimeOut");
+        Print2ndStage("TimeOut", SolFirstStage);
     }
     GrandSubProbAux.end();
     cplexGrandAux.end();
@@ -1422,7 +1424,7 @@ bool NeededElement(vector<int>&uncoveredc, coveringElements& Ele){
     
     return false;
 }
-bool Problem::Heuristcs2ndPH(){
+bool Problem::Heuristcs2ndPH(vector<IndexGrandSubSol>&SolFirstStage){
     bool another = false, keepgoing = true, complete = false;
     int UsedArcs = 0;
     int UsedVertices = 0, ele;
@@ -1479,7 +1481,7 @@ bool Problem::Heuristcs2ndPH(){
                     failedArcs.push_back(scenarioHeuristics[i]);
                 }
             }
-            ans = UnMVtxdueToVtx(failedVxt, failedArcs, vinFirstStage, auxCov[ele].first);
+            ans = UnMVtxdueToVtx(failedVxt, failedArcs, vinFirstStage, auxCov[ele].first, SolFirstStage);
         }
         if (ans == true){
             // Add element to scenario
@@ -1523,6 +1525,7 @@ bool Problem::Heuristcs2ndPH(){
         }
         else{
             Eleaux[auxCov[ele].first].set_state(true);//true so that it is not selected
+            NumDominatedS++;
         }
         if (keepgoing == false) {
             complete = true;
@@ -1613,7 +1616,7 @@ bool IsxinChain(int v, Chain c){
     }
     return false;
 }
-bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs, vector<int> vinFirstStage, pair<int,int> origin){
+bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs, vector<int> vinFirstStage, pair<int,int> origin, vector<IndexGrandSubSol>&SolFirstStage){
     //Build Adjacency List
     IloNumArray2 AdjaList (env);
     //Check whether vertex it->first fails naturally due to another vertex failure
@@ -1664,7 +1667,7 @@ bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>&
             InitializeVertexinSolChain(vinFirstStage, VertexinSolChain, AdjaList);
         }
         vector<Chain>ChainResult;
-        ChainResult = FindChains(VertexinSolChain, Altruists, ChainStarters, true);
+        ChainResult = FindChains(VertexinSolChain, Altruists, ChainStarters, true, SolFirstStage);
         if (ChainResult[0].Vnodes.size() == 0){
             return false;
         }
@@ -1770,7 +1773,7 @@ IloNumArray2 Problem::BuildAdjaListVtxChains(vector<int> delete_vertex, vector<p
     return AdjaList;
 }
 ////////////////////Column Generation//////////////////
-bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar){
+bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar, vector<IndexGrandSubSol>&SolFirstStage){
     
     //Create model
     IloEnv env;
@@ -1778,7 +1781,7 @@ bool Problem::ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar)
     IloCplex Colcplex(ColGen);
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     if (LeftTime < 0){
-        Print2ndStage("TimeOut");
+        Print2ndStage("TimeOut", SolFirstStage);
     }
     Colcplex.setOut(env.getNullStream());
     Colcplex.setParam(IloCplex::RootAlg, 1);

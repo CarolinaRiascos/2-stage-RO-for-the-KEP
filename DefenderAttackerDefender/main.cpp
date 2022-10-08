@@ -11,29 +11,29 @@
 
 
 int main(int argc, const char * argv[]) { // cuatro parámetros ojo!!!
-    if (argc != 12){
-        cout <<"Not enough parameters. They must be 12." << endl;
+    if (argc != 11){
+        cout <<"Not enough parameters. They must be 11." << endl;
         return -1;
     }
     
     //List of arguments
-    string FolderName = argv[1];
-    string FileName = argv[2];
-    stringstream str; str << argv[3];
+    string FilePath = argv[1];
+    //string FileName = argv[2];
+    stringstream str; str << argv[2];
     IloInt CycleLength; str >> CycleLength;
-    str.clear(); str << argv[4];
+    str.clear(); str << argv[3];
     IloInt ChainLength; str >> ChainLength;
-    str.clear(); str << argv[5];
+    str.clear(); str << argv[4];
     IloInt VertexBudget; str >> VertexBudget;
-    str.clear(); str << argv[6];
+    str.clear(); str << argv[5];
     IloInt ArcBudget; str >> ArcBudget;
-    string RecoursePolicy = argv[7];
-    string THP_Method = argv[8];
-    string THP_Bound = argv[9];
-    string WhereItisRun = argv[10];
-    str.clear(); str << argv[11];
+    string RecoursePolicy = argv[6];
+    string THP_Method = argv[7];
+    string THP_Bound = argv[8];
+    string OutputPath = argv[9];
+    str.clear(); str << argv[10];
     IloNum TimeLimit; str >> TimeLimit;
-    Problem P(FolderName, FileName, CycleLength, ChainLength, RecoursePolicy, THP_Method, THP_Bound, VertexBudget, ArcBudget, WhereItisRun, TimeLimit);
+    Problem P(FilePath, CycleLength, ChainLength, RecoursePolicy, THP_Method, THP_Bound, VertexBudget, ArcBudget, OutputPath, TimeLimit);
     P.ProgramStart = clock();
     
     cout << "Start reading" << endl;

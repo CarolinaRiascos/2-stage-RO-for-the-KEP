@@ -21,7 +21,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
     SampleCols2ndStage2(Chains2ndStage, Cycles2ndStage, SolFirstStage);
     
     //Get selected vertices
-    vector<int>ListSelVertices = GetSelVertices(SolFirstStage);
+    vector<int>ListSelVertices = GetSelPairs(SolFirstStage);
     
     //Create cycle variables
     cyvar = IloNumVarArray(env, Cycles2ndTo3rd.size(), 0, 1, ILOINT);
@@ -128,7 +128,7 @@ void Problem::GrandSubProbMaster2(vector<Cycles>&Cycles2ndStage, vector<Chain>&C
             arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
             cplexGrandSubP.getValues(arc_sol[f],arc[f]);
         }
-        THPMIP(Cycles2ndStage, Chains2ndStage, ListSelVertices);
+        THPMIP(Cycles2ndStage, Chains2ndStage, SolFirstStage);
     }
 
 }
