@@ -69,7 +69,7 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStag
     file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << THP_Bound << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << '\t' << IteOptP << '\t' << IteOptPIte1stis1 << '\t' << tTotalOptP << '\t' << OutforInfeas << '\t' << OutforBound << '\t' << tTotalFindingCyCh << '\t' << NumDominatedS << endl;
     
     cout << "First-stage solution:";
-    int ncy, nch = 0;
+    int ncy = 0; int nch = 0;
     for (int i = 0; i < SolFirstStage.size(); i++){
         cout << endl;
         if (SolFirstStage[i].get_cc()[0] < Pairs){
@@ -84,8 +84,24 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStag
             cout << SolFirstStage[i].get_cc()[j] + 1 << "\t";
         }
     }
+    cout << endl << "Recourse solution: " << endl;
+    ncy = 0; nch = 0;
+    for (int i = 0; i < RecoMatching.size(); i++){
+        cout << endl;
+        if (RecoMatching[i][0] < Pairs){
+            ncy++;
+            cout << "Cycle " << to_string(ncy) << ":" << "\t";
+        }
+        else{
+            nch++;
+            cout << "Chain " << to_string(nch) << ":" << "\t";
+        }
+        for (int j = 0; j < RecoMatching[i].size(); j++){
+            cout << RecoMatching[i][j] + 1 << "\t";
+        }
+    }
     
-    cout << to_string(LeftTime) + ": Results printed" << endl;
+    cout << endl << to_string(LeftTime) + ": Results printed" << endl;
     
     file.close();
     exit(0);

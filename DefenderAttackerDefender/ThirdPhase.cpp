@@ -305,7 +305,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         else if (SPMIP_Obj == FPMIP_Obj){
             cout << to_string(LeftTime) + ": THP: Optimal robust solution found" << endl;
             //Robust Solution found
-            Print2ndStage("Optimal", SolFirstStageNew);
+            Print2ndStage("Optimal", SolFirstStage);
         }
         else{
             cout << endl << "This should never happen";
@@ -371,6 +371,20 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
         OptFailedArcs = FailedArcs;
         OptFailedVertices = FailedVertices;
         Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
+        //Store recourse solution
+        RecoMatching.clear();
+        for (int i = 0; i < Cycles3rdSol.size(); i++){
+            RecoMatching.push_back(vector<int>());
+            for (int j = 0; j < Cycles3rdSol[i].get_c().size(); j++){
+                RecoMatching.back().push_back(Cycles3rdSol[i].get_c()[j]);
+            }
+        }
+        for (int i = 0; i < Chains3rdSol.size(); i++){
+            RecoMatching.push_back(vector<int>());
+            for (int j = 0; j < Chains3rdSol[i].Vnodes.size(); j++){
+                RecoMatching.back().push_back(Chains3rdSol[i].Vnodes[j].vertex);
+            }
+        }
         if (Cycles3rdSol.size() == 0 && Chains3rdSol.size() == 0){
             SPMIP_Obj = LOWEST_TPMIP_Obj;
             return true; // No recourse solution found;
@@ -1212,12 +1226,18 @@ void Problem::Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3r
     Chains3rdSol.clear();
     for (int i = 0; i < cyvar_sol3rd.getSize(); i++){
         if (cyvar_sol3rd[i] > 0.9){
-            Cycles3rdSol.push_back(Cycles2ndStage[i]);
+            map<int,bool>::iterator find0 = ub_tcyvar.find(i);
+            if (find0 == ub_tcyvar.end()){
+                Cycles3rdSol.push_back(Cycles2ndStage[i]);
+            }
         }
     }
     for (int i = 0; i < chvar_sol3rd.getSize(); i++){
         if (chvar_sol3rd[i] > 0.9){
-            Chains3rdSol.push_back(Chains2ndStage[i]);
+            map<int,bool>::iterator find0 = ub_tchvar.find(i);
+            if (find0 == ub_tchvar.end()){
+                Chains3rdSol.push_back(Chains2ndStage[i]);
+            }
         }
     }
 }

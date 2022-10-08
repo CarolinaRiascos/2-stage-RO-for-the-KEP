@@ -301,7 +301,7 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Inde
             }
             else if (SPMIP_Obj == FPMIP_Obj){
                 //Robust Solution found
-                Print2ndStage("Optimal", SolFirstStageNew);
+                Print2ndStage("Optimal", SolFirstStage);
             }
             else{
                 cout << endl << "This should never happen";
@@ -692,9 +692,19 @@ void Problem::BendersPICEF(vector<Cycles>& Cycles2ndStage, vector<IndexGrandSubS
             tTotalRecoMIP += (clock() - tStartRecoMIP)/double(CLOCKS_PER_SEC);
             tStartMP2ndPH = clock();
             
+            
             if (TPMIP_Obj - SPMIP_Obj <= 0.0002){
                 OptFailedArcs = FailedArcs;
                 OptFailedVertices = FailedVertices;
+                //Store recourse solution
+                RecoMatching.clear();
+                RecoMatching = vChains;
+                for (int i = 0; i < KEPSols2ndStage.back().cycles.size(); i++){
+                    RecoMatching.push_back(vector<int>());
+                    for (int j = 0; j < Cycles2ndStage[Cycles2ndTo3rd[KEPSols2ndStage.back().cycles[i]]].get_c().size(); j++){
+                        RecoMatching.back().push_back(Cycles2ndStage[Cycles2ndTo3rd[KEPSols2ndStage.back().cycles[i]]].get_c()[j]);
+                    }
+                }
                 break;
             }
             else if (SPMIP_Obj <= TPMIP_Obj){
