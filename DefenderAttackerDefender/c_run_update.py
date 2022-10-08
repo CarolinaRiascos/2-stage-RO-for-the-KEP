@@ -30,6 +30,11 @@ def main() -> None:
         default=max(1, multiprocessing.cpu_count() - 2),
         help="Number of processes to use",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+    )
     args = parser.parse_args()
 
     print(f"Loading configuration file {args.config_file}")
@@ -43,10 +48,14 @@ def main() -> None:
         for s in range(0, 30):  # Seeds
             for n in range(0, 10):  # NDDs
                 instance_file = os.path.join(
-                    config.run_setup.InstancesDir, f"CarvalhoRO2021_{s}_{name}_{n}.txt"
+                    config.run_setup.InstancesDir,
+                    name,
+                    f"CarvalhoRO2021_{s}_{name}_{n}.txt",
                 )
                 if os.path.isfile(instance_file):
-                    instances_folders.append(instance_file)
+                    instances_folders.append(
+                        (instance_file, f"CarvalhoRO2021_{s}_{name}_{n}")
+                    )
         assert len(instances_folders) > 0
         instance_path[name] = instances_folders
     assert name is not None, "No instance folders found"
@@ -75,14 +84,15 @@ def main() -> None:
     print("\n".join([str(s) for s in sweep_options]))
     os.makedirs(config.run_setup.LogPrintFolder + "/stderr", exist_ok=True)
     os.makedirs(config.run_setup.LogPrintFolder + "/stdout", exist_ok=True)
+    os.makedirs(os.path.dirname(config.run_setup.OutputPath), exist_ok=True)
     for options_list in sweep_options:
         for n in config.run_setup.InstanceFolders:
-            for i in instance_path[n]:
+            for full_path, file_name in instance_path[n]:
                 commands.append(
                     (
                         [
                             config.run_setup.exe,
-                            i,
+                            full_path,
                             *options_list,
                             config.run_setup.OutputPath,
                             str(config.run_setup.TimeLimit),
@@ -90,13 +100,14 @@ def main() -> None:
                         os.path.join(
                             config.run_setup.LogPrintFolder,
                             "stdout",
-                            f"{n}_{i}_{'_'.join(options_list)}_{config.run_setup.OutputPath}.txt",
+                            f"{n}_{file_name}_{'_'.join(options_list)}.txt",
                         ),
                         os.path.join(
                             config.run_setup.LogPrintFolder,
                             "stderr",
-                            f"{n}_{i}_{'_'.join(options_list)}_{config.run_setup.OutputPath}.txt",
+                            f"{n}_{file_name}_{'_'.join(options_list)}.txt",
                         ),
+                        args.dry_run,
                     )
                 )
     print(f"setup {len(commands)} commands")
@@ -107,21 +118,19 @@ def main() -> None:
 
 
 def run_command(
-    command: typing.List[str], output_path_stdout: str, output_path_stderr: str
+    command: typing.List[str],
+    output_path_stdout: str,
+    output_path_stderr: str,
+    dry_run: bool,
 ) -> None:
-    print(f"Writing to: {output_path_stdout}, Running command: {' '.join(command)}")
-
-    with open(output_path_stdout, "wb") as fstd, open(output_path_stderr, "wb") as ferr:
-        sub_proc = subprocess.run(command, stderr=ferr, stdout=fstd, shell=False)
-    if False:
-        stdout_str = sub_proc.stdout.decode("utf-8")
-        if "Instance's files not found." not in stdout_str and len(stdout_str) > 0:
-            with open(output_path_stdout, "wt") as f:
-                f.write(stdout_str)
-            print(f"Done: {' '.join(command)}")
-        stderr_str = sub_proc.stderr.decode("utf-8")
-        if len(stderr_str) > 0:
-            f.write(stderr_str)
+    print(
+        f"Writing to: {command[-2]}, stdout: {output_path_stdout}, Running command: {' '.join(command)}"
+    )
+    if not dry_run:
+        with open(output_path_stdout, "wb") as fstd, open(
+            output_path_stderr, "wb"
+        ) as ferr:
+            subprocess.run(command, stderr=ferr, stdout=fstd, shell=False)
 
 
 class SweepOptions(pydantic.BaseModel):
