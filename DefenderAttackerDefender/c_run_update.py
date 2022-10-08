@@ -82,7 +82,6 @@ def main() -> None:
                     (
                         [
                             config.run_setup.exe,
-                            n,
                             i,
                             *options_list,
                             config.run_setup.OutputPath,
