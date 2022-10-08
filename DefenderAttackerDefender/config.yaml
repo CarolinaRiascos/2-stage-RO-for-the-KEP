@@ -1,0 +1,36 @@
+%YAML 1.2
+---
+sweep_options:
+  Cycle_Length:
+      - 3
+      - 4
+  Chain_Length:
+      - 3
+      - 4
+  VertexBudget:
+      #- 1
+      #- 2
+      - 4
+  ArcBudget:
+      - 0
+      #- 1
+      #- 2
+      #- 3
+  Policy:
+      - "Full"
+  Formulation:
+      - "Covering"
+      - "DoubleCovering"
+      #- "Benders"
+      #- "BendersPICEF"
+  LowerBound:
+      - "Strong"
+
+run_setup:
+  OutputPath: "/home/criascos/codes/2StageRO/Output/"
+  TimeLimit: 3600
+  InstanceFolders:
+    - "100"
+  InstancesDir: "/home/criascos/codes/0TestInstances/ROCarvalho2021/"
+  exe: "./2StageROThisWork"
+  LogPrintFolder: "/home/criascos/codes/2StageRO/Output/ROLog"

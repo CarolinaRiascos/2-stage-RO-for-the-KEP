@@ -11,24 +11,25 @@ command = []
 
 Cycle_Length = ["3"]#, "4"
 Chain_Length = ["3"]#, "4"
-VertexBudget = ["1", "2", "3"]#,  
+VertexBudget = ["3"]#,  
 ArcBudget = ["0"]#, "1", "2", "3"  
 Policy = "Full" #seconds
-Formulation = ["Covering","Literature"]#  
-WhereToRun = "PC"
+Formulation = ["Covering"]# , "Literature"
+WhereToRun = "Server"
+TimeLimit = "3600"
 
-InstanceFolder = ["Kidney_Matching_17_1", "Kidney_Matching_18_2",  "Kidney_Matching_33_1", "Kidney_Matching_35_3", "Kidney_Matching_36_4", "Kidney_Matching_67_3", "Kidney_Matching_70_6",  "Kidney_Matching_73_9", "Kidney_Matching_134_6"]# , "Kidney_Matching_140_12", "Kidney_Matching_147_19","Kidney_Matching_268_12", "Kidney_Matching_281_25", "Kidney_Matching_294_38", "Kidney_Matching_537_25", "Kidney_Matching_563_51", "Kidney_Matching_588_76", "Kidney_Matching_1075_51", "Kidney_Matching_1126_102","Kidney_Matching_1177_153","Kidney_Matching_2150_102", "Kidney_Matching_2252_204","Kidney_Matching_2355_307"
+InstanceFolder = ["Kidney_Matching_17_1", "Kidney_Matching_67_3"]#, "Kidney_Matching_70_6",  "Kidney_Matching_73_9", "Kidney_Matching_134_6", "Kidney_Matching_18_2",  "Kidney_Matching_33_1", "Kidney_Matching_35_3", "Kidney_Matching_36_4", "Kidney_Matching_140_12", "Kidney_Matching_147_19","Kidney_Matching_268_12", "Kidney_Matching_281_25", "Kidney_Matching_294_38", "Kidney_Matching_537_25", "Kidney_Matching_563_51", "Kidney_Matching_588_76", "Kidney_Matching_1075_51", "Kidney_Matching_1126_102","Kidney_Matching_1177_153","Kidney_Matching_2150_102", "Kidney_Matching_2252_204","Kidney_Matching_2355_307"
 
 InstanceName = [
     ["KP_Num11_N17_A1.txt","KP_Num12_N17_A1.txt","KP_Num13_N17_A1.txt","KP_Num14_N17_A1.txt","KP_Num15_N17_A1.txt","KP_Num16_N17_A1.txt","KP_Num17_N17_A1.txt","KP_Num18_N17_A1.txt","KP_Num19_N17_A1.txt","KP_Num20_N17_A1.txt"],
-    ["KP_Num21_N18_A2.txt","KP_Num22_N18_A2.txt","KP_Num23_N18_A2.txt","KP_Num24_N18_A2.txt","KP_Num25_N18_A2.txt","KP_Num26_N18_A2.txt","KP_Num27_N18_A2.txt","KP_Num28_N18_A2.txt","KP_Num29_N18_A2.txt","KP_Num30_N18_A2.txt"],
-    ["KP_Num41_N33_A1.txt","KP_Num42_N33_A1.txt","KP_Num43_N33_A1.txt","KP_Num44_N33_A1.txt","KP_Num45_N33_A1.txt","KP_Num46_N33_A1.txt","KP_Num47_N33_A1.txt","KP_Num48_N33_A1.txt","KP_Num49_N33_A1.txt","KP_Num50_N33_A1.txt"],
-    ["KP_Num51_N35_A3.txt","KP_Num52_N35_A3.txt","KP_Num53_N35_A3.txt","KP_Num54_N35_A3.txt","KP_Num55_N35_A3.txt","KP_Num56_N35_A3.txt","KP_Num57_N35_A3.txt","KP_Num58_N35_A3.txt","KP_Num59_N35_A3.txt","KP_Num60_N35_A3.txt"],
-    ["KP_Num61_N36_A4.txt","KP_Num62_N36_A4.txt","KP_Num63_N36_A4.txt","KP_Num64_N36_A4.txt","KP_Num65_N36_A4.txt","KP_Num66_N36_A4.txt","KP_Num67_N36_A4.txt","KP_Num68_N36_A4.txt","KP_Num69_N36_A4.txt","KP_Num70_N36_A4.txt"],
+    #["KP_Num21_N18_A2.txt","KP_Num22_N18_A2.txt","KP_Num23_N18_A2.txt","KP_Num24_N18_A2.txt","KP_Num25_N18_A2.txt","KP_Num26_N18_A2.txt","KP_Num27_N18_A2.txt","KP_Num28_N18_A2.txt","KP_Num29_N18_A2.txt","KP_Num30_N18_A2.txt"],
+    #["KP_Num41_N33_A1.txt","KP_Num42_N33_A1.txt","KP_Num43_N33_A1.txt","KP_Num44_N33_A1.txt","KP_Num45_N33_A1.txt","KP_Num46_N33_A1.txt","KP_Num47_N33_A1.txt","KP_Num48_N33_A1.txt","KP_Num49_N33_A1.txt","KP_Num50_N33_A1.txt"],
+    #["KP_Num51_N35_A3.txt","KP_Num52_N35_A3.txt","KP_Num53_N35_A3.txt","KP_Num54_N35_A3.txt","KP_Num55_N35_A3.txt","KP_Num56_N35_A3.txt","KP_Num57_N35_A3.txt","KP_Num58_N35_A3.txt","KP_Num59_N35_A3.txt","KP_Num60_N35_A3.txt"],
+    #["KP_Num61_N36_A4.txt","KP_Num62_N36_A4.txt","KP_Num63_N36_A4.txt","KP_Num64_N36_A4.txt","KP_Num65_N36_A4.txt","KP_Num66_N36_A4.txt","KP_Num67_N36_A4.txt","KP_Num68_N36_A4.txt","KP_Num69_N36_A4.txt","KP_Num70_N36_A4.txt"],
     ["KP_Num81_N67_A3.txt","KP_Num82_N67_A3.txt","KP_Num83_N67_A3.txt","KP_Num84_N67_A3.txt","KP_Num85_N67_A3.txt","KP_Num86_N67_A3.txt","KP_Num87_N67_A3.txt","KP_Num88_N67_A3.txt","KP_Num89_N67_A3.txt","KP_Num90_N67_A3.txt"],
-    ["KP_Num100_N70_A6.txt","KP_Num91_N70_A6.txt","KP_Num92_N70_A6.txt","KP_Num93_N70_A6.txt","KP_Num94_N70_A6.txt","KP_Num95_N70_A6.txt","KP_Num96_N70_A6.txt","KP_Num97_N70_A6.txt","KP_Num98_N70_A6.txt","KP_Num99_N70_A6.txt"],
-    ["KP_Num101_N73_A9.txt","KP_Num102_N73_A9.txt","KP_Num103_N73_A9.txt","KP_Num104_N73_A9.txt","KP_Num105_N73_A9.txt","KP_Num106_N73_A9.txt","KP_Num107_N73_A9.txt","KP_Num108_N73_A9.txt","KP_Num109_N73_A9.txt","KP_Num110_N73_A9.txt"],
-    ["KP_Num121_N134_A6.txt","KP_Num122_N134_A6.txt","KP_Num123_N134_A6.txt","KP_Num124_N134_A6.txt","KP_Num125_N134_A6.txt","KP_Num126_N134_A6.txt","KP_Num127_N134_A6.txt","KP_Num128_N134_A6.txt","KP_Num129_N134_A6.txt","KP_Num130_N134_A6.txt"]
+    #["KP_Num100_N70_A6.txt","KP_Num91_N70_A6.txt","KP_Num92_N70_A6.txt","KP_Num93_N70_A6.txt","KP_Num94_N70_A6.txt","KP_Num95_N70_A6.txt","KP_Num96_N70_A6.txt","KP_Num97_N70_A6.txt","KP_Num98_N70_A6.txt","KP_Num99_N70_A6.txt"],
+    #["KP_Num101_N73_A9.txt","KP_Num102_N73_A9.txt","KP_Num103_N73_A9.txt","KP_Num104_N73_A9.txt","KP_Num105_N73_A9.txt","KP_Num106_N73_A9.txt","KP_Num107_N73_A9.txt","KP_Num108_N73_A9.txt","KP_Num109_N73_A9.txt","KP_Num110_N73_A9.txt"],
+    #["KP_Num121_N134_A6.txt","KP_Num122_N134_A6.txt","KP_Num123_N134_A6.txt","KP_Num124_N134_A6.txt","KP_Num125_N134_A6.txt","KP_Num126_N134_A6.txt","KP_Num127_N134_A6.txt","KP_Num128_N134_A6.txt","KP_Num129_N134_A6.txt","KP_Num130_N134_A6.txt"]
     #["KP_Num131_N140_A12.txt","KP_Num132_N140_A12.txt","KP_Num133_N140_A12.txt","KP_Num134_N140_A12.txt","KP_Num135_N140_A12.txt","KP_Num136_N140_A12.txt","KP_Num137_N140_A12.txt","KP_Num138_N140_A12.txt","KP_Num139_N140_A12.txt","KP_Num140_N140_A12.txt"],
     #["KP_Num141_N147_A19.txt","KP_Num142_N147_A19.txt","KP_Num143_N147_A19.txt","KP_Num144_N147_A19.txt","KP_Num145_N147_A19.txt","KP_Num146_N147_A19.txt","KP_Num147_N147_A19.txt","KP_Num148_N147_A19.txt","KP_Num149_N147_A19.txt","KP_Num150_N147_A19.txt"],#
     #["KP_Num161_N268_A12.txt","KP_Num162_N268_A12.txt","KP_Num163_N268_A12.txt","KP_Num164_N268_A12.txt","KP_Num165_N268_A12.txt","KP_Num166_N268_A12.txt","KP_Num167_N268_A12.txt","KP_Num168_N268_A12.txt","KP_Num169_N268_A12.txt","KP_Num170_N268_A12.txt"],
@@ -46,8 +47,8 @@ InstanceName = [
    ] #
 
 
-exe = "./DefenderAttackerDefender"
-LogPrintFolder ="/home/criascos/codes/2StageRO/Output/ROLog"
+exe = "./2StageROThisWork"
+LogPrintFolder = "/home/criascos/codes/2StageRO/Output/ROLog"
 FileNames = []
 
 #for f in Formulation:
@@ -59,7 +60,7 @@ for v in VertexBudget:
                     for n in range(len(InstanceFolder)):
                         for i in InstanceName[n]:
                             FileNames.append(i)
-                            command = command + [ exe + " " + InstanceFolder[n] + " " + i + " " + k + " " + l + " " + v + " " + a + " " + Policy + " " + c + " " + WhereToRun]#+ " > " + LogPrintFolder + "_" + c + "_" + i + "_K" + k + "_L" + l + ".txt"
+                            command = command + [ exe + " " + InstanceFolder[n] + " " + i + " " + k + " " + l + " " + v + " " + a + " " + Policy + " " + c + " " + WhereToRun + " " + TimeLimit]#+ " > " + LogPrintFolder + "_" + c + "_" + i + "_K" + k + "_L" + l + ".txt"
                             "./2StageROThisWork" "Kidney_Matching_17_1" "KP_Num11_N17_A1.txt" "3" "3" "1" "0" "Full" "Literature" "Server"
 
 for r in range(len(command)):
