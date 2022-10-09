@@ -68,8 +68,11 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStage
     
     file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << THP_Bound << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << '\t' << IteOptP << '\t' << IteOptPIte1stis1 << '\t' << tTotalOptP << '\t' << OutforInfeas << '\t' << OutforBound << '\t' << tTotalFindingCyCh << '\t' << NumDominatedS << endl;
     
+
     cout << "status:" << '\t' << status << endl;
-    cout << "RO objective value: " << '\t' << FPMIP_Obj << endl;
+    cout << "Vertex budget:" << '\t' << MaxVertexFailures << endl;
+    cout << "Arc budget:" << '\t' << MaxArcFailures << endl;
+    cout << "RO objective value:" << '\t' << FPMIP_Obj << endl;
     
     cout << "First-stage solution:";
     int ncy = 0; int nch = 0; int total = 0;
@@ -90,20 +93,20 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStage
         }
     }
     
-    cout << endl << "worst case, failed vertices: " << '\t';
+    cout << endl << "worst case, failed vertices:" << '\t';
     for (auto it = scenarios[worst_sce].begin(); it != scenarios[worst_sce].end(); it++){
         if (it->first.first == -1){
             cout <<  it->first.second + 1 << '\t';
         }
     }
-    cout << endl << "worst case, failed arcs: " << '\t';
+    cout << endl << "worst case, failed arcs:" << '\t';
     for (auto it = scenarios[worst_sce].begin(); it != scenarios[worst_sce].end(); it++){
         if (it->first.first != -1){
             cout <<  "(" << it->first.first + 1 << "," << it->first.second + 1 << ")" << '\t';
         }
     }
     
-    cout << endl << "Recourse solution: ";
+    cout << endl << "Recourse solution:";
     ncy = 0; nch = 0;
     for (int i = 0; i < RecoMatching.size(); i++){
         cout << endl;
@@ -121,7 +124,7 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStage
         cout << "p:" << '\t' << RecoMatching[i].get_w() ;
     }
     
-    cout << endl << "Det. objective value: " << '\t' << total << endl;
+    cout << endl << "Det. objective value:" << '\t' << total << endl;
     cout << endl << to_string(LeftTime) + ": Results printed" << endl;
     
     file.close();
