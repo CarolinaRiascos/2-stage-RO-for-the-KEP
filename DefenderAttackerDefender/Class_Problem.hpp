@@ -296,6 +296,7 @@ public:
     vector<int> GrandSubOptScenario; //Interdected cycles and chains
     //Grand Problem
     vector<map<pair<int,int>, bool>>scenarios;
+    int worst_sce = 0;
     
     //Grand SubProblem
     IloModel GrandSubProb;
@@ -366,6 +367,7 @@ public:
     void SampleCols2ndStage(vector<Chain>& Chains, vector<Cycles>&Cycles, vector<IndexGrandSubSol>&SolFirstStage);
     vector<int>GetSelPairs(vector<IndexGrandSubSol>&SolFirstStage);
     void GrandSubProMastermAux(vector<KEPSol>KEPSols, vector<KEPSol>KEPUniqueEx,vector<IndexGrandSubSol>&SolFirstStage);
+    void GetRecourseSolution (IloNumArray2 y_ju_sol, IloNumArray2 X_cu_sol, IloNumArray4 E_ijlu_sol, vector<map<pair<int,int>, bool>>sce);
     
     vector<int> Complete_ActiveCCSubP_LB(vector<int>PosNewCycles);
     void UpdateSNPSol(IloNumArray& r_sol, IloNum GrandSubObj);
@@ -472,7 +474,7 @@ public:
     IloExpr exprVxtArcsCH;
     IloExpr exprBound;
     
-    void Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStage);
+    void Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStagef);
     
     void HeadingCF();
     void PrintCF();

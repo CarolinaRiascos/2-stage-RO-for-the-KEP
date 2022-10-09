@@ -52,7 +52,7 @@ int Problem::Reading() {
     
     return 1;
 }
-void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStage){
+void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStagef){
     //Print summary of results
     //"/Users/caroriascos/Documents/PhdProjectUofT/XcodeTests/Output/LagrangianBB/LagResults.txt"
     cout << to_string(LeftTime) << ": " <<  status << endl;
@@ -68,11 +68,46 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStag
     
     file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << THP_Bound << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << '\t' << IteOptP << '\t' << IteOptPIte1stis1 << '\t' << tTotalOptP << '\t' << OutforInfeas << '\t' << OutforBound << '\t' << tTotalFindingCyCh << '\t' << NumDominatedS << endl;
     
+    cout << "status:" << '\t' << status << endl;
+    cout << "RO objective value: " << '\t' << FPMIP_Obj << endl;
+    
     cout << "First-stage solution:";
-    int ncy = 0; int nch = 0;
-    for (int i = 0; i < SolFirstStage.size(); i++){
+    int ncy = 0; int nch = 0; int total = 0;
+    for (int i = 0; i < SolFirstStagef.size(); i++){
         cout << endl;
-        if (SolFirstStage[i].get_cc()[0] < Pairs){
+        if (SolFirstStagef[i].get_cc()[0] < Pairs){
+            ncy++;
+            total += SolFirstStagef[i].get_cc().size();
+            cout << "Cycle " << to_string(ncy) << ":" << "\t";
+        }
+        else{
+            nch++;
+            total += SolFirstStagef[i].get_cc().size() - 1;
+            cout << "Chain " << to_string(nch) << ":" << "\t";
+        }
+        for (int j = 0; j < SolFirstStagef[i].get_cc().size(); j++){
+            cout << SolFirstStagef[i].get_cc()[j] + 1 << "\t";
+        }
+    }
+    
+    cout << endl << "worst case, failed vertices: " << '\t';
+    for (auto it = scenarios[worst_sce].begin(); it != scenarios[worst_sce].end(); it++){
+        if (it->first.first == -1){
+            cout <<  it->first.second << '\t';
+        }
+    }
+    cout << endl << "worst case, failed arcs: " << '\t';
+    for (auto it = scenarios[worst_sce].begin(); it != scenarios[worst_sce].end(); it++){
+        if (it->first.first != -1){
+            cout <<  "(" << it->first.first << "," << it->first.second << ")" << '\t';
+        }
+    }
+    
+    cout << endl << "Recourse solution: ";
+    ncy = 0; nch = 0;
+    for (int i = 0; i < RecoMatching.size(); i++){
+        cout << endl;
+        if (RecoMatching[i].get_c()[0] < Pairs){
             ncy++;
             cout << "Cycle " << to_string(ncy) << ":" << "\t";
         }
@@ -80,27 +115,13 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStag
             nch++;
             cout << "Chain " << to_string(nch) << ":" << "\t";
         }
-        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
-            cout << SolFirstStage[i].get_cc()[j] + 1 << "\t";
+        for (int j = 0; j < RecoMatching[i].get_c().size(); j++){
+            cout << RecoMatching[i].get_c()[j] + 1 << "\t";
         }
+        cout << "p:" << '\t' << RecoMatching[i].get_w() ;
     }
-//    cout << endl << "Recourse solution: " << endl;
-//    ncy = 0; nch = 0;
-//    for (int i = 0; i < RecoMatching.size(); i++){
-//        cout << endl;
-//        if (RecoMatching[i][0] < Pairs){
-//            ncy++;
-//            cout << "Cycle " << to_string(ncy) << ":" << "\t";
-//        }
-//        else{
-//            nch++;
-//            cout << "Chain " << to_string(nch) << ":" << "\t";
-//        }
-//        for (int j = 0; j < RecoMatching[i].size(); j++){
-//            cout << RecoMatching[i][j] + 1 << "\t";
-//        }
-//    }
     
+    cout << endl << "Det. objective value: " << '\t' << total << endl;
     cout << endl << to_string(LeftTime) + ": Results printed" << endl;
     
     file.close();

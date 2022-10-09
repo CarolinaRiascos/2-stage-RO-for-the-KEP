@@ -249,7 +249,7 @@ NumVar3D Create3DBin (IloEnv& env, IloNumArray2 Adja, int L, string name){
         for (int j = 0; j < Adja[i].getSize(); j++) {
             Aux[i][j] = IloNumVarArray(env, L, 0, 1, ILOINT);
             for (int l = 0; l < L; l++) {
-                string auxName = name + "_" + to_string(i + 1) + "_" + to_string(int(Adja[i][j])) + "_" + to_string(l);
+                string auxName = name + "_" + to_string(i) + "_" + to_string(int(Adja[i][j] - 1)) + "_" + to_string(l);
                 Aux[i][j][l].setName(auxName.c_str());
             }
         }
@@ -537,6 +537,68 @@ void CreateCon7k(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<map<pair<
     }
     
 }
+bool vinFirstSol(vector<int> sol, int v){
+    for (int i = 0; i < sol.size(); i++){
+        if (v == sol[i]) return true;
+    }
+    return false;
+}
+void Problem::GetRecourseSolution (IloNumArray2 y_ju_sol, IloNumArray2 X_cu_sol, IloNumArray4 E_ijlu_sol, vector<map<pair<int,int>, bool>>sce){
+    RecoMatching.clear();
+    double target_obj = 0;
+    double npairs = 0;
+    vector<int>target_pairs;
+    for (int u = 0; u < sce.size(); u++){
+        //cout << endl;
+        target_obj = 0;
+        target_pairs.clear();
+        for (int j = 0; j < y_ju_sol.getSize(); j++){
+            if (y_ju_sol[j][u] > 0.9){
+                //cout << Y_ju[j][u].getName() << '\t';
+                target_obj++;
+                target_pairs.push_back(j);
+            }
+        }
+        if (target_obj == FPMIP_Obj){
+            worst_sce = u;
+            break;
+        }
+    }
+    //Find cycles in recourse solution
+    for (int i = 0; i < X_cu_sol.getSize(); i++){
+        if (X_cu_sol[i][worst_sce] > 0.9){
+            npairs = 0;
+            //Get weight
+            for (int j = 0; j < ListCycles[i].get_c().size(); j++){
+                if (vinFirstSol(target_pairs, ListCycles[i].get_c()[j])) npairs++;
+            }
+            RecoMatching.push_back(Cycles(ListCycles[i].get_c(), npairs));
+        }
+    }
+    //Find chains in recourse solution
+    //Flatten E_ijlu_sol
+    IloNumArray3 E_ijl_sol(env, AdjacencyList.getSize());
+    for (int i = 0; i < AdjacencyList.getSize(); i++){
+        E_ijl_sol[i] = IloNumArray2(env, AdjacencyList[i].getSize());
+        for (int j = 0; j < AdjacencyList[i].getSize(); j++){
+            E_ijl_sol[i][j] = IloNumArray(env, ChainLength);
+            for (int l = 0; l < ChainLength; l++){
+                E_ijl_sol[i][j][l] = E_ijlu_sol[i][j][l][worst_sce];
+            }
+        }
+    }
+    //Get chains
+    vector<vector<int>>vChains;
+    vChains = GetChainsFrom1stStageSol(AdjacencyList,E_ijl_sol, Pairs, ChainLength);
+    for (int i = 0; i < vChains.size(); i++){
+        npairs = 0;
+        for (int j = 1; j < vChains[i].size(); j++){//Not counting the NDD
+            if (vinFirstSol(target_pairs, vChains[i][j])) npairs++;
+        }
+        RecoMatching.push_back(Cycles(vChains[i], npairs));
+    }
+    
+}
 //Retrieve cycles and chains
 vector<vector<int>> GetChainsFrom1stStageSol(IloNumArray2 AdjacencyList,IloNumArray3 ysol, int Pairs, int ChainLength){
     vector<vector<int>>vChains;
@@ -695,8 +757,32 @@ void Problem::ROBUST_KEP(){
     
     //Retrieve solution
     FPMIP_Obj = cplexRobust.getObjValue();
+    
+    ////////New recourse solution
+    IloNumArray2 y_ju_sol(env, Y_ju.getSize());
+    for (int i = 0; i < y_ju_sol.getSize(); i++){
+        y_ju_sol[i] = IloNumArray(env, Y_ju[i].getSize());
+        cplexRobust.getValues(y_ju_sol[i],Y_ju[i]);
+    }
+    IloNumArray2 X_cu_sol(env, ListCycles.size());
+    for (int i = 0; i < X_cu_sol.getSize(); i++){
+        X_cu_sol[i] = IloNumArray(env, X_cu[i].getSize());
+        cplexRobust.getValues( X_cu_sol[i],X_cu[i]);
+    }
+    IloNumArray4 E_ijlu_sol(env, AdjacencyList.getSize());
+    for (int i = 0; i < E_ijlu_sol.getSize(); i++){
+        E_ijlu_sol[i] = IloNumArray3 (env, E_ijlu[i].getSize());
+        for (int j = 0; j < E_ijlu_sol[i].getSize(); j++){
+            E_ijlu_sol[i][j] = IloNumArray2(env, E_ijlu[i][j].getSize());
+            for (int k = 0; k < E_ijl[i][j].getSize(); k++){
+                E_ijlu_sol[i][j][k] = IloNumArray(env, E_ijlu[i][j][k].getSize());
+                cplexRobust.getValues(E_ijlu_sol[i][j][k],E_ijlu[i][j][k]);
+            }
+        }
+    }
+    
+    /////////New first-stage solution
     vector<IndexGrandSubSol>SolFirstStage;
-
 //    cout << endl << "Cycles: " << endl;
     IloNumArray xsol(env, ListCycles.size());
     cplexRobust.getValues(xsol,X_c);
@@ -723,6 +809,9 @@ void Problem::ROBUST_KEP(){
     for (int i = 0; i < vChains.size(); i++){
         SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
     }
+    //Store solution
+    GetRecourseSolution (y_ju_sol, X_cu_sol, E_ijlu_sol, scenarios);
+    
     tTotal1stS += (clock() - tStart1stS)/double(CLOCKS_PER_SEC);
 
     
