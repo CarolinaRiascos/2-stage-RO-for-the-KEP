@@ -7,7 +7,7 @@
 //
 
 #include "ThirdPhase.hpp"
-void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage){
+void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>SolFirstStage){
     tStartRecoMIP = clock();
     vector<int> vinFirstStage = GetSelPairs(SolFirstStage);
     cout << to_string(LeftTime) + ": Third stage: GetScenario starting" << endl;
@@ -244,6 +244,31 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         cout << to_string(LeftTime) + ": THP: Retrieving first-stage solution" << endl;
         //////////////////Retrieve solution/////////////////////////
         FPMIP_Obj = cplexRobust.getObjValue();
+        
+        ////////New recourse solution
+        IloNumArray2 y_ju_sol(env, Y_ju.getSize());
+        for (int i = 0; i < y_ju_sol.getSize(); i++){
+            y_ju_sol[i] = IloNumArray(env, Y_ju[i].getSize());
+            cplexRobust.getValues(y_ju_sol[i],Y_ju[i]);
+        }
+        IloNumArray2 X_cu_sol(env, ListCycles.size());
+        for (int i = 0; i < y_ju_sol.getSize(); i++){
+            X_cu_sol[i] = IloNumArray(env, X_cu[i].getSize());
+            cplexRobust.getValues( X_cu_sol[i],X_cu[i]);
+        }
+        IloNumArray4 E_ijlu_sol(env, AdjacencyList.getSize());
+        for (int i = 0; i < E_ijlu_sol.getSize(); i++){
+            E_ijlu_sol[i] = IloNumArray3 (env, E_ijlu[i].getSize());
+            for (int j = 0; j < E_ijlu_sol[i].getSize(); j++){
+                E_ijlu_sol[i][j] = IloNumArray2(env, E_ijlu[i][j].getSize());
+                for (int k = 0; k < E_ijl[i][j].getSize(); k++){
+                    E_ijlu_sol[i][j][k] = IloNumArray(env, E_ijlu[i][j][k].getSize());
+                    cplexRobust.getValues(E_ijlu_sol[i][j][k],E_ijlu[i][j][k]);
+                }
+            }
+        }
+        
+        /////////New first-stage solution
         vector<IndexGrandSubSol>SolFirstStageNew;
         IloNumArray xsol(env, ListCycles.size());
         cplexRobust.getValues(xsol,X_c);
@@ -259,7 +284,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
                 esol[i][j] = IloNumArray(env, ChainLength);
                 cplexRobust.getValues(esol[i][j],E_ijl[i][j]);
                 for (int k = 0; k < E_ijl[i][j].getSize(); k++){
-                    //if (esol[i][j][k] > 0.9) cout << E_ijl[i][j][k].getName() << "\t";
+                    if (esol[i][j][k] > 0.9) cout << E_ijl[i][j][k].getName() << "\t";
                 }
             }
         }
@@ -331,7 +356,7 @@ vector<int> SelectConst2ndPh(vector<coverConst>&AllConst2ndPhase, vector<double>
     }
     return order;
 }
-bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGrandSubSol>&SolFirstStage){
+bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGrandSubSol>SolFirstStage){
         
     double Actual_THPObjective = 0;
     
@@ -342,6 +367,10 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             map<int,bool>::iterator find0 = ub_tchvar.find(i);
             if (find0 == ub_tchvar.end()){
                 Actual_THPObjective+= Chains2ndStage[i].AccumWeight;
+                cout << endl << "Weight chain: " << Chains2ndStage[i].AccumWeight << ":" << '\t';
+                for (int j = 0; j < Chains2ndStage[i].Vnodes.size(); j++){
+                    cout << Chains2ndStage[i].Vnodes[j].vertex  << '\t';
+                }
             }
         }
     }
@@ -353,9 +382,14 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             map<int,bool>::iterator find0 = ub_tcyvar.find(i);
             if (find0 == ub_tcyvar.end()){
                 Actual_THPObjective+= Cycles2ndStage[i].get_Many();
+                cout << endl << "Weight cycle : " << Cycles2ndStage[i].get_Many() << ":" << '\t';
+                for (int j = 0; j < Cycles2ndStage[i].get_c().size(); j++){
+                    cout << Cycles2ndStage[i].get_c()[j]  << '\t';
+                }
             }
         }
     }
+    cout << endl;
     
     TPMIP_Obj = Actual_THPObjective;
     
@@ -371,20 +405,6 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
         OptFailedArcs = FailedArcs;
         OptFailedVertices = FailedVertices;
         Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
-        //Store recourse solution
-        RecoMatching.clear();
-        for (int i = 0; i < Cycles3rdSol.size(); i++){
-            RecoMatching.push_back(vector<int>());
-            for (int j = 0; j < Cycles3rdSol[i].get_c().size(); j++){
-                RecoMatching.back().push_back(Cycles3rdSol[i].get_c()[j]);
-            }
-        }
-        for (int i = 0; i < Chains3rdSol.size(); i++){
-            RecoMatching.push_back(vector<int>());
-            for (int j = 0; j < Chains3rdSol[i].Vnodes.size(); j++){
-                RecoMatching.back().push_back(Chains3rdSol[i].Vnodes[j].vertex);
-            }
-        }
         if (Cycles3rdSol.size() == 0 && Chains3rdSol.size() == 0){
             SPMIP_Obj = LOWEST_TPMIP_Obj;
             return true; // No recourse solution found;
@@ -398,6 +418,8 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             }
         }
     }
+    
+
 
     //Add AtLeastOneFails Cut
     cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function started" << endl;

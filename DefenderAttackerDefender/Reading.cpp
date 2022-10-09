@@ -84,22 +84,22 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>&SolFirstStag
             cout << SolFirstStage[i].get_cc()[j] + 1 << "\t";
         }
     }
-    cout << endl << "Recourse solution: " << endl;
-    ncy = 0; nch = 0;
-    for (int i = 0; i < RecoMatching.size(); i++){
-        cout << endl;
-        if (RecoMatching[i][0] < Pairs){
-            ncy++;
-            cout << "Cycle " << to_string(ncy) << ":" << "\t";
-        }
-        else{
-            nch++;
-            cout << "Chain " << to_string(nch) << ":" << "\t";
-        }
-        for (int j = 0; j < RecoMatching[i].size(); j++){
-            cout << RecoMatching[i][j] + 1 << "\t";
-        }
-    }
+//    cout << endl << "Recourse solution: " << endl;
+//    ncy = 0; nch = 0;
+//    for (int i = 0; i < RecoMatching.size(); i++){
+//        cout << endl;
+//        if (RecoMatching[i][0] < Pairs){
+//            ncy++;
+//            cout << "Cycle " << to_string(ncy) << ":" << "\t";
+//        }
+//        else{
+//            nch++;
+//            cout << "Chain " << to_string(nch) << ":" << "\t";
+//        }
+//        for (int j = 0; j < RecoMatching[i].size(); j++){
+//            cout << RecoMatching[i][j] + 1 << "\t";
+//        }
+//    }
     
     cout << endl << to_string(LeftTime) + ": Results printed" << endl;
     

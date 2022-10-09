@@ -349,7 +349,7 @@ public:
     map<int,int>Cycles3rdTo2nd;
     map<int,int>Chains3rdTo2nd;
     map<int,vector<int>> CycleNodeGSP;
-    vector<vector<int>> RecoMatching;
+    vector<Cycles> RecoMatching;
     
     void SetName(IloNumVar& var, const char* prefix, IloInt i);
     void SetName2(IloNumVar& var, const char* prefix, IloInt i, IloInt j);
@@ -379,7 +379,7 @@ public:
     IloObjective ObjTHP;
     vector<Cycles>Cycles2ndStage;
     vector<Chain>Chains2ndStage;
-    void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
+    void THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>SolFirstStage);
     void BendersPICEF(vector<Cycles>&Cycles2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     IloNum VI_I = 0;
     vector<vector<double>>RecoSolCovering;
@@ -437,7 +437,7 @@ public:
     void GetScenario(IloNumArray2& arc_sol, IloNumArray& vertex_sol);
     void Get3rdStageSol(vector<Cycles>&Cycles3rdSol, vector<Chain>&Chains3rdSol, IloNumArray& cyvar_sol3rd, IloNumArray& chvar_sol3rd);
     IloExpr GetObjTPH(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, string& TPH_Method);
-    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGrandSubSol>&SolFirstStage);
+    bool ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGrandSubSol>SolFirstStage);
     int Update_RHS_Covering(int row);
     bool Heuristcs2ndPH(vector<IndexGrandSubSol>&SolFirstStage);
     void HeuristicsStart2ndPH(map<int,int>& Cycles2ndTo3rd, map<int,int>& Chains2ndTo3rd, vector<int>&ListSelVex);
