@@ -68,10 +68,17 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStage
     
     file << FileName << '\t' << Pairs << '\t' << NDDs << '\t' << CycleLength << '\t' << ChainLength << '\t' << MaxVertexFailures <<'\t' << MaxArcFailures << '\t' << THP_Method << '\t' << THP_Bound << '\t' << RecoursePolicy << '\t' << status << '\t' << Ite1stStage << '\t' << tTotal1stS << '\t' << GlobalIte2ndStage << '\t' << tTotal2ndS << '\t' << tTotalMP2ndPH << '\t' << tTotalHeu << '\t' << runHeuristicstrue <<  '\t' << tTotalRecoCG << '\t' << runCGtrue << '\t' << tTotalRecoMIP << '\t' << FPMIP_Obj << '\t' << IteOptP << '\t' << IteOptPIte1stis1 << '\t' << tTotalOptP << '\t' << OutforInfeas << '\t' << OutforBound << '\t' << tTotalFindingCyCh << '\t' << NumDominatedS << endl;
     
-
-    cout << "Status:" << '\t' << status << endl;
+    cout << "Formulation:" << '\t' << THP_Method << endl;
+    if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
+        cout << "LB type:" << '\t' << THP_Bound << endl;
+    }
+    else{
+        cout << "LB type:" << '\t' << "NA" << endl;
+    }
+    cout << "Policy:" << '\t' << RecoursePolicy << endl;
     cout << "Vertex budget:" << '\t' << MaxVertexFailures << endl;
     cout << "Arc budget:" << '\t' << MaxArcFailures << endl;
+    cout << "Status:" << '\t' << status << endl;
     cout << "RO objective value:" << '\t' << FPMIP_Obj << endl;
     
     cout << "First-stage solution:";

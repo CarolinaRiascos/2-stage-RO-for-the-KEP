@@ -259,6 +259,33 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Inde
         else if (cplexRobust.getStatus() == IloAlgorithm::Optimal){
             //////////////////Retrieve solution/////////////////////////
             FPMIP_Obj = cplexRobust.getObjValue();
+            ////////New recourse solution
+            IloNumArray2 y_ju_sol(env, Y_ju.getSize());
+            for (int i = 0; i < y_ju_sol.getSize(); i++){
+                y_ju_sol[i] = IloNumArray(env, Y_ju[i].getSize());
+                cplexRobust.getValues(y_ju_sol[i],Y_ju[i]);
+            }
+            IloNumArray2 X_cu_sol(env, ListCycles.size());
+            for (int i = 0; i < X_cu_sol.getSize(); i++){
+                X_cu_sol[i] = IloNumArray(env, X_cu[i].getSize());
+                cplexRobust.getValues( X_cu_sol[i],X_cu[i]);
+            }
+            IloNumArray4 E_ijlu_sol(env, AdjacencyList.getSize());
+            for (int i = 0; i < E_ijlu_sol.getSize(); i++){
+                E_ijlu_sol[i] = IloNumArray3 (env, E_ijlu[i].getSize());
+                for (int j = 0; j < E_ijlu_sol[i].getSize(); j++){
+                    E_ijlu_sol[i][j] = IloNumArray2(env, E_ijlu[i][j].getSize());
+                    for (int k = 0; k < E_ijl[i][j].getSize(); k++){
+                        E_ijlu_sol[i][j][k] = IloNumArray(env, E_ijlu[i][j][k].getSize());
+                        cplexRobust.getValues(E_ijlu_sol[i][j][k],E_ijlu[i][j][k]);
+    //                    for (int u = 0; u < E_ijlu_sol[i][j][k].getSize(); u++){
+    //                       if (E_ijlu_sol[i][j][k][u] > 0.9) cout << E_ijlu[i][j][k][u].getName() << "\t";
+    //                    }
+                    }
+                }
+            }
+            
+            /////////New first-stage solution
             vector<IndexGrandSubSol>SolFirstStageNew;
             IloNumArray xsol(env, ListCycles.size());
             cplexRobust.getValues(xsol,X_c);
@@ -283,6 +310,8 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Inde
             for (int i = 0; i < vChains.size(); i++){
                 SolFirstStageNew.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
             }
+            GetRecourseSolution (y_ju_sol, X_cu_sol, E_ijlu_sol, scenarios);
+            
             if (SPMIP_Obj < FPMIP_Obj){ //Send scenario to 1st. stage
                 //Call 2nd. stage
                 tStart2ndS = clock();
@@ -301,7 +330,7 @@ void Problem::GrandSubProbMasterPICEF(vector<Cycles>&Cycles2ndStage, vector<Inde
             }
             else if (SPMIP_Obj == FPMIP_Obj){
                 //Robust Solution found
-                Print2ndStage("Optimal", SolFirstStage);
+                Print2ndStage("Optimal", SolFirstStageNew);
             }
             else{
                 cout << endl << "This should never happen";
