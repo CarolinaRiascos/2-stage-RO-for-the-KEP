@@ -817,12 +817,12 @@ void Problem::ROBUST_KEP(){
     
     //Call 2nd. stage
     tStart2ndS = clock();
-    cout << to_string(LeftTime) + ": 1st. stage getting cycles and chains" << endl;
+    //cout << to_string(LeftTime) + ": 1st. stage getting cycles and chains" << endl;
     if (THP_Method != "BendersPICEF"){
         Chains2ndStage = Get2ndStageChains (SolFirstStage, RecoursePolicy);
     }
     Cycles2ndStage = Get2ndStageCycles (SolFirstStage, RecoursePolicy);
-    cout << to_string(LeftTime) + ": 1st. stage cycles and chains obtained" << endl;
+    //cout << to_string(LeftTime) + ": 1st. stage cycles and chains obtained" << endl;
     tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
     if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
         GrandSubProbMaster(Cycles2ndStage,Chains2ndStage,SolFirstStage);

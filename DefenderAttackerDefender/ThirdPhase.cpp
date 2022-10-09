@@ -13,7 +13,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     cout << to_string(LeftTime) + ": Third stage: GetScenario starting" << endl;
     //Get scenario
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
-    cout << to_string(LeftTime) + ": Third stage: GetScenario finished" << endl;
+    //cout << to_string(LeftTime) + ": Third stage: GetScenario finished" << endl;
     //Create model
     mTHPMIP = IloModel (env);
     cout << to_string(LeftTime) + ": 2nd. stage: Creating MIP for recourse problem" << endl;
@@ -47,10 +47,10 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         Ite2ndS++;
         //Solve formulation
         tStartCG = clock();
-        cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds started" << endl;
+        //cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds started" << endl;
         ub_tchvar = GetUB_tchvar(FailedArcs, FailedVertices);
         ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
-        cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds finished" << endl;
+        //cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds finished" << endl;
         cout << to_string(LeftTime) + ": 2nd. stage: Running CG" << endl;
         bool runColGen = ColumnGeneration(ub_tcyvar, ub_tchvar, SolFirstStage);
         cout << to_string(LeftTime) + ": 2nd. stage: CG finished" << endl;
@@ -77,9 +77,9 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
 
                 //Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
                 if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
-                    cout << to_string(LeftTime) + ": 2nd. stage: starting ThisWork function" << endl;
+                    //cout << to_string(LeftTime) + ": 2nd. stage: starting ThisWork function" << endl;
                     if (ThisWork(tcysol, tchsol, SolFirstStage) == true) break;
-                    cout << to_string(LeftTime) + ": 2nd. stage: ThisWork function finished" << endl;
+                    //cout << to_string(LeftTime) + ": Starting new iteration in the 2nd. stage" << endl;
                 }else{//Literature's approach
                     if (Literature(tcysol, tchsol) == true) break;
                 }
@@ -126,7 +126,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
     tStart1stS = clock();
     
     if (Ite1stStage == 1){
-        cout << to_string(LeftTime) + ": THP: If iteration is first, update first-stage formulation" << endl;
+        //cout << to_string(LeftTime) + ": THP: If iteration is first, update first-stage formulation" << endl;
         //Update Con7g
         for (int j = 0; j < Pairs; j++) { // para todo j
             auto it = scenarios[0].find(make_pair(-1, j));
@@ -160,7 +160,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
     }
     else{
-        cout << to_string(LeftTime) + ": THP: If iteration is NOT the first one, update first-stage formulation" << endl;
+        //cout << to_string(LeftTime) + ": THP: If iteration is NOT the first one, update first-stage formulation" << endl;
         /////////////////////Create new cols/////////////////////////
         // Y_ju
         for (int i = 0; i < Y_ju.getSize(); i++){
@@ -226,7 +226,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             CreateCon7k(env, X_cu, E_ijlu, scenarios, int(scenarios.size() - 1), AdjacencyList, CycleArcs, PredMap, int(ChainLength), "7k");
         }
     }
-    cout << to_string(LeftTime) + ": THP: Solving first-stage formulation" << endl;
+    cout << to_string(LeftTime) + "Solving first-stage formulation" << endl;
     //cplexRobust.exportModel("RO_Model.lp");
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     if (LeftTime < 0){
@@ -241,7 +241,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         cout << "This should not happen." << endl;
     }
     else if (cplexRobust.getStatus() == IloAlgorithm::Optimal){
-        cout << to_string(LeftTime) + ": THP: Retrieving first-stage solution" << endl;
+        cout << to_string(LeftTime) + ":Retrieving first-stage solution" << endl;
         //////////////////Retrieve solution/////////////////////////
         FPMIP_Obj = cplexRobust.getObjValue();
         
@@ -301,10 +301,10 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         if (SPMIP_Obj < FPMIP_Obj){ //Send scenario to 1st. stage
             //Call 2nd. stage
             tStart2ndS = clock();
-            cout << to_string(LeftTime) + ": THP: Getting cycles and chains" << endl;
+            //cout << to_string(LeftTime) + ": THP: Getting cycles and chains" << endl;
             Chains2ndStage = Get2ndStageChains (SolFirstStageNew, RecoursePolicy);
             Cycles2ndStage = Get2ndStageCycles (SolFirstStageNew, RecoursePolicy);
-            cout << to_string(LeftTime) + ": THP: cycles and chains obtained" << endl;
+            //cout << to_string(LeftTime) + ": THP: cycles and chains obtained" << endl;
             tTotalFindingCyCh+= (clock() - tStart2ndS)/double(CLOCKS_PER_SEC);
             GrandSubProb.end();
             cplexGrandSubP.end();
@@ -333,7 +333,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             }
         }
         else if (SPMIP_Obj == FPMIP_Obj){
-            cout << to_string(LeftTime) + ": THP: Optimal robust solution found" << endl;
+            //cout << to_string(LeftTime) + ": THP: Optimal robust solution found" << endl;
             //Robust Solution found
             Print2ndStage("Optimal", SolFirstStageNew);
         }
@@ -373,10 +373,6 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             map<int,bool>::iterator find0 = ub_tchvar.find(i);
             if (find0 == ub_tchvar.end()){
                 Actual_THPObjective+= Chains2ndStage[i].AccumWeight;
-                cout << endl << "Weight chain: " << Chains2ndStage[i].AccumWeight << ":" << '\t';
-                for (int j = 0; j < Chains2ndStage[i].Vnodes.size(); j++){
-                    cout << Chains2ndStage[i].Vnodes[j].vertex  << '\t';
-                }
             }
         }
     }
@@ -388,10 +384,6 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             map<int,bool>::iterator find0 = ub_tcyvar.find(i);
             if (find0 == ub_tcyvar.end()){
                 Actual_THPObjective+= Cycles2ndStage[i].get_Many();
-                cout << endl << "Weight cycle : " << Cycles2ndStage[i].get_Many() << ":" << '\t';
-                for (int j = 0; j < Cycles2ndStage[i].get_c().size(); j++){
-                    cout << Cycles2ndStage[i].get_c()[j]  << '\t';
-                }
             }
         }
     }
@@ -428,20 +420,20 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
 
 
     //Add AtLeastOneFails Cut
-    cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function started" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function started" << endl;
     if (THP_Method == "Covering"){
         GetAtLeastOneFails(tcysol, tchsol);
     }
     else{
         GetAtLeastOneFailsTwo(tcysol, tchsol);
     }
-    cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function ended" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function ended" << endl;
     
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     tStartHeu = clock();
     if (Ite2ndS >= 150 && THP_Bound != "NoBound"){
-        cout << to_string(LeftTime) + ": ThisWork: Building GrandSubProMastermAux" << endl;
+        //cout << to_string(LeftTime) + ": ThisWork: Building GrandSubProMastermAux" << endl;
         //Return to optimality
         IteOptP++;
         if (Ite1stStage == 1) IteOptPIte1stis1++;
@@ -481,13 +473,13 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
         }
         //Call GrandSubPromAux
         GrandSubProMastermAux(KEPSols2ndStage, KEPSol2ndStageUnique, SolFirstStage);
-        cout << to_string(LeftTime) + ": ThisWork: GrandSubProMastermAux solved" << endl;
+        //cout << to_string(LeftTime) + ": ThisWork: GrandSubProMastermAux solved" << endl;
         tTotalOptP+= (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
 
     }else{
-        cout << to_string(LeftTime) + ": ThisWork: About to run Heuristics" << endl;
+        //cout << to_string(LeftTime) + ": ThisWork: About to run Heuristics" << endl;
         bool runH = Heuristcs2ndPH(SolFirstStage);
-        cout << to_string(LeftTime) + ": ThisWork: Heuristics done" << endl;
+        //cout << to_string(LeftTime) + ": ThisWork: Heuristics done" << endl;
         tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
         if (runH == false){
             tStartMP2ndPH = clock();
@@ -499,7 +491,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             }
             cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
             cplexGrandSubP.solve();
-            cout << to_string(LeftTime) + ": ThisWork: MIP for MP solved" << endl;
+            //cout << to_string(LeftTime) + ": ThisWork: MIP for MP solved" << endl;
             tTotalMP2ndPH += (clock() - tStartMP2ndPH)/double(CLOCKS_PER_SEC);
 
             if (cplexGrandSubP.getStatus() == IloAlgorithm::Infeasible){
@@ -510,7 +502,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             }
             else if (cplexGrandSubP.getStatus() == IloAlgorithm::Feasible || cplexGrandSubP.getStatus() == IloAlgorithm::Optimal){
                 //Get failing arcs and failing vertices
-                cout << to_string(LeftTime) + ": ThisWork: Retrieving solution from MIP for MP" << endl;
+                //cout << to_string(LeftTime) + ": ThisWork: Retrieving solution from MIP for MP" << endl;
                 vertex_sol = IloNumArray(env, Nodes);
                 cplexGrandSubP.getValues(vertex_sol,vertex);
                 
@@ -519,7 +511,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
                     arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
                     cplexGrandSubP.getValues(arc_sol[f],arc[f]);
                 }
-                cout << to_string(LeftTime) + ": ThisWork: Solution from MIP for MP retrieved" << endl;
+                //cout << to_string(LeftTime) + ": ThisWork: Solution from MIP for MP retrieved" << endl;
             }
             else{
                 GlobalIte2ndStage += Ite2ndS;
@@ -530,7 +522,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
         else{
             runHeuristicstrue++;
             //Build solution
-            cout << to_string(LeftTime) + ": ThisWork: Heuristics true, building solution" << endl;
+            //cout << to_string(LeftTime) + ": ThisWork: Heuristics true, building solution" << endl;
             vertex_sol = IloNumArray(env, Nodes);
             for (int j = 0; j < scenarioHeuristics.size(); j++){
                 if (scenarioHeuristics[j].first == - 1){
@@ -551,13 +543,13 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
                     }
                 }
             }
-            cout << to_string(LeftTime) + ": ThisWork: Heuristics true, solution built" << endl;
+            //cout << to_string(LeftTime) + ": ThisWork: Heuristics true, solution built" << endl;
         }
     }
-    cout << to_string(LeftTime) + ": ThisWork: Getting scenario" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Getting scenario" << endl;
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
-    cout << to_string(LeftTime) + ": ThisWork: Scenario obtained" << endl;
-    cout << to_string(LeftTime) + ": ThisWork: Updating variable bounds for MIP of MP " << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Scenario obtained" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Updating variable bounds for MIP of MP " << endl;
     //Change variables' UB in 3rd phase
     ub_tcyvar.clear(); // <cycle number, 0 or 1>
     ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
@@ -582,7 +574,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             tchvar[i].setUB(1);
         }
     }
-    cout << to_string(LeftTime) + ": ThisWork: Variable bounds for MIP of MP updated" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Variable bounds for MIP of MP updated" << endl;
     return false;
 }
 bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
