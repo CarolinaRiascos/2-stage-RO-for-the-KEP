@@ -93,13 +93,13 @@ void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStage
     cout << endl << "worst case, failed vertices: " << '\t';
     for (auto it = scenarios[worst_sce].begin(); it != scenarios[worst_sce].end(); it++){
         if (it->first.first == -1){
-            cout <<  it->first.second << '\t';
+            cout <<  it->first.second + 1 << '\t';
         }
     }
     cout << endl << "worst case, failed arcs: " << '\t';
     for (auto it = scenarios[worst_sce].begin(); it != scenarios[worst_sce].end(); it++){
         if (it->first.first != -1){
-            cout <<  "(" << it->first.first << "," << it->first.second << ")" << '\t';
+            cout <<  "(" << it->first.first + 1 << "," << it->first.second + 1 << ")" << '\t';
         }
     }
     
