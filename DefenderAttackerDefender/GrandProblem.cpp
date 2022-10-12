@@ -450,7 +450,6 @@ IloRangeArray CreateCon7g(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<
             string name2 = name + '[' + to_string(Ulast) + ']' + '[' + to_string(j) + ']';
             Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
         }
-        
     }
     return Cons;
 }
@@ -518,7 +517,6 @@ IloRangeArray CreateCon7j(IloEnv& env, NumVar4D& E_ijlu, int Ulast, int Pairs, i
 }
 void CreateCon7k(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<map<pair<int,int>, bool>>&scenarios, int Ulast, IloNumArray2 AdjaList, map<pair<int,int>,vector<int>> CycleArcs, map<int, vector<pair<int,int>>> PredMap, int Lmax, string name){
     
-    
     for (auto it = scenarios[Ulast].begin(); it != scenarios[Ulast].end(); it++) { // para todo j
         if (it->first.first != -1){
             for (int c = 0; c < CycleArcs[it->first].size(); c++) {
@@ -535,6 +533,56 @@ void CreateCon7k(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, vector<map<pair<
             }
         }
     }
+    
+}
+IloRangeArray CreateCon7l(IloEnv& env, NumVar2D& X_cu, NumVar4D& E_ijlu, IloNumVarArray& X_c, NumVar3D& E_ijl, vector<map<pair<int,int>, bool>>&scenarios, int Ulast, map<int,vector<int>>CycleNode, map<int, vector<pair<int,int>>>PredMap, int Pairs, int Lmax, string name){
+    
+    IloRangeArray Cons(env);
+    for (int j = 0; j < Pairs; j++) { // para todo j
+        IloExpr expr (env, 0);
+        auto it = scenarios[Ulast].find(make_pair(-1, j));
+        if (it != scenarios[Ulast].end()){
+            for (int c = 0; c < CycleNode[j].size(); c++) {
+                X_cu[CycleNode[j][c]][Ulast].setUB(0);
+            }
+            for (int l = 0; l < Lmax; l++) {
+                for (int i = 0; i < PredMap[j].size(); i++) {
+                    int i2 = PredMap[j][i].first;
+                    int j2 = PredMap[j][i].second;
+                    //cout << E_ijlu[i2][j2][l][Ulast].getName();
+                    E_ijlu[i2][j2][l][Ulast].setUB(0); // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
+                }
+            }
+        }
+        else{
+            for (int c = 0; c < CycleNode[j].size(); c++) {
+                expr+= X_cu[CycleNode[j][c]][Ulast];
+            }
+            for (int l = 0; l < Lmax; l++) {
+                for (int i = 0; i < PredMap[j].size(); i++) {
+                    int i2 = PredMap[j][i].first;
+                    int j2 = PredMap[j][i].second;
+                    expr+= E_ijlu[i2][j2][l][Ulast]; // (i,pos en la que está 8) {(4,8)  (7,8)  (10,8)}  size 3    se pone pos 0,5,10
+                }
+            }
+            //string name2 = name + '[' + to_string(Ulast) + ']' + '[' + to_string(j) + ']';
+            //Cons.add(IloRange(env, -IloInfinity, expr, 1, name2.c_str()));
+        }
+        IloExpr expr_rhs (env, 0);
+        for (int c = 0; c < CycleNode[j].size(); c++) {
+            expr+= X_c[CycleNode[j][c]];
+        }
+        for (int i = 0; i < PredMap[j].size(); i++) {
+            int i2 = PredMap[j][i].first;
+            int j2 = PredMap[j][i].second;
+            expr+= IloSum(E_ijl[i2][j2]);
+        }
+        string name2 = name + '[' + to_string(Ulast) + ']' + '[' + to_string(j) + ']';
+        Cons.add(IloRange(env, -IloInfinity, expr - expr_rhs, 0, name2.c_str()));
+        expr.end();
+        expr_rhs.end();
+    }
+    return Cons;
     
 }
 bool vinFirstSol(vector<int> sol, int v){
@@ -738,10 +786,12 @@ void Problem::ROBUST_KEP(){
     cons7j = CreateCon7j(env, E_ijlu, 0, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7j");
     RobustMod.add(cons7j);
     
-//    //Constraint (7k)
-//    IloRangeArray cons7k (env);
-//    CreateCon7k(env, X_cu, E_ijlu, scenarios, 0, AdjacencyList, CycleArcs, PredMap, int(ChainLength), "7k");
-//    RobustMod.add(cons7k);
+    if (RecoursePolicy == "FirstSOnly"){
+        //Constraint (7k)
+        IloRangeArray cons7l (env);
+        CreateCon7l(env, X_cu, E_ijlu, X_c, E_ijl, scenarios, 0, CycleNode, PredMap, int(Pairs), int(ChainLength), "7l");
+        RobustMod.add(cons7l);
+    }
 
     //Objective function
     auxName = "ZFRuMax";

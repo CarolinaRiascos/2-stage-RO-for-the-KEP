@@ -357,7 +357,7 @@ public:
     void GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage, vector<IndexGrandSubSol>&SolFirstStage);
     void GrandSubProbRoutine();
     vector<Cycles> BackRecoursePolicy(vector<int>&vinFirstStageSol, vector<IndexGrandSubSol>&SolFirstStage);
-    vector<Cycles> AmongPolicy(vector<IndexGrandSubSol>&SolFirstStage);
+    vector<Cycles> FirstSOnlyPolicy(vector<IndexGrandSubSol>&SolFirstStage);
     vector<Cycles> FullPolicy(vector<IndexGrandSubSol>&SolFirstStage);
     void AddNewColsConsGSP(vector<Cycles>& RepairedSol);
     void InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>& VertexinSolChain, IloNumArray2 AdjaList);

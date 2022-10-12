@@ -225,6 +225,12 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
             //Constraint (7k)
             CreateCon7k(env, X_cu, E_ijlu, scenarios, int(scenarios.size() - 1), AdjacencyList, CycleArcs, PredMap, int(ChainLength), "7k");
         }
+        if (RecoursePolicy == "FirstSOnly"){
+            //Constraint (7l)
+            IloRangeArray cons7l (env);
+            CreateCon7l(env, X_cu, E_ijlu, X_c, E_ijl, scenarios, 0, CycleNode, PredMap, int(Pairs), int(ChainLength), "7l");
+            RobustMod.add(cons7l);
+        }
     }
     cout << to_string(LeftTime) + "Solving first-stage formulation" << endl;
     //cplexRobust.exportModel("RO_Model.lp");

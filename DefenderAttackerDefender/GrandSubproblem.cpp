@@ -285,9 +285,9 @@ vector<Cycles> Problem::Get2ndStageCycles (vector<IndexGrandSubSol>& SolFirstSta
     //Create List of all vertices in 1st-stage sol: vinFirstStageSol
 
     vector<Cycles>RecoCycles;
-    if (policy == "Among"){
+    if (policy == "FirstSOnly"){
         //Call Find Cycles
-        RecoCycles = AmongPolicy(SolFirstStage);
+        RecoCycles = FirstSOnlyPolicy(SolFirstStage);
     }
     else if (policy == "Full"){
         //Call Find Cycles
@@ -302,7 +302,7 @@ vector<Cycles> Problem::Get2ndStageCycles (vector<IndexGrandSubSol>& SolFirstSta
     return RecoCycles;
 }
 
-vector<Cycles> Problem::AmongPolicy(vector<IndexGrandSubSol>&SolFirstStage){
+vector<Cycles> Problem::FirstSOnlyPolicy(vector<IndexGrandSubSol>&SolFirstStage){
     vector<Cycles> NewListCCs;
     CycleNodeTPH.clear();
     ArcsinCyclesTHP.clear();
@@ -333,7 +333,7 @@ vector<Cycles> Problem::AmongPolicy(vector<IndexGrandSubSol>&SolFirstStage){
         }
     }
     
-    //Find among-cycles
+    //Find 1stStageOnly-cycles
     vector<Cycles> NewList;
     for (int i = 0; i < PairsFirstStageSol.size(); i++){
         int origin = PairsFirstStageSol[i];
@@ -399,17 +399,21 @@ vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol
     
     //Create List of all vertices in 1st-stage sol: vinFirstStageSol
     vector<int> vinFirstStageSol;
-    if (policy == "Among" || policy == "Full"){
+    vector<int>ChainStarters1stSOnly;
+    if (policy == "FirstSOnly" || policy == "Full"){
         for (int i = 0; i < GrandProbSol.size(); i++){
             for (int j = 0; j < GrandProbSol[i].get_cc().size(); j++){
                 vinFirstStageSol.push_back(GrandProbSol[i].get_cc()[j]);
+                if (GrandProbSol[i].get_cc()[j] >= Pairs){
+                    ChainStarters1stSOnly.push_back(GrandProbSol[i].get_cc()[j]);
+                }
             }
         }
     }
     
     //Create List of all candidate vertices: ListVertices
     vector<int>ListVertices;
-    if (policy == "Among"){
+    if (policy == "FirstSOnly"){
         ListVertices = vinFirstStageSol;
     }
     else if (policy == "Full"){
@@ -428,26 +432,16 @@ vector<Chain> Problem::Get2ndStageChains (vector<IndexGrandSubSol>& GrandProbSol
         //Call Find Chains
         RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ChainStarters, false, GrandProbSol);
     }
-    else if (policy == "Among"){
+    else if (policy == "FirstSOnly"){
         //Call InitializeVertexinSolChain
         InitializeVertexinSolChain(ListVertices, VertexinSolChain, AdjacencyList);
         //Call Find Chains
-        RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ListVertices, false, GrandProbSol);
+        RecoChains = FindChains(VertexinSolChain, vinFirstStageSol, ChainStarters1stSOnly, false, GrandProbSol);
     }
     else{//BackArcs recourse
-        for (int i = 0; i < GrandProbSol.size(); i++){
-            //Call InitializeVertexinSolChain
-            vector<int> aux = GrandProbSol[i].get_cc();
-            InitializeVertexinSolChain(aux, VertexinSolChain, AdjacencyList);
-            //Call Find Chains
-            vector<Chain>auxChains;
-            auxChains = FindChains(VertexinSolChain, aux, aux, false, GrandProbSol);
-            for (int j = 0; j < auxChains.size(); j++){
-                RecoChains.push_back(auxChains[j]);
-            }
-        }
+        cout << "Recourse policy NOT supported" << endl;
+        Print2ndStage("WrongRecourse", GrandProbSol);
     }
-    
     
     return RecoChains;
 }
@@ -465,13 +459,13 @@ void Problem::InitializeVertexinSolChain(vector<int>&ListVertices,vector<vChain>
         
         if (veci.size() > 0){
             VertexinSolChain.push_back(vChain(ListVertices[j], veci));
-            VertexinSolChain.back().it = VertexinSolChain[ListVertices[j]].veci.begin();
-            VertexinSolChain.back().itEnd = VertexinSolChain[ListVertices[j]].veci.end();
+            VertexinSolChain.back().it = VertexinSolChain.back().veci.begin();
+            VertexinSolChain.back().itEnd = VertexinSolChain.back().veci.end();
         }
         else{
             VertexinSolChain.push_back(vChain(ListVertices[j], null));
-            VertexinSolChain.back().it = VertexinSolChain[ListVertices[j]].veci.begin();
-            VertexinSolChain.back().itEnd = VertexinSolChain[ListVertices[j]].veci.end();
+            VertexinSolChain.back().it = VertexinSolChain.back().veci.begin();
+            VertexinSolChain.back().itEnd = VertexinSolChain.back().veci.end();
         }
     }
 }
