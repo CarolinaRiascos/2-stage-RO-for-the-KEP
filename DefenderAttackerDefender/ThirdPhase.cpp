@@ -1492,7 +1492,7 @@ bool Problem::Heuristcs2ndPH(vector<IndexGrandSubSol>&SolFirstStage){
             }
             if (it->first.first != -1 && UsedArcs < MaxArcFailures && Eleaux[it->first].get_state() == false){
                 //w = it->second.get_maxw();
-                w = 0.4*(ArcsinChCyTHP[it->first].size()/(Cycles2ndStage.size() + Chains2ndStage.size())) +  0.6*it->second.get_coversize(); //Number Arcs in cycles/chains 2ndStage
+                w = it->second.get_coversize(); //Number Arcs in cycles/chains 2ndStage 0.4*(ArcsinChCyTHP[it->first].size()/(Cycles2ndStage.size() + Chains2ndStage.size())) +  0.6*
                 auxCov.push_back(make_pair(it->first, w));
             }
         }

@@ -334,6 +334,12 @@ void CreateU_uj(int maxFailureV, int Nodes, int maxFailureA, vector<map<pair<int
             }
         }
     }
+    //scenarios.clear();
+    //scenarios.push_back(map<pair<int,int>, bool>());
+    //scenarios.back()[make_pair(36, 80)] = true;
+    //scenarios.back()[make_pair(77, 14)] = true;
+    //scenarios.back()[make_pair(-1, 44)] = true;
+    //scenarios.back()[make_pair(-1, 82)] = true;
 }
 
 //Creación de restricciones
@@ -786,8 +792,10 @@ void Problem::ROBUST_KEP(){
     cons7j = CreateCon7j(env, E_ijlu, 0, int(Pairs), int(ChainLength), PredMap, AdjacencyList, "7j");
     RobustMod.add(cons7j);
     
+    //CreateCon7k(env, X_cu, E_ijlu, scenarios, 0, AdjacencyList, CycleArcs, PredMap, int(ChainLength), "7k");
+    
     if (RecoursePolicy == "FirstSOnly"){
-        //Constraint (7k)
+        //Constraint (7l)
         IloRangeArray cons7l (env);
         CreateCon7l(env, X_cu, E_ijlu, X_c, E_ijl, scenarios, 0, CycleNode, PredMap, int(Pairs), int(ChainLength), "7l");
         RobustMod.add(cons7l);
