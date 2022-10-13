@@ -836,9 +836,11 @@ void Problem::ROBUST_KEP(){
 //    cout << endl << "Cycles: " << endl;
     IloNumArray xsol(env, ListCycles.size());
     cplexRobust.getValues(xsol,X_c);
+    int n_arcs_det = 0;
     for (int i = 0; i < xsol.getSize(); i++){
         if (xsol[i] > 0.9){
             SolFirstStage.push_back(IndexGrandSubSol(ListCycles[i].get_c(), ListCycles[i].get_c().size()));
+            n_arcs_det += ListCycles[i].get_c().size();
         }
     }
     
@@ -858,7 +860,17 @@ void Problem::ROBUST_KEP(){
     
     for (int i = 0; i < vChains.size(); i++){
         SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
+        n_arcs_det += vChains[i].size() - 1;
     }
+    //Save first-stage solution
+    DetSol = SolFirstStage;
+    det_objective = n_arcs_det;
+    
+    //Set the maximum number of arcs that can fail
+    double narcs = MaxArcFailures/100.0;
+    narcs = ceil(narcs*n_arcs_det);
+    MaxArcFailures = narcs;
+    
     //Store solution
     GetRecourseSolution (y_ju_sol, X_cu_sol, E_ijlu_sol, scenarios);
     

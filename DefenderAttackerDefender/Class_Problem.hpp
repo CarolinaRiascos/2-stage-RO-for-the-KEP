@@ -350,6 +350,9 @@ public:
     map<int,int>Cycles3rdTo2nd;
     map<int,int>Chains3rdTo2nd;
     map<int,vector<int>> CycleNodeGSP;
+    int n_hsp = 0;
+    double det_objective = 0;
+    vector<IndexGrandSubSol>DetSol;
     vector<Cycles> RecoMatching;
     
     void SetName(IloNumVar& var, const char* prefix, IloInt i);
