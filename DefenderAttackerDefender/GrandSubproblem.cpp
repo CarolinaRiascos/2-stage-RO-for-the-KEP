@@ -81,7 +81,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     
     cout << to_string(LeftTime) + ": 2nd. stage: MIP of MP built" << endl;
-    //cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function starting" << endl;
+    
     //First Get at least one vertex/arc fails
     RecoSolCovering.push_back(vector<double>());
     IloNumArray tcysol(env, Cycles2ndStage.size());
@@ -99,7 +99,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     RecoTotalWCovering.push_back(w);
     sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
-    
+    cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function starting" << endl;
     
     if (THP_Method == "Covering"){
         GetAtLeastOneFails(tcysol, tchsol);
