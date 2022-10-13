@@ -99,7 +99,7 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     }
     RecoTotalWCovering.push_back(w);
     sort(RecoSolCovering.back().begin(), RecoSolCovering.back().end(), sortdouble);
-    cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function starting" << endl;
+    //cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function starting" << endl;
     
     if (THP_Method == "Covering"){
         GetAtLeastOneFails(tcysol, tchsol);
@@ -107,20 +107,20 @@ void Problem::GrandSubProbMaster(vector<Cycles>&Cycles2ndStage, vector<Chain>&Ch
     else{
         GetAtLeastOneFailsTwo(tcysol, tchsol);
     }
-    cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function finished" << endl;
+    //cout << to_string(LeftTime) + ": 2nd. stage: Get-at-least-one function finished" << endl;
     LeftTime = TimeLimit - (clock() - ProgramStart)/double(CLOCKS_PER_SEC);
     cplexGrandSubP = IloCplex(GrandSubProb);
     //cplexGrandSubP.setParam(IloCplex::Param::TimeLimit, LeftTime);
     cplexGrandSubP.setParam(IloCplex::Param::Threads, 1);
     cplexGrandSubP.setOut(env.getNullStream());
     Ite2ndS = 0;
-    cout << to_string(LeftTime) + ": 2nd. stage: About to run Heuristics before While" << endl;
+    //cout << to_string(LeftTime) + ": 2nd. stage: About to run Heuristics before While" << endl;
     bool runH = Heuristcs2ndPH(SolFirstStage);
     //cout << to_string(LeftTime) + ": 2nd. stage: Heuristics done" << endl;
     if (runH == true){
         runHeuristicstrue++;
         //Build solution
-        cout << to_string(LeftTime) + ": 2nd. stage: Heuristics true, building solution" << endl;
+        //cout << to_string(LeftTime) + ": 2nd. stage: Heuristics true, building solution" << endl;
         vertex_sol = IloNumArray(env, Nodes);
         for (int j = 0; j < scenarioHeuristics.size(); j++){
             if (scenarioHeuristics[j].first == - 1){

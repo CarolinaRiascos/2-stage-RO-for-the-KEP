@@ -47,10 +47,10 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         Ite2ndS++;
         //Solve formulation
         tStartCG = clock();
-        cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds started" << endl;
+        //cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds started" << endl;
         ub_tchvar = GetUB_tchvar(FailedArcs, FailedVertices);
         ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
-        cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds finished" << endl;
+        //cout << to_string(LeftTime) + ": 2nd. stage: Getting upper bounds finished" << endl;
         cout << to_string(LeftTime) + ": 2nd. stage: Running CG" << endl;
         bool runColGen = ColumnGeneration(ub_tcyvar, ub_tchvar, SolFirstStage);
         cout << to_string(LeftTime) + ": 2nd. stage: CG finished" << endl;
@@ -77,9 +77,9 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
 
                 //Get3rdStageSol(Cycles3rdSol, Chains3rdSol, tcysol, tchsol);
                 if (THP_Method == "Covering" || THP_Method == "DoubleCovering"){
-                    cout << to_string(LeftTime) + ": 2nd. stage: starting ThisWork function" << endl;
+                    //cout << to_string(LeftTime) + ": 2nd. stage: starting ThisWork function" << endl;
                     if (ThisWork(tcysol, tchsol, SolFirstStage) == true) break;
-                    cout << to_string(LeftTime) + ": Starting new iteration in the 2nd. stage" << endl;
+                    //cout << to_string(LeftTime) + ": Starting new iteration in the 2nd. stage" << endl;
                 }else{//Literature's approach
                     if (Literature(tcysol, tchsol) == true) break;
                 }
@@ -425,20 +425,20 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
 
 
     //Add AtLeastOneFails Cut
-    cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function started" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function started" << endl;
     if (THP_Method == "Covering"){
         GetAtLeastOneFails(tcysol, tchsol);
     }
     else{
         GetAtLeastOneFailsTwo(tcysol, tchsol);
     }
-    cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function ended" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Get-at-least-one function ended" << endl;
     
     //Resolve 2nd. Phase
     //cplexGrandSubP.exportModel("GrandSubP.lp");
     tStartHeu = clock();
     if (Ite2ndS >= 150 && THP_Bound != "NoBound"){
-        cout << to_string(LeftTime) + ": ThisWork: Building GrandSubProMastermAux" << endl;
+        //cout << to_string(LeftTime) + ": ThisWork: Building GrandSubProMastermAux" << endl;
         //Return to optimality
         IteOptP++;
         if (Ite1stStage == 1) IteOptPIte1stis1++;
@@ -484,7 +484,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
     }else{
         //cout << to_string(LeftTime) + ": ThisWork: About to run Heuristics" << endl;
         bool runH = Heuristcs2ndPH(SolFirstStage);
-        cout << to_string(LeftTime) + ": ThisWork: Heuristics done" << endl;
+        //cout << to_string(LeftTime) + ": ThisWork: Heuristics done" << endl;
         tTotalHeu += (clock() - tStartHeu)/double(CLOCKS_PER_SEC);
         if (runH == false){
             tStartMP2ndPH = clock();
@@ -506,7 +506,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
                 return true;
             }
             else if (cplexGrandSubP.getStatus() == IloAlgorithm::Feasible || cplexGrandSubP.getStatus() == IloAlgorithm::Optimal){
-                cout << "Get failing arcs and failing vertices" << endl;
+                //cout << "Get failing arcs and failing vertices" << endl;
                 //cout << to_string(LeftTime) + ": ThisWork: Retrieving solution from MIP for MP" << endl;
                 vertex_sol = IloNumArray(env, Nodes);
                 cplexGrandSubP.getValues(vertex_sol,vertex);
@@ -516,7 +516,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
                     arc_sol[f] = IloNumArray(env, AdjacencyList[f].getSize());
                     cplexGrandSubP.getValues(arc_sol[f],arc[f]);
                 }
-                cout << to_string(LeftTime) + ": ThisWork: Solution from MIP for MP retrieved" << endl;
+                //cout << to_string(LeftTime) + ": ThisWork: Solution from MIP for MP retrieved" << endl;
             }
             else{
                 GlobalIte2ndStage += Ite2ndS;
@@ -548,13 +548,13 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
                     }
                 }
             }
-            cout << to_string(LeftTime) + ": ThisWork: Heuristics true, solution built" << endl;
+            //cout << to_string(LeftTime) + ": ThisWork: Heuristics true, solution built" << endl;
         }
     }
     //cout << to_string(LeftTime) + ": ThisWork: Getting scenario" << endl;
     GetScenario(arc_sol, vertex_sol); //Update FailedArcs and FailedVertices
-    cout << to_string(LeftTime) + ": ThisWork: Scenario obtained" << endl;
-    cout << to_string(LeftTime) + ": ThisWork: Updating variable bounds for MIP of MP " << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Scenario obtained" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Updating variable bounds for MIP of MP " << endl;
     //Change variables' UB in 3rd phase
     ub_tcyvar.clear(); // <cycle number, 0 or 1>
     ub_tcyvar = GetUB_tcyvar(FailedArcs, FailedVertices);
@@ -579,7 +579,7 @@ bool Problem::ThisWork(IloNumArray& tcysol, IloNumArray& tchsol, vector<IndexGra
             tchvar[i].setUB(1);
         }
     }
-    cout << to_string(LeftTime) + ": ThisWork: Variable bounds for MIP of MP updated" << endl;
+    //cout << to_string(LeftTime) + ": ThisWork: Variable bounds for MIP of MP updated" << endl;
     return false;
 }
 bool Problem::Literature(IloNumArray& tcysol, IloNumArray& tchsol){
