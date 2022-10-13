@@ -344,6 +344,7 @@ void Problem::THPMIP(vector<Cycles>&Cycles2ndStage, vector<Chain>&Chains2ndStage
         }
         else{
             cout << endl << "This should never happen";
+            Print2ndStage("S.O.S", SolFirstStageNew);
         }
     }
     else{

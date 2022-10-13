@@ -815,6 +815,12 @@ void Problem::ROBUST_KEP(){
     
     //Retrieve solution
     FPMIP_Obj = cplexRobust.getObjValue();
+    vector<IndexGrandSubSol>SolFirstStage;
+    //If 1st. stage solution is already zero
+    if (FPMIP_Obj == 0){
+        Print2ndStage("No_matches", SolFirstStage);
+    }
+   
     
     ////////New recourse solution
     IloNumArray2 y_ju_sol(env, Y_ju.getSize());
@@ -840,7 +846,6 @@ void Problem::ROBUST_KEP(){
     }
     
     /////////New first-stage solution
-    vector<IndexGrandSubSol>SolFirstStage;
 //    cout << endl << "Cycles: " << endl;
     IloNumArray xsol(env, ListCycles.size());
     cplexRobust.getValues(xsol,X_c);
@@ -870,6 +875,8 @@ void Problem::ROBUST_KEP(){
         SolFirstStage.push_back(IndexGrandSubSol(vChains[i], vChains[i].size() - 1));
         n_arcs_det += vChains[i].size() - 1;
     }
+    
+    
     //Save first-stage solution
     DetSol = SolFirstStage;
     det_objective = n_arcs_det;
