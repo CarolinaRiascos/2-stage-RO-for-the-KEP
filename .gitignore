@@ -1,7 +1,7 @@
 2StageROThisWork
 
 DerivedData
-DefenderAttackerDefender.xcodeproj
+*.xcodeproj/
 *.txt
 
 
