@@ -1517,7 +1517,7 @@ bool Problem::Heuristcs2ndPH(vector<IndexGrandSubSol>&SolFirstStage){
         //Check whether we should add element to scenario
         bool ans = true;
         if (UsedArcs + UsedVertices >= 1 && auxCov[ele].first.first < Pairs && auxCov[ele].first.second < Pairs && (UsedArcs >= 1 || UsedVertices >= 2)){
-            vector<int> failedVxt, vinFirstStage;
+            vector<int> failedVxt;
             vector<pair<int,int>>failedArcs;
             for (int i = 0; i < scenarioHeuristics.size();i++){
                 if(scenarioHeuristics[i].first == -1){
@@ -1527,7 +1527,7 @@ bool Problem::Heuristcs2ndPH(vector<IndexGrandSubSol>&SolFirstStage){
                     failedArcs.push_back(scenarioHeuristics[i]);
                 }
             }
-            ans = UnMVtxdueToVtx(failedVxt, failedArcs, vinFirstStage, auxCov[ele].first, SolFirstStage);
+            ans = UnMVtxdueToVtx(failedVxt, failedArcs, auxCov[ele].first, SolFirstStage);
         }
         if (ans == true){
             // Add element to scenario
@@ -1662,7 +1662,13 @@ bool IsxinChain(int v, Chain c){
     }
     return false;
 }
-bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs, vector<int> vinFirstStage, pair<int,int> origin, vector<IndexGrandSubSol>&SolFirstStage){
+bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs, pair<int,int> origin, vector<IndexGrandSubSol>&SolFirstStage){
+    vector<int> vinFirstStage;
+    for (int i = 0; i < SolFirstStage.size(); i++){
+        for (int j = 0; j < SolFirstStage[i].get_cc().size(); j++){
+            vinFirstStage.push_back(SolFirstStage[i].get_cc()[j]);
+        }
+    }
     //Build Adjacency List
     IloNumArray2 AdjaList (env);
     //Check whether vertex it->first fails naturally due to another vertex failure
@@ -1693,15 +1699,15 @@ bool Problem::UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>&
         vector<vChain> VertexinSolChain;
         vector<int>Altruists;
         vector<int>Vertices;
-        if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
+        if (RecoursePolicy == "FirstSOnly"){
             for (int i = 0; i < vinFirstStage.size(); i++){
-                if (vinFirstStage[i] > Pairs - 1) Altruists.push_back(i);
+                if (vinFirstStage[i] >= Pairs) Altruists.push_back(i);
             }
         }
         else{//Full
             for (int i = 0; i < Nodes; i++) {
                 Vertices.push_back(i);
-                if (i > Pairs - 1){
+                if (i >= Pairs){
                     Altruists.push_back(i);
                 }
             }
@@ -1740,7 +1746,10 @@ IloNumArray2 Problem::BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<p
             }
         }
     }
-    else if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
+    else if (RecoursePolicy == "FirstSOnly"){
+        for (int i = 0; i < AdjacencyList.getSize(); i++){
+            AdjaList[i] = IloNumArray(env);
+        }
         for (int i = 0; i < vinFirstStage.size(); i++){
             if (vinFirstStage[i] == origin.first){
                 AdjaList[vinFirstStage[i]].add(origin.second + 1);
@@ -1797,7 +1806,7 @@ IloNumArray2 Problem::BuildAdjaListVtxChains(vector<int> delete_vertex, vector<p
             }
         }
     }
-    else if (RecoursePolicy == "Among" || RecoursePolicy == "BackArcs"){
+    else if (RecoursePolicy == "FirstSOnly"){
         for (int i = 0; i < PredMap.size(); i++){
             AdjaList[i] = IloNumArray(env);
             if ((i == origin.second) && (origin.first != -1)){

@@ -449,7 +449,7 @@ public:
     bool ColumnGeneration(map<int,bool>&ub_tcyvar, map<int,bool>&ub_tchvar, vector<IndexGrandSubSol>&SolFirstStage);
     
     //SVIs
-    bool UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs,vector<int>vinFirstStage, pair<int,int> origin, vector<IndexGrandSubSol>&SolFirstStage);
+    bool UnMVtxdueToVtx(vector<int>& FailedVertices, vector<pair<int,int>>& FailedArcs, pair<int,int> origin, vector<IndexGrandSubSol>&SolFirstStage);
     IloNumArray2 BuildAdjaListVtxCycles(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int>vinFirstStage,pair<int, int>origin);
     IloNumArray2 BuildAdjaListVtxChains(vector<int> delete_vertex, vector<pair<int, int>> delete_arc, vector<int> vinFirstStage, pair<int,int> origin);
     
