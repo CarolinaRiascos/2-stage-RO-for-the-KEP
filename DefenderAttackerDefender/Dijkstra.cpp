@@ -86,7 +86,7 @@ bool fsptSet(vector<bool> vector, int v){
 
     return 0;
 }
-int posinFVS(vector<int>fvs, int lookfor){
+int posinFVSa(vector<int>fvs, int lookfor){
     for (int i = 0; i < fvs.size(); i++){
         if (lookfor == fvs[i]) return i;
     }
@@ -113,7 +113,7 @@ void Problem::distCycles(IloNumArray2 graph){
             if (fvs[i] != j){
                 distFVS_to_Pairs[i][j] = dist[j];
                 if (dist[j] < distFor[j]) distFor[j] = dist[j];
-                int pos = posinFVS(fvs, j);
+                int pos = posinFVSa(fvs, j);
                 if (pos != - 1){
                     distFVS[i][pos] += dist[j];
                 }
@@ -123,10 +123,10 @@ void Problem::distCycles(IloNumArray2 graph){
     
     //Return: From pair to feedback vertices
     for(int i = 0; i < Pairs; i++){
-        int posGo = posinFVS(fvs, i);
+        int posGo = posinFVSa(fvs, i);
         dist = dijkstra(AdjacencyList, i);
         for(int j = 0; j < dist.size(); j++){
-            int pos = posinFVS(fvs, j);
+            int pos = posinFVSa(fvs, j);
             if (pos != -1 && i != j){
                 distPairs_to_FVS[pos][i] = dist[j];
                 if (dist[j] < distBack[i]) distBack[i] = dist[j];
