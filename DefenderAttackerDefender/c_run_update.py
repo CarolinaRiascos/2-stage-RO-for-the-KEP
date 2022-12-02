@@ -85,6 +85,8 @@ def main() -> None:
     os.makedirs(config.run_setup.LogPrintFolder + "/stderr", exist_ok=True)
     os.makedirs(config.run_setup.LogPrintFolder + "/stdout", exist_ok=True)
     os.makedirs(os.path.dirname(config.run_setup.OutputPath), exist_ok=True)
+
+    f_num = 0
     for options_list in sweep_options:
         for n in config.run_setup.InstanceFolders:
             for full_path, file_name in instance_path[n]:

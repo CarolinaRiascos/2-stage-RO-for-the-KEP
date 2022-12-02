@@ -55,7 +55,7 @@ int Problem::Reading() {
                 PredMap[AdjacencyList[i][j] - 1].push_back(make_pair(i, j));
         }
     }
-    
+
     return 1;
 }
 void Problem::Print2ndStage(string status, vector<IndexGrandSubSol>SolFirstStagef){
