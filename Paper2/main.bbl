@@ -1,0 +1,27 @@
+\begin{thebibliography}{3}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Carvalho et~al.(2020)Carvalho, Klimentova, Glorie, Viana, and
+  Constantino]{Carvalho2020}
+M.~Carvalho, X.~Klimentova, K.~Glorie, A.~Viana, and M.~Constantino.
+\newblock Robust models for the kidney exchange problem.
+\newblock \emph{INFORMS Journal on Computing}, 2020.
+
+\bibitem[Dickerson et~al.(2016)Dickerson, Manlove, Plaut, Sandholm, and
+  Trimble]{Dickerson2016}
+J.~P. Dickerson, D.~F. Manlove, B.~Plaut, T.~Sandholm, and J.~Trimble.
+\newblock {P}osition-indexed formulations for kidney exchange.
+\newblock In \emph{Proceedings of the 2016 ACM Conference on Economics and
+  Computation}, pages 25--42, 2016.
+
+\bibitem[McElfresh et~al.(2019)McElfresh, Bidkhori, and Dickerson]{Duncan2019}
+D.~McElfresh, H.~Bidkhori, and J.~Dickerson.
+\newblock {S}calable robust kidney exchange.
+\newblock \emph{Proceedings of the AAAI Conference on Artificial Intelligence},
+  33:\penalty0 1077--1084, 07 2019.
+
+\end{thebibliography}

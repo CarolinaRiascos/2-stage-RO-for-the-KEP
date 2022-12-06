@@ -1,0 +1,143 @@
+\documentclass{article}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+
+
+
+\title{A Defender-Attacker-Defender Approach for the Kidney Exchange Problem}
+\author{Authors}
+
+\input{Definitions}
+\begin{document}
+	\maketitle
+	
+	\begin{abstract}
+		Kidney Exchange has consolidated in healthcare systems as an alternative for patients whose incompatible donors are willing to donate a kidney to another patient, as long as their intended recipient receives one in return from a different donor. Such incompatible donors and patients sign up voluntarily as a pair and can leave the system as unexpectedly as they arrive. In this paper we study the dynamics of kidney exchange systems for the first time by means of a multi-stage stochastic integer programming approach. Particularly, we respond to the questions when and who to match over a finite time horizon, taking into account arrivals and departures of pairs and failure likelihood of planned matches.
+	\end{abstract}
+	
+	
+	\section{Problem Definition}
+	\label{sec:ProblemDefinition}
+	
+	The underlying optimization problem in Kidney Paired Donation Programs is the Kidney Exchange Problem (KEP). The KEP can be modeled using a compatibility digraph $D = (V,A)$. The set of vertices $V = \{1,...,|P|+|N|\}$ represents the set of patient-donor pairs, $P$, and the set of altruistic donors $N$, whereas $A$ contains the arc $(i,j)$ if and only if the donor $i \in \{P \cup N\}$ is compatible with patient $j  \neq i \in P$. Each arc $(i,j) \in A$ has a weight $w_{ij} \in \mathbb{R_{+}}$ representing the priority given to that transplant. Given length caps $K$ and $L$, the KEP aims to select a vertex-disjoint cycle and path packing of $D$ satisfying capacity constraints and maximizing total arc weight.
+	
+	
+	\section{Introduction}
+	
+	In many real-world problems parameters are uncertain. \textit{Stochastic programming} (SP) and \textit{Robust optimization} (RO) have classically modeled this uncertainty within a decision-making framework. While SP works under the assumption that the probability distribution generating the true values of the uncertain parameters is \textit{known} and maximizes the expected benefit, RO assumes that the decision maker has no distributional knowledge about the underlying uncertainty, except for its \textit{support}, and maximizes the worst-case benefit over an \textit{uncertainty set}. Typically, uncertainty is present in exogenous data such as demand, price changes, tools precision, etc., and the goal is to find a solution that remains feasible under any possible values of the parameters within the uncertainty set. However, in applications such as power distribution, drug-traffic control and kidney exchange, uncertainty is in the network itself, for which a robust solution is seen as a ``risk-aversion decision'' where the goal is to find a graph traversal that maximizes network-related benefits under all possible scenarios of the uncertainty set. 
+	
+	For the particular case of kidney exchange, match weight uncertainty has been studied \citep{Duncan2019}, but uncertainty on the status of an arc or vertex (active or inactive) impacts directly on the number of matches that actually proceed to transplantation, even under perfect information on match weights. A vertex (a pair or an altruistic donor) in kidney exchange can be inactive for drop-out, illness of the donor or patient, and other medical conditions preventing a vertex from participating in an exchange. Although, the previous reasons can be adverted before decision making, a vertex status could still turn to inactive if some sudden events occur between a vertex status evaluation and the execution time of the matching. On the other hand, an arc that is ``believed'' to be active from preliminary tests (e.g. virtual crossmatch, blood-type compatibility, etc.) can fail for one or several of the following reasons: disapproving result of conclusive before-transplantation medical tests, match offer declination by at least one member of the exchange (patient or donor), or inactive status of at least one of the vertices associated with that arc.
+	
+	In the RO literature relevant to the KEP, two approaches have been studied: robust solutions with and without recourse policies. In \cite{Duncan2019} two types of uncertainty are tackled: interval weight uncertainty and arc existence uncertainty. The former brings awareness on the imperfect process of assigning a weight to a match, and thus, the authors consider arc weights as random variables with a partially known symmetric distribution centered around a nominal weight value. The latter refers to the arc status uncertainty as just described. A new scalable (in terms of chains) mixed-integer programming model is proposed, and no recourse policies are considered. In \citep{Carvalho2020} the authors build upon previous recourse policies to propose a two-stage robust optimization problem. After observing the actual status of arcs and vertices in a selected match, the two studied recourse policies proceed as follows: the first one, called back-arcs recourse, allows a cycle/chain to be recovered with smaller cycles/chains within the set of active vertices in \textit{each} cycle/chain. The second recourse, called full-recourse, prioritizes the matching of surviving (active) vertices in the failed exchange they were part of, by arranging new cycles and chains with vertices non-selected in the first stage. An important assumption made in this study is the concept of \textit{homogeneous} uncertainty, i.e., vertices and arcs can fail with the same probability. In homogeneous failure, there is a worst-case scenario in which all failures are vertex failures. However, data suggests that exchanges fail most of the time due to arc failures, thus, a robust solution under homogeneous uncertainty is too pessimistic with respect to reality. Our goal is to develop a two-stage Robust approach considering \textit{non-homogeneous} uncertainty between arc and vertex failures, while considering existing and new recourse policies. We decompose the two-stage Robust approach into three stages and model it as a defender-attacker-defender problem.
+	
+	\section{Mixed PICEF (M-PICEF)}
+	
+	\cite{Dickerson2016} proposed PICEF, a hybrid formulation where chains are represented as arc-based variables, indexed by the position such arcs can be at in a chain. Cycles, on the other hand, are enumerated a priori and introduced to the formulation as decision variables. We extend PICEF so that cycle variables are modeled in a similar fashion to chains, resulting in a compact formulation, i.e., the input size of the decision variables is polynomial.
+	
+	We define $\SetposL$ as the set of possible positions at which arc $\arcp \in \arcset$ may occur in a chain. Particularly,
+	
+	$$
+	\SetposL := \left\{
+	\begin{array}{ll}
+		\{1\}      & \ux \in \altruSet \\
+		\{2,...,\lcap\}      & \ux \in \pairsSet
+	\end{array}
+	\right.
+	$$
+	
+Let $\fvs$	be a $\kcap$-limited feedback-vertex set of $\graphName$. A $\kcap$-limited feedback-vertex set is a set of vertices in $\vertexset$ such that if removed from $\graphName$, all simple cycles with cardinality up to $\kcap$ are removed from the graph. When $\kcap$ is sufficiently large, $\fvs$ becomes a true feedback-vertex set of $\graphName$. 
+%Additionally, we create a set of replicas, $\mathcal{T}$ containing a replica $\tau_{\ux} \in \mathcal{T}$ of each feedback vertex $\ux \in \fvs$, with the purpose of forming cycles in the same way chains are created in PICEF. To this end, we define a new vertex set $\tilde{\pairsSet} = \{\pairsSet\} \cup \{\tau_{\ux} \mid \ux \in \fvs\}$ and arc set $\tilde{\arcset} = \{\arcset \setminus (\vx, \ux) \mid \ux \in \fvs\} \cup \{(\vx, \tau_{\ux}) \mid (\vx, \ux) \in \arcset, \ux \in \fvs\} \cup \{(\tau_{\ux}, \ux) \mid \ux \in \fvs\}$. That is, we redirect the incoming arcs of a feedback vertex to their replicas, and add a directed arc from the replica to the original feedback vertex. Thus, for an arc $\arcp \in \tilde{\arcset}$, we define $\SetposK$ as the set of positions at which that arc may arise in a cycle. That is,
+
+	$$
+\SetposK := \left\{
+\begin{array}{ll}
+	\{1\}      & \ux \in \fvs \\
+	\{2,...,\kcap\}      & \ux \in \pairsSet
+	%\{3,...,\kcap + 1\} & \ux = \tau_{\ux} \mbox{ and } \ux \in \fvs
+\end{array}
+\right.
+$$
+
+Observe that the previous definition allows a feedback vertex to be at any position in a cycle, but only feedback vertices can start a cycle, and thus, their outcoming arcs are the only ones that can be selected at position 1. By convention, we define that the position of an arc emanated from a feedback vertex replica is $\kcap + 1$. Now, we can define AB-PICEF as follows:
+
+%Before introducing our last set of decision variables, let $V^{\ux} = \{\vx \in \fvs \setminus \{\ux\}\} \cup \{s\} \cup \{n\} \ \forall \ux \in \fvs$ be the set of all possible \textit{roles} a feedback vertex can take in a feasible solution. For a 
+
+A feedback vertex $\ux$ can have one of the following \textit{roles} in a feasible solution: 1) $\ux$ is present in a cycle started by another feedback vertex, 2) $\ux$ starts a cycle and 3) $\ux$ is not selected in the matching. Thus, we define
+
+$$
+	\rolevstar_{\ux\vx}  := \left\{
+\begin{array}{lll}
+	1     & \mbox{ if vertex } \vx \mbox{ is in a cycle started by } \ux& \forall \ \ux \in \fvs, \vx \in \fvs\\
+	0     & \mbox{o.w.}
+\end{array}
+\right.
+$$
+
+For instance, $\rolevstar_{\ux\ux}$ means that vertex $\ux \in \fvs$ starts a cycle. We also define variables $\start_{\arc} \in \mathbb{Z}^{\mid \arcset \mid}_{+} \cup \{0\}$ as the feedback vertex initiating the origin of the flow that traverses arc $\arcp\in \arcset$. If the arc is not selected, then $\start_{\arc}$ can take on a zero value. Moreover, let $a_{\arc} \in \mathbb{Z}^{\mid \arcset \mid}_{+} \cup \{0\}$ be auxiliary variables  used to adjust the true value of $\start_{\arc}$ when an arc $\arcp \in \arcset$ is not selected. Lastly, our formulation requires that the feedback vertices are indexed from $1$ to $\mid \fvs \mid$. Thus, we define the following MIP formulation as M-PICEF:
+%That is, whenever a feedback vertex is selected but does not start the cycle it is in, such vertex must either start a cycle or be left out of the solution. 
+
+
+\begin{subequations}
+	\begin{align}
+		\max \qquad & \sum_{\arcp \in \arcset}\sum_{\kway \in \SetposK} w_{\arc}\cyclevarOut + \sum_{\arcp \in \arcset}\sum_{\lway \in \SetposL} w_{\arc}\chainvarOut&
+		\label{eq:objAB} \tag{M-PICEF}\\
+		\text{s.t.}\qquad
+		&\sum_{\vx: \rarcp \in \arcset}\sum_{\lway \in \rSetposL} \chainvarIn + \sum_{\vx: \rarcp \in \arcset}\sum_{\kway \in \rSetposK} \cyclevarIn \le 1 & \ux \in \pairsSet \label{eq:inflow}\\
+		&\sum_{\vx: \arcp \in \arcset} \chainvarOutF \le 1& \ux \in \altruSet \label{eq:firstarcch}\\
+		&\sum_{\vx: \arcp \in \arcset} \sum_{\kway \in \mathcal{K}\arcp} \cyclevarOut \le 1 & \ux \in \pairsSet \label{eq:firstarccy}\\
+		&\sum_{\vx: \rarcp \in \arcset \wedge \lway \in \rSetposL} \chainvarIn \ge \sum_{\vx: \arcp \in \arcset} \chainvarOutP& \ux \in \pairsSet, \lway \in \{1,...,\lcap-1\} \label{eq:onetonextch}\\
+		&\sum_{\vx: \rarcp \in \arcset \wedge \kway \in \rSetposK} \cyclevarIn \ge \sum_{\vx: \arcp \in \arcset} \cyclevarOutP& \ux \in \pairsSet, \kway \in \{1,...,\kcap - 1\} \label{eq:onetonextcy}\\
+		&\sum_{\vx:\rarcp \in \arcset} \sum_{\kway \in \mathcal{K}\rarcp \setminus \{1\}} \cyclevar_{\rarc\kway} \ge \sum_{\vx:\arcp \in \arcset}   \cyclevarOutF & \ux \in \fvs \label{eq:starttonextcy}\\
+		&\start_{\arc} \le (\mid \fvs \mid - \ux)(1 -  \cyclevarOutF) +  \ux& \arcp \in \arcset; \ux \in \fvs\\
+		&\start_{\arc} \ge \ux \cyclevarOutF & \arcp \in \arcset; \ux \in \fvs\\
+		&\start_{\arc} \le \sum_{i \in \delta^{-}(\ux)} \aux_{i \ux} & \arcp \in \arcset\\
+		&\aux_{\arc} \le \mid \fvs \mid \sum_{\kway \in \mathcal{K}\arcp} \cyclevarOut& \arcp \in \arcset\\
+		&\chainvarOut \in \{0,1\}& \arcp \in \arcset, \lway \in \SetposL\\
+		&\cyclevarOut \in \{0,1\}& \arcp \in \arcset, \kway \in \SetposK\\
+		&\start_{\arc}, \aux_{\arc} \ge 0 & \arcp \in \arcset
+\end{align}
+\end{subequations}
+
+The objective function \eqref{eq:objAB} finds the chain and cycle packing with maximum weight. Constraints \eqref{eq:inflow} limit a pair to receive at most one kidney, regardless of the position at which this donation occurs. Constraints \eqref{eq:firstarcch} ensure that a singleton donor can give one of their kidneys to at most one patient-donor pair. Similarly, constraints \eqref{eq:firstarccy} ensure that a cycle-starting pair, represented by a feedback vertex, can donate at most one kidney to any other pair. Constraints \eqref{eq:onetonextch} preserve the flow balance between consecutive arcs in a chain. Constraints \eqref{eq:starttonextcy} guarantee that the next kidney donation in a cycle occurs at a subsequent position from the current one. Constraints \eqref{eq:starttonextcy} ensure that the patient in a cycle-starting pair receives a kidney back through an arc that can be at least at position two in a cycle. Constraints \eqref{eq:icompanion} assure that  a feedback vertex $i$ can be in the same cycle started by vertex $\ux$, only if the latter has a selected outgoing arc at position one of the cycle. Constraints 	\eqref{eq:ustarts} assure that if an arc is selected at position one of a cycle, then the role of the associated feedback vertex is to initiate such cycle.
+
+We can now use AB-PICEF as a base line to define a two-stage robust formulation for the kidney exchange problem. 
+
+\section{Two-stage Robust Optimization models under partially non-homogeneous uncertainty}
+We define our uncertainty set as follows:
+
+\subsection{Uncertainty set}
+\begin{definition}
+	In partially non-homogeneous failure, at most $\gamma_v$ vertices and $\gamma_a$ arcs can fail. This corresponds to the uncertainty set $\Xi := \{\xi = V^{\xi} \cup A^{\xi}:  V^{\xi} \subseteq V,  A^{\xi} \subseteq A, |V^{\xi}| \ge |V| - \gamma_v \text{ and } |A^{\xi}| \ge  |A| - \gamma_a\}$.
+\end{definition}
+
+\subsection{Recourse policies}
+\textcolor{red}{I will add text here later.}
+
+\subsection{A two-stage RO formulation}
+A two-stage robust optimization model for the KEP can be defined as follows:
+
+\vspace{-0.5cm}
+\begin{subequations}
+	\label{eq:Robust1i}
+	\begin{align}
+		\label{eq:Robust1}
+		\max_{x \in \mathcal{X}} \min_{\xi \in \Xi} \max_{y \in \mathcal{Y}(x,\xi)} \qquad& f(x, \xi, y)
+	\end{align}
+\end{subequations}
+
+where the set $\mathcal{X}$ denotes the set of all feasible solutions on $\graphName$ and $\mathcal{Y}(x,\xi)$ is the set of remaining feasible solutions after failures in the first-stage solution $x \in \mathcal{X}$, as defined by the uncertainty vector $\xi$, are revealed. The definition of the objective function depends upon the recourse policy adopted by the Kidney Paired Donation Program.
+In the first-stage, the set of cycles and chains that will be proposed for transplantation are selected. Because failures can occur, a second stage evaluates the best recovery plan (also a set of cycles and chains), after observing the worst realization of failed vertices and arcs. Thus, the second stage corresponds to a bilevel min-max optimization problem. The overall objective is to propose a solution that yields the best recovery plan, even when the damage inflicted to the graph is maximal. Since the idea is to keep the promise of a match offer to patients selected in the first stage, very often, the best recovery plan is achieved when the recourse solution includes as many pairs of the proposed solution as possible.
+
+\cite{Carvalho2020} proposed a solution framework in which the first stage is solved separately from the second stage.  At every iteration of the solution framework, a candidate first-stage solution is selected. Then, given such solution, the worst-case scenario and the corresponding recovery plan are determined. If the recovery plan worsens the current objective of the first-stage optimization problem, then a new worst-case scenario is added to the first stage. The algorithm terminates when there are no more worsening scenarios. We follow the same solution framework, but define a new approach to solve the second-stage bilinear problem.
+
+Our observation is that the set $\mathcal{Y}(x,\xi)$ can be limited to only those cycles and chains that include pairs in the first stage, since otherwise, such exchanges do not contribute to the recourse objective function. Thus, for the purpose of finding the optimal objective of the second stage, it is not necessary to find a maximum matching among all the active cycles and chains.
+
+
+
+
+
+	%\bibliographystyle{apalike}
+	\bibliography{writeup_reference}
+	
+\end{document}

@@ -1,0 +1,66 @@
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with`a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\usepackage[round]{natbib} 
+\bibliographystyle{abbrvnat}
+%\setcitestyle{authoryear,open={((},close={))}} %Citation-related commands
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{tipx}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage[dvipsnames]{xcolor}
+% Set page size and margins
+% Replace `letterpaper' with`a4paper' for UK/EU standard size
+
+\newtheorem{definition}{Definition}
+
+% Comments
+\newcommand{\dma}[1]{\textcolor{red}{\bfseries [Dionne: #1]}} 
+%Graph notation
+\newcommand{\graphName}{D}
+\newcommand{\vertexset}{V}
+\newcommand{\arcset}{A}
+\newcommand{\digraph}{\graphName = (\vertexset, \arcset)}
+
+%Notation
+\newcommand{\ux}{u}
+\newcommand{\vx}{v}
+\newcommand{\kway}{k}
+\newcommand{\lway}{\ell}
+\newcommand{\lcap}{L}
+\newcommand{\kcap}{K}
+\newcommand{\arc}{uv}
+\newcommand{\rarcp}{(v,u)}
+\newcommand{\arcp}{(u,v)}
+\newcommand{\rarc}{vu}
+\newcommand{\SetposK}{\mathcal{K}\arcp}
+\newcommand{\rSetposK}{\mathcal{K}\rarcp}
+\newcommand{\SetposL}{\mathcal{L}\arcp}
+\newcommand{\rSetposL}{\mathcal{L}\rarcp}
+\newcommand{\rSetposstar}{\mathcal{K}(\ux, \vstar)}
+\newcommand{\Setposstar}{\mathcal{K}( \vstar, \ux)}
+\newcommand{\fvs}{\mathcal{V}^{\star}}
+\newcommand{\vstar}{v^{\star}}
+\newcommand{\pairsSet}{P}
+\newcommand{\altruSet}{N}
+
+%AB-PICEF
+\newcommand{\cyclevar}{x}
+\newcommand{\chainvarOut}{y_{\arc\lway}}
+\newcommand{\chainvarIn}{y_{\rarc\lway}}
+\newcommand{\cyclevarOut}{x_{\arc\kway}}
+\newcommand{\cyclevarIn}{x_{\rarc\kway}}
+\newcommand{\cyclevarInF}{x_{\rarc1}}
+\newcommand{\chainvarOutF}{y_{\arc1}}
+\newcommand{\cyclevarOutF}{x_{\arc1}}
+\newcommand{\chainvarOutP}{y_{\arc,\lway+1}}
+\newcommand{\cyclevarOutP}{x_{\arc,\kway+1}}
+
+%Variables deterministic formulation
+\newcommand{\rolevstar}{r}
+\newcommand{\start}{s}
+\newcommand{\aux}{a}
