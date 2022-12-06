@@ -2,22 +2,20 @@
 ---
 sweep_options:
   Cycle_Length:
-      #- 3
+      - 3
       - 4
   Chain_Length:
-      #- 3
+      - 3
       - 4
   VertexBudget:
-      #- 1
-      #- 2
-      - 4
+      - 1
+      - 2
   ArcBudget:
-      - 0
-      #- 1
-      #- 2
-      #- 3
+      - 5
+      - 10
+      - 30
   Policy:
-      - "Full"
+      - "FirstSOnly"
   Formulation:
       - "Covering"
       # - "DoubleCovering"
@@ -27,10 +25,10 @@ sweep_options:
       - "Strong"
 
 run_setup:
-  OutputPath: "outputs/RO_results_test.txt"
+  OutputPath: "outputs/RO_results_policies_FirstSOnly_n20.txt"
   TimeLimit: 3600
   InstanceFolders:
-    - "100"
+    - "20"
   InstancesDir: "/home/criascos/codes/0TestInstances/ROCarvalho2021"
   exe: "./2StageROThisWork"
   LogPrintFolder: "outputs/testing"

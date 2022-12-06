@@ -9,28 +9,33 @@ sweep_options:
       - 4
   VertexBudget:
       #- 1
-      #- 2
+      - 2
+      - 3
       - 4
   ArcBudget:
       - 0
-      #- 1
-      #- 2
+      #- 10
+      #- 30
       #- 3
   Policy:
       - "Full"
+      #- "FirstSOnly"
   Formulation:
       - "Covering"
       - "DoubleCovering"
       #- "Benders"
       #- "BendersPICEF"
   LowerBound:
-      - "Strong"
+      - "NoBound"
 
 run_setup:
-  OutputPath: "/home/criascos/codes/2StageRO/Output/"
+  OutputPath: "outputs/RO_results_benchmark.txt"
   TimeLimit: 3600
   InstanceFolders:
+    #- "20"
+    #- "50"
     - "100"
-  InstancesDir: "/home/criascos/codes/0TestInstances/ROCarvalho2021/"
+  InstancesDir: "/home/criascos/codes/0TestInstances/ROCarvalho2021"
   exe: "./2StageROThisWork"
-  LogPrintFolder: "/home/criascos/codes/2StageRO/Output/ROLog"
+  LogPrintFolder: "outputs/benchmark"
+
